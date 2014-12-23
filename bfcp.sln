@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bfcp_server", "bfcp_server\bfcp_server.vcxproj", "{630A615A-92C3-4A1B-BAAC-4105CAB8AA24}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bfcp_client", "bfcp_client\bfcp_client.vcxproj", "{2D961E8B-9600-4E00-AAEF-07DE86E54362}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{630A615A-92C3-4A1B-BAAC-4105CAB8AA24}.Debug|Win32.ActiveCfg = Debug|Win32
+		{630A615A-92C3-4A1B-BAAC-4105CAB8AA24}.Debug|Win32.Build.0 = Debug|Win32
+		{630A615A-92C3-4A1B-BAAC-4105CAB8AA24}.Release|Win32.ActiveCfg = Release|Win32
+		{630A615A-92C3-4A1B-BAAC-4105CAB8AA24}.Release|Win32.Build.0 = Release|Win32
+		{2D961E8B-9600-4E00-AAEF-07DE86E54362}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2D961E8B-9600-4E00-AAEF-07DE86E54362}.Debug|Win32.Build.0 = Debug|Win32
+		{2D961E8B-9600-4E00-AAEF-07DE86E54362}.Release|Win32.ActiveCfg = Release|Win32
+		{2D961E8B-9600-4E00-AAEF-07DE86E54362}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

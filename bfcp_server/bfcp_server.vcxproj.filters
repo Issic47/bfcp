@@ -18,18 +18,9 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\BfcpMsgBuilder.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\common\BfcpMsgParser.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\BfcpMsgBuilder.h">
-      <Filter>common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\common\BfcpMsgParser.h">
+    <ClInclude Include="..\common\BfcpMsg.h">
       <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>

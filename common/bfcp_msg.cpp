@@ -110,7 +110,7 @@ int build_attr_FLOOR_REQUEST_INFORMATION( mbuf_t *buf, const bfcp_floor_request_
   int err = 0;
   do 
   {
-    err = bfcp_attrs_encode(buf, 1, BFCP_FLOOR_REQ_INFO | BFCP_MANDATORY, 0, frqInfo.floorRequestID);
+    err = bfcp_attrs_encode(buf, 1, BFCP_FLOOR_REQ_INFO | BFCP_MANDATORY, 0, &frqInfo.floorRequestID);
     if (err) break;
 
     if (frqInfo.oRS)
@@ -160,11 +160,13 @@ int build_attr_FLOOR_REQUEST_INFORMATION( mbuf_t *buf, const bfcp_floor_request_
 } // namespace detail
 } // namespace bfcp
 
-using namespace bfcp;
 using namespace bfcp::detail;
 
+namespace bfcp
+{
+
 int build_msg_FloorRequest(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                                const bfcp_floor_id_list &fID, uint16_t *bID, char *pInfo, bfcp_priority *priority)
+                           const bfcp_floor_id_list &fID, uint16_t *bID, char *pInfo, bfcp_priority *priority)
 {
   assert(buf);
 
@@ -231,7 +233,7 @@ int build_msg_FloorRequestQuery( mbuf_t *buf, uint8_t version, const bfcp_entity
 }
 
 int build_msg_FloorRequestStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                                      const bfcp_floor_request_info &frqInfo)
+                                 const bfcp_floor_request_info &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -268,7 +270,7 @@ int build_msg_UserQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity
 }
 
 int build_msg_UserStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                              bfcp_user_info *beneficiary, const bfcp_floor_request_info_list &frqInfo)
+                         bfcp_user_info *beneficiary, const bfcp_floor_request_info_list &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -303,7 +305,7 @@ int build_msg_UserStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity
 }
 
 int build_msg_FloorQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
-                              const bfcp_floor_id_list &fID)
+                         const bfcp_floor_id_list &fID)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -332,7 +334,7 @@ int build_msg_FloorQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity
 }
 
 int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                               uint16_t floorID, const bfcp_floor_request_info_list &frqInfo)
+                          uint16_t floorID, const bfcp_floor_request_info_list &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -364,7 +366,7 @@ int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entit
 }
 
 int build_msg_ChairAction(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                               const bfcp_floor_request_info &frqInfo)
+                          const bfcp_floor_request_info &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -473,9 +475,4 @@ int build_msg_GoodByeAck( mbuf_t *buf, uint8_t version, const bfcp_entity &entit
     0);
 }
 
-
-
-
-
-
-
+} // namespace bfcp

@@ -18,9 +18,12 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\bfcp_msg.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\BfcpMsg.h">
+    <ClInclude Include="..\common\bfcp_msg.h">
       <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>

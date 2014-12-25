@@ -6,6 +6,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include <muduo/base/Atomic.h>
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/TimerId.h>
 
@@ -14,18 +15,28 @@
 namespace bfcp
 {
 
+class ClientTransaction;
+typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
+
 class BfcpConnection : public boost::shared_ptr<BfcpConnection>,
                        boost::noncopyable
 {
 public:
-  BfcpConnection(const muduo::net::UdpSocketPtr &socket);
+  BfcpConnection(uint8_t version, const muduo::net::UdpSocketPtr &socket);
   ~BfcpConnection();
 
-  
+  /* request */
+  void sendHello(uint32_t conferenceID, uint16_t userID);
+  //void notify();
+  //void reply();
 
 private:
-  boost::weak_ptr<muduo::net::UdpSocket> socket_;
+  typedef muduo::detail::AtomicIntegerT<uint16_t> AtomicUInt16;
 
+  boost::weak_ptr<muduo::net::UdpSocket> socket_;
+  uint8_t version_;
+  std::vector<ClientTransactionPtr> ctrans_;
+  AtomicUInt16 nextTid;
 };
 
 

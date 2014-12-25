@@ -12,9 +12,7 @@ class ClientTransaction;
 typedef struct bfcp_msg bfcp_msg_t;
 typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
 
-typedef boost::function<void (int, 
-                              const bfcp_msg_t*, 
-                              ClientTransactionPtr)> ResponseCallback;
+typedef boost::function<void (int, const bfcp_msg_t*)> ResponseCallback;
 typedef boost::function<void (ClientTransactionPtr)> SendFailedCallback;
 
 } // namespace bfcp

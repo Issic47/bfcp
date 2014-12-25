@@ -49,7 +49,7 @@ public:
   { sendFailedCallback_ = std::move(sendFailedCallback); }
 
   void response(int err, const bfcp_msg_t *msg)
-  { responseCallback_(err, msg, shared_from_this()); }
+  { responseCallback_(err, msg); }
 
 private:
   void onSendTimeout();

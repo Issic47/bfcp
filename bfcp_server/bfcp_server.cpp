@@ -21,7 +21,7 @@ void BfcpServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetA
   LOG_TRACE << server_.name() << " recv " << buf->readableBytes() << " bytes at " << time.toString()
             << " from " << src.toIpPort();
 
-  BfcpBufNode *bufNode = BfcpBufPoolSingleton::instance().getFreeBufNode();
+  BfcpBufNodePtr bufNode = BfcpBufPoolSingleton::instance().getFreeBufNode();
   bufNode->src = src;
   bufNode->time = time;
   bufNode->buf.retrieveAll();

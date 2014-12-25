@@ -21,6 +21,8 @@ typedef struct BfcpBufNode
   muduo::net::Buffer buf;
 } BfcpBufNode;
 
+typedef boost::shared_ptr<BfcpBufNode> BfcpBufNodePtr;
+
 class BfcpBufPool : boost::noncopyable
 {
 public:
@@ -37,13 +39,13 @@ public:
     // NOTE: currently let the operation system do it.
   }
 
-  BfcpBufNode *getFreeBufNode()
+  BfcpBufNodePtr getFreeBufNode()
   {
     {
       muduo::MutexLockGuard lock(mutex_);
       if (bufQueue_.empty() && usedBufCount_ < kMaxBufNodeCount)
       {
-        bufQueue_.put(new BfcpBufNode);
+        bufQueue_.put(boost::make_shared<BfcpBufNode>());
         ++usedBufCount_;
       }
     }
@@ -51,9 +53,10 @@ public:
   }
 
 
-  void releaseBufNode(BfcpBufNode *bufNode)
+  void releaseBufNode(BfcpBufNodePtr &bufNode)
   {
     bufQueue_.put(bufNode);
+    bufNode = nullptr;
   }
 
 private:
@@ -61,11 +64,11 @@ private:
   const size_t maxBufCount_;
   
   mutable muduo::MutexLock mutex_;
-  muduo::BlockingQueue<BfcpBufNode*> bufQueue_;
+  muduo::BlockingQueue<BfcpBufNodePtr> bufQueue_;
 };
 
 typedef muduo::Singleton<BfcpBufPool> BfcpBufPoolSingleton;
-typedef muduo::Singleton< muduo::BlockingQueue<BfcpBufNode*> > BfcpBufQueueSingleton;
+typedef muduo::Singleton< muduo::BlockingQueue<BfcpBufNodePtr> > BfcpBufQueueSingleton;
 
 } // namespace bfcp
 

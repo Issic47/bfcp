@@ -4,17 +4,21 @@
 #include <boost/noncopyable.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/TimerId.h>
 #include <muduo/net/InetAddress.h>
 
 #include "bfcp_msg.h"
+#include "bfcp_callbacks.h"
 
 namespace bfcp
 {
 
-class ClientTransaction : boost::noncopyable
+class ClientTransaction : public boost::enable_shared_from_this<ClientTransaction>, 
+                          boost::noncopyable
 {
 public:
   enum 
@@ -32,10 +36,27 @@ public:
 
   void setTimerId(const muduo::net::TimerId &timer1) { timer1_ = timer1; }
 
+  void setReponseCallback(const ResponseCallback &responseCallback)
+  { responseCallback_ = responseCallback; }
+
+  void setReponseCallback(ResponseCallback &&responseCallback)
+  { responseCallback_ = std::move(responseCallback); }
+
+  void setSendFailedCallback(const SendFailedCallback &sendFailedCallback)
+  { sendFailedCallback_ = sendFailedCallback; }
+
+  void setSendFailedCallback(SendFailedCallback &&sendFailedCallback)
+  { sendFailedCallback_ = std::move(sendFailedCallback); }
+
+  void response(int err, const bfcp_msg_t *msg)
+  { responseCallback_(err, msg, shared_from_this()); }
+
 private:
-  void onTimeout();
+  void onSendTimeout();
 
   boost::weak_ptr<muduo::net::UdpSocket> socket_;
+  ResponseCallback responseCallback_;
+  SendFailedCallback sendFailedCallback_;
   mbuf_t *msgBuf_;
   bfcp_entity entity_;
   muduo::net::InetAddress dst_;

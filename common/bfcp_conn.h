@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/ptr_container/ptr_unordered_map.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/TimerId.h>
@@ -13,11 +14,14 @@
 namespace bfcp
 {
 
-class BfcpConnection : boost::noncopyable
+class BfcpConnection : public boost::shared_ptr<BfcpConnection>,
+                       boost::noncopyable
 {
 public:
-  BfcpConnection(const muduo::net::UdpSocketPtr socket);
+  BfcpConnection(const muduo::net::UdpSocketPtr &socket);
   ~BfcpConnection();
+
+  
 
 private:
   boost::weak_ptr<muduo::net::UdpSocket> socket_;

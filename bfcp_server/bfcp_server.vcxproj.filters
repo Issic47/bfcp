@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="common\utility">
+      <UniqueIdentifier>{27610fce-daec-4977-98ab-2c7bf67ab10b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -27,6 +30,9 @@
     <ClCompile Include="..\common\bfcp_ctrans.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="bfcp_server.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\bfcp_msg.h">
@@ -37,6 +43,21 @@
     </ClInclude>
     <ClInclude Include="..\common\bfcp_ctrans.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="bfcp_server.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_buf_pool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_callbacks.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MemoryPool.h">
+      <Filter>common\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\MemoryPool.hpp">
+      <Filter>common\utility</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

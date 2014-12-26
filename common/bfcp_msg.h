@@ -1,97 +1,76 @@
 #ifndef BFCP_MSG_H
 #define BFCP_MSG_H
 
-#include <vector>
+#include <muduo/net/Buffer.h>
+#include <muduo/net/InetAddress.h>
+#include <muduo/base/copyable.h>
 
-#include <re.h>
-
-typedef struct mbuf mbuf_t;
-
-typedef struct bfcp_entity
-{
-  uint32_t conferenceID;
-  uint16_t transactionID;
-  uint16_t userID;
-} bfcp_entity;
-
-typedef std::vector<uint16_t> bfcp_floor_id_list;
-
-typedef struct bfcp_user_info
-{
-  uint16_t id;
-  char *username;
-  char *useruri;
-} bfcp_user_info;
-
-typedef struct bfcp_overall_request_status
-{
-  uint16_t floorRequestID;
-  bfcp_reqstatus_t *requestStatus;
-  char *statusInfo;
-} bfcp_overall_request_status;
-
-typedef struct bfcp_floor_request_status 
-{
-  uint16_t floorID;
-  bfcp_reqstatus_t *requestStatus;
-  char *statusInfo;
-} bfcp_floor_request_status;
-
-typedef std::vector<bfcp_floor_request_status> bfcp_floor_request_status_list;
-
-typedef struct bfcp_floor_request_info
-{
-  uint16_t floorRequestID;
-  bfcp_overall_request_status *oRS;
-  bfcp_floor_request_status_list fRS;
-  bfcp_user_info *beneficiary;
-  bfcp_user_info *requested_by;
-  bfcp_priority *priority;
-  char *partPriovidedInfo;
-} bfcp_floor_request_info;
-
-typedef std::vector<bfcp_floor_request_info> bfcp_floor_request_info_list;
+#include "common/bfcp_ex.h"
+#include "common/bfcp_attr.h"
 
 namespace bfcp
 {
 
-int build_msg_FloorRequest(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                           const bfcp_floor_id_list &fID, uint16_t *bID, 
-                           char *pInfo, bfcp_priority *priority);
+class BfcpMsg : public muduo::copyable
+{
+public:
+  BfcpMsg(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
+  
+  BfcpMsg(const BfcpMsg &other) 
+   : msg_(other.msg_), err_(other.err_)
+  {
+    mem_ref(other.msg_);
+  }
+  
+  ~BfcpMsg() { 
+    mem_deref(msg_); 
+    msg_ = nullptr;
+  }
 
-int build_msg_FloorRelease(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t frqID);
-int build_msg_FloorRequestQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t frqID);
+  bool valid() const { return err_ == 0; }
+  int error() const { return err_; }
 
-int build_msg_FloorRequestStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                                 const bfcp_floor_request_info &frqInfo);
-int build_msg_UserQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t bID);
+  bool isResponse() const { return msg_->r == 1; }
+  bool isFragement() const { return msg_->f == 1; }
+  bfcp_prim primivity() const { return msg_->prim; }
 
-int build_msg_UserStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                         bfcp_user_info *beneficiary, const bfcp_floor_request_info_list &frqInfo);
+  muduo::net::InetAddress getSrc() const 
+  { return muduo::net::InetAddress(msg_->src.u.sa); }
 
-int build_msg_FloorQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                         const bfcp_floor_id_list &fID);
+  uint32_t getConferenceID() const { return msg_->confid; }
+  uint16_t getUserID() const { return msg_->userid; }
+  uint16_t getTransactionID() const { return msg_->tid; }
+  const bfcp_unknown_attr_t& getUnknownAttrs() const { return msg_->uma; }
+  std::list<BfcpAttr> getAttributes() const;
 
-int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
-                          uint16_t floorID, const bfcp_floor_request_info_list &frqInfo);
+  const ::bfcp_attr_t* findAttribute(::bfcp_attrib attrType) const 
+  { return bfcp_msg_attr(msg_, attrType); }
 
-int build_msg_ChairAction(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
-                          const bfcp_floor_request_info &frqInfo);
+  std::list<BfcpAttr> findAttributes(::bfcp_attrib attrType) const;
 
-int build_msg_ChairActionAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_Hello(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
+  BfcpMsg& operator=(const BfcpMsg &other)
+  {
+    if (msg_ != other.msg_)
+    {
+      mem_deref(msg_);
+      msg_ = other.msg_;
+      mem_ref(other.msg_);
+    }
+    err_ = other.err_;
+  }
 
-int build_msg_HelloAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
-                       const bfcp_supprim_t &primitives, const bfcp_supattr_t &attributes);
+private:
+  void setSrc(const muduo::net::InetAddress &src)
+  {
+    auto &rawAddr = src.getRawSockAddr();
+    ::memcpy(&msg_->src.u.sa, &rawAddr.u.sa, rawAddr.len);
+    msg_->src.len = rawAddr.len;
+  }
 
-int build_msg_Error(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
-                    const bfcp_errcode_t &errcode, char *eInfo);
-
-int build_msg_FloorRequestStatusAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_FloorStatusAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_GoodBye(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_GoodByeAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
+  ::bfcp_msg_t *msg_;
+  int err_;
+};
 
 } // namespace bfcp
 
-#endif // BFCP_MSG_H
+#endif // !BFCP_MSG_H

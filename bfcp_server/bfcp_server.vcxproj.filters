@@ -21,9 +21,6 @@
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\common\bfcp_msg.cpp">
-      <Filter>common</Filter>
-    </ClCompile>
     <ClCompile Include="..\common\bfcp_conn.cpp">
       <Filter>common</Filter>
     </ClCompile>
@@ -33,11 +30,17 @@
     <ClCompile Include="bfcp_server.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\bfcp_msg_builder.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\bfcp_msg.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\bfcp_attr.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\common\bfcp_msg.h">
-      <Filter>common</Filter>
-    </ClInclude>
     <ClInclude Include="..\common\bfcp_conn.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -53,11 +56,23 @@
     <ClInclude Include="..\common\bfcp_callbacks.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\MemoryPool.h">
+    <ClInclude Include="..\common\bfcp_msg_builder.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_msg.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_ex.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\utility\MemoryPool.h">
       <Filter>common\utility</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\MemoryPool.hpp">
+    <ClInclude Include="..\common\utility\MemoryPool.hpp">
       <Filter>common\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_attr.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

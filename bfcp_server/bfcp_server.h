@@ -12,8 +12,12 @@
 
 #include <muduo/base/Thread.h>
 
+#include "common/bfcp_conn.h"
+
 namespace bfcp
 {
+class BfcpConnection;
+typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
 class BfcpServer
 {
@@ -38,7 +42,8 @@ private:
 
   muduo::net::EventLoop* loop_;
   muduo::net::UdpServer server_;
-  //muduo::Thread connThread_;
+
+  BfcpConnectionPtr connection_;
 };
 
 } // namespace bfcp

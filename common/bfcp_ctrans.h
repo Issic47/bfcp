@@ -48,7 +48,7 @@ public:
   void setSendFailedCallback(SendFailedCallback &&sendFailedCallback)
   { sendFailedCallback_ = std::move(sendFailedCallback); }
 
-  void response(int err, const bfcp_msg_t *msg)
+  void response(int err, const BfcpMsg &msg)
   { responseCallback_(err, msg); }
 
 private:

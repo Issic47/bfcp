@@ -4,16 +4,20 @@
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
+struct bfcp_msg;
+typedef struct bfcp_msg bfcp_msg_t;
+
 namespace bfcp
 {
 
-struct bfcp_msg;
+class BfcpMsg;
 class ClientTransaction;
-typedef struct bfcp_msg bfcp_msg_t;
 typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
 
-typedef boost::function<void (int, const bfcp_msg_t*)> ResponseCallback;
+typedef boost::function<void (int, const BfcpMsg&)> ResponseCallback;
 typedef boost::function<void (ClientTransactionPtr)> SendFailedCallback;
+
+typedef boost::function<void (const BfcpMsg&)> NewRequestCallback;
 
 } // namespace bfcp
 

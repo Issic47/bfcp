@@ -14,10 +14,16 @@ class BfcpMsg;
 class ClientTransaction;
 typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
 
-typedef boost::function<void (int, const BfcpMsg&)> ResponseCallback;
-typedef boost::function<void (ClientTransactionPtr)> SendFailedCallback;
+enum ResponseError
+{
+  kNoError = 0,
+  kTimeout = 1,
+};
 
+typedef boost::function<void (ResponseError, const BfcpMsg&)> ResponseCallback;
 typedef boost::function<void (const BfcpMsg&)> NewRequestCallback;
+
+void defaultResponseCallback(ResponseError err, const BfcpMsg &msg);
 
 } // namespace bfcp
 

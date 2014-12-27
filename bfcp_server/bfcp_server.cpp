@@ -23,7 +23,7 @@ void BfcpServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetA
 
   if (!connection_)
   {
-    connection_ = boost::make_shared<BfcpConnection>(socket);
+    connection_ = boost::make_shared<BfcpConnection>(loop_, socket);
   }
 
   connection_->onMessage(buf, src);

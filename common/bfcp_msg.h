@@ -14,6 +14,7 @@ namespace bfcp
 class BfcpMsg : public muduo::copyable
 {
 public:
+  BfcpMsg() : msg_(nullptr), err_(EINVAL) {}
   BfcpMsg(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
   
   BfcpMsg(const BfcpMsg &other) 
@@ -47,6 +48,15 @@ public:
   { return bfcp_msg_attr(msg_, attrType); }
 
   std::list<BfcpAttr> findAttributes(::bfcp_attrib attrType) const;
+
+  bfcp_entity getEntity() const
+  {
+    bfcp_entity entity;
+    entity.conferenceID = msg_->confid;
+    entity.transactionID = msg_->tid;
+    entity.userID = msg_->userid;
+    return entity;
+  }
 
   BfcpMsg& operator=(const BfcpMsg &other)
   {

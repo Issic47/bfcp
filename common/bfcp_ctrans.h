@@ -27,14 +27,22 @@ public:
     BFCP_TXC = 4,
   };
 
-  ClientTransaction(const muduo::net::UdpSocketPtr &socket,
+  typedef boost::function<void (const ClientTransactionPtr&)> RequestTimeoutCallback;
+
+  ClientTransaction(muduo::net::EventLoop *loop,
+                    const muduo::net::UdpSocketPtr &socket,
                     const muduo::net::InetAddress &dst, 
                     const bfcp_entity &entity, 
                     mbuf_t *msgBuf);
 
   ~ClientTransaction();
 
-  void setTimerId(const muduo::net::TimerId &timer1) { timer1_ = timer1; }
+  // no thread safe
+  void start();
+  // no thread safe
+  void onResponse(ResponseError err, const BfcpMsg &msg);
+
+  const bfcp_entity& getEntity() const { return entity_; }
 
   void setReponseCallback(const ResponseCallback &responseCallback)
   { responseCallback_ = responseCallback; }
@@ -42,24 +50,23 @@ public:
   void setReponseCallback(ResponseCallback &&responseCallback)
   { responseCallback_ = std::move(responseCallback); }
 
-  void setSendFailedCallback(const SendFailedCallback &sendFailedCallback)
-  { sendFailedCallback_ = sendFailedCallback; }
+  void setRequestTimeoutCallback(const RequestTimeoutCallback &requestTimeoutCallback)
+  { requestTimeoutCallback_ = requestTimeoutCallback; }
 
-  void setSendFailedCallback(SendFailedCallback &&sendFailedCallback)
-  { sendFailedCallback_ = std::move(sendFailedCallback); }
-
-  void response(int err, const BfcpMsg &msg)
-  { responseCallback_(err, msg); }
+  void setRequestTimeoutCallback(RequestTimeoutCallback &&requestTimeoutCallback)
+  { requestTimeoutCallback_ = std::move(requestTimeoutCallback); }
 
 private:
+  void startInLoop();
   void onSendTimeout();
 
+  muduo::net::EventLoop *loop_;
   boost::weak_ptr<muduo::net::UdpSocket> socket_;
-  ResponseCallback responseCallback_;
-  SendFailedCallback sendFailedCallback_;
   mbuf_t *msgBuf_;
   bfcp_entity entity_;
   muduo::net::InetAddress dst_;
+  ResponseCallback responseCallback_;
+  RequestTimeoutCallback requestTimeoutCallback_;
   muduo::net::TimerId timer1_;
   uint8_t txc_;
 };

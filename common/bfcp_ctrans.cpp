@@ -7,55 +7,83 @@
 
 using muduo::net::UdpSocketPtr;
 using muduo::net::EventLoop;
+using muduo::net::InetAddress;
 
 namespace bfcp
 {
 
-bfcp::ClientTransaction::ClientTransaction(const muduo::net::UdpSocketPtr &socket, 
-                                           const muduo::net::InetAddress &dst, 
-                                           const bfcp_entity &entity, 
-                                           mbuf_t *msgBuf)
-    : socket_(socket),
+void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
+{
+  if (err)
+  {
+    LOG_ERROR << "Response error: " << muduo::strerror_tl(err);
+  }
+}
+
+ClientTransaction::ClientTransaction(EventLoop *loop,
+                                     const UdpSocketPtr &socket, 
+                                     const muduo::net::InetAddress &dst, 
+                                     const bfcp_entity &entity, 
+                                     mbuf_t *msgBuf)
+    : loop_(CHECK_NOTNULL(loop)),
+      socket_(socket),
       dst_(dst), 
       entity_(entity),
-      msgBuf_(msgBuf), 
-      txc_(1)
+      msgBuf_(CHECK_NOTNULL(msgBuf)), 
+      txc_(1),
+      responseCallback_(defaultResponseCallback)
 {
 
 }
 
 ClientTransaction::~ClientTransaction()
 {
-  // TODO: use memory pool
   mem_deref(msgBuf_);
+}
+
+void ClientTransaction::start()
+{
+  txc_ = 1;
+  timer1_ = loop_->runAfter(
+    BFCP_T1 / 1000.0, boost::bind(&ClientTransaction::onSendTimeout, shared_from_this()));
 }
 
 void ClientTransaction::onSendTimeout()
 {
-  LOG_DEBUG << "Client transaction to " << dst_.toIpPort() << " send timeout";
-  UdpSocketPtr socket = socket_.lock();
-  if (!socket)
-  {
-    return;
-  }
-
+  loop_->assertInLoopThread();
   double delay = (BFCP_T1 << txc_) / 1000.0;
-  int err = ETIMEDOUT;
   if (++txc_ > BFCP_TXC)
   {
-    if (sendFailedCallback_)
+    LOG_WARN << "Client transaction("
+             << entity_.conferenceID << ":"
+             << entity_.transactionID << ":"
+             << entity_.userID <<  ") timeout";
+
+    if (requestTimeoutCallback_)
     {
-      sendFailedCallback_(shared_from_this());
+      loop_->queueInLoop(
+        boost::bind(requestTimeoutCallback_, shared_from_this()));
       return;
     }
   }
 
-  socket->send(dst_, msgBuf_->buf, msgBuf_->end);
-
-  timer1_ = socket->getLoop()->runAfter(
-    delay, boost::bind(&ClientTransaction::onSendTimeout, shared_from_this()));
+  UdpSocketPtr socket = socket_.lock();
+  if (!socket)
+  {
+    LOG_WARN << "UDP socket has been destructed before ClientTransaction::onSendTimeout";
+  }
+  else
+  {
+    socket->send(dst_, msgBuf_->buf, msgBuf_->end);
+    timer1_ = loop_->runAfter(
+      delay, boost::bind(&ClientTransaction::onSendTimeout, this));
+  }
 }
 
-
+void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
+{
+  loop_->cancel(timer1_);
+  loop_->queueInLoop(boost::bind(responseCallback_, err, msg));
+}
 
 } // namespace bfcp

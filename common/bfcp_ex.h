@@ -60,5 +60,29 @@ typedef struct bfcp_floor_request_info
 
 typedef std::vector<bfcp_floor_request_info> bfcp_floor_request_info_list;
 
+inline int compare(const bfcp_entity &lhs, const bfcp_entity &rhs)
+{
+  uint64_t lvalue = uint64_t(lhs.conferenceID) << 32;
+  lvalue |= uint64_t(lhs.userID) << 16;
+  lvalue |= uint64_t(lhs.transactionID);
+
+  uint64_t rvalue = uint64_t(rhs.conferenceID) << 32;
+  rvalue |= uint64_t(rhs.userID) << 16;
+  rvalue |= uint64_t(rhs.transactionID);
+
+  return lvalue < rvalue ? -1 : ((lvalue == rvalue) ? 0 : 1);
+}
+
+inline bool operator<(const bfcp_entity &lhs, const bfcp_entity &rhs)
+{
+  return compare(lhs, rhs) < 0;
+}
+
+inline bool operator==(const bfcp_entity &lhs, const bfcp_entity &rhs)
+{
+  return compare(lhs, rhs) == 0;
+}
+
+
 
 #endif // BFCP_EX_H

@@ -74,5 +74,8 @@
     <ClInclude Include="..\common\bfcp_attr.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\bfcp_mbuf_wrapper.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

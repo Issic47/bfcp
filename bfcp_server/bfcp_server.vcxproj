@@ -81,6 +81,7 @@
     <ClInclude Include="..\common\bfcp_conn.h" />
     <ClInclude Include="..\common\bfcp_ctrans.h" />
     <ClInclude Include="..\common\bfcp_ex.h" />
+    <ClInclude Include="..\common\bfcp_mbuf_wrapper.h" />
     <ClInclude Include="..\common\bfcp_msg.h" />
     <ClInclude Include="..\common\bfcp_msg_builder.h" />
     <ClInclude Include="..\common\utility\MemoryPool.h" />

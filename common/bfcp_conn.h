@@ -13,6 +13,7 @@
 
 #include "bfcp_callbacks.h"
 #include "bfcp_ex.h"
+#include "bfcp_mbuf_wrapper.h"
 
 #include <vector>
 #include <map>
@@ -67,7 +68,7 @@ private:
   static const int BFCP_T2_SEC = 10;
 
   typedef muduo::detail::AtomicIntegerT<uint16_t> AtomicUInt16;
-  typedef boost::shared_ptr<mbuf_t> MBufPtr;
+  typedef MBufWrapper MBufPtr;
   // FIXME: assigned MbufPtr mem_ref
   typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
 

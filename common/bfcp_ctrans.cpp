@@ -12,11 +12,21 @@ using muduo::net::InetAddress;
 namespace bfcp
 {
 
+const char* getResponceErrorName( ResponseError err )
+{
+  switch (err)
+  {
+    case bfcp::kNoError: return "NoError";
+    case bfcp::kTimeout: return "Timeout";
+    default: return "???";
+  }
+}
+
 void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
 {
   if (err)
   {
-    LOG_ERROR << "Response error: " << muduo::strerror_tl(err);
+    LOG_ERROR << "Response error: " << getResponceErrorName(err);
   }
 }
 
@@ -43,6 +53,10 @@ ClientTransaction::~ClientTransaction()
 
 void ClientTransaction::start()
 {
+  UdpSocketPtr socket = socket_.lock();
+  assert(socket);
+  socket->send(dst_, msgBuf_->buf, msgBuf_->end);
+
   txc_ = 1;
   timer1_ = loop_->runAfter(
     BFCP_T1 / 1000.0, boost::bind(&ClientTransaction::onSendTimeout, shared_from_this()));
@@ -51,6 +65,7 @@ void ClientTransaction::start()
 void ClientTransaction::onSendTimeout()
 {
   loop_->assertInLoopThread();
+
   double delay = (BFCP_T1 << txc_) / 1000.0;
   if (++txc_ > BFCP_TXC)
   {

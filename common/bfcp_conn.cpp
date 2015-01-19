@@ -10,12 +10,31 @@
 
 #include "common/bfcp_msg.h"
 #include "common/bfcp_ctrans.h"
+#include "common/bfcp_msg_build.h"
 
 using muduo::net::UdpSocketPtr;
 using muduo::net::InetAddress;
 using muduo::net::Buffer;
 using muduo::net::EventLoop;
 using muduo::strerror_tl;
+
+namespace bfcp
+{
+namespace detail
+{
+
+class AutoDeref
+{
+public:
+  AutoDeref(void *buf): buf_(buf) {}
+  ~AutoDeref() { mem_deref(buf_); }
+
+private:
+  void *buf_;
+};
+
+} // namespace detail
+} // namespace bfcp
 
 namespace bfcp
 {
@@ -124,6 +143,115 @@ void BfcpConnection::onRequestTimeout(const ClientTransactionPtr &transaction)
   {
     LOG_ERROR << "Cannot find client transaction in BfcpConnection::onRequestTimeout";
   }
+}
+
+void BfcpConnection::sendFloorRequestInLoop(const BasicRequestParam &basicParam, 
+                                            const FloorRequestParam &extParam)
+{
+  loop_->assertInLoopThread();
+  // FIXME: get msg buf from pool
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+  
+  bfcp_entity entity;
+  initEntity(entity, basicParam.conferenceID, basicParam.userID);
+
+  uint16_t bID = static_cast<uint16_t>(extParam.beneficiaryID);
+  int err = build_msg_FloorRequest(
+    msgBuf, BFCP_VER2, entity, 
+    extParam.floorIDs, 
+    extParam.beneficiaryID == -1 ? nullptr : &bID, 
+    extParam.pInfo.c_str(), 
+    &extParam.priority);
+  // FIXME: check err(ENOMEM)
+
+  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
+    loop_, socket_, basicParam.dst, entity, msgBuf);
+  ctrans_.insert(std::make_pair(entity, ctran));
+  ctran->start();
+}
+
+uint16_t BfcpConnection::getNextTransactionID()
+{
+  uint16_t tid = 0;
+  while ((tid = nextTid_.incrementAndGet()) == 0) {};
+  return tid;
+}
+
+void BfcpConnection::sendFloorReleaseInLoop(const BasicRequestParam &basicParam,
+                                            uint16_t floorRequestID)
+{
+  loop_->assertInLoopThread();
+  // FIXME: get msg buf from pool
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity;
+  initEntity(entity, basicParam.conferenceID, basicParam.userID);
+
+  build_msg_FloorRelease(msgBuf, BFCP_VER2, entity, floorRequestID);
+
+  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
+    loop_, socket_, basicParam.dst, entity, msgBuf);
+  ctrans_.insert(std::make_pair(entity, ctran));
+  ctran->start();
+}
+
+void BfcpConnection::sendFloorRequestQueryInLoop(const BasicRequestParam &basicParam, 
+                                                 uint16_t floorRequestID)
+{
+  loop_->assertInLoopThread();
+  // FIXME: get msg buf from pool
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity;
+  initEntity(entity, basicParam.conferenceID, basicParam.userID);
+
+  build_msg_FloorRequestQuery(msgBuf, BFCP_VER2, entity, floorRequestID);
+
+  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
+    loop_, socket_, basicParam.dst, entity, msgBuf);
+  ctrans_.insert(std::make_pair(entity, ctran));
+  ctran->start();
+}
+
+void BfcpConnection::sendUserQueryInLoop( const BasicRequestParam &basicParam, uint16_t userID )
+{
+  loop_->assertInLoopThread();
+  // FIXME: get msg buf from pool
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity;
+  initEntity(entity, basicParam.conferenceID, basicParam.userID);
+
+  build_msg_UserQuery(msgBuf, BFCP_VER2, entity, userID);
+
+  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
+    loop_, socket_, basicParam.dst, entity, msgBuf);
+  ctrans_.insert(std::make_pair(entity, ctran));
+  ctran->start();
 }
 
 } // namespace bfcp

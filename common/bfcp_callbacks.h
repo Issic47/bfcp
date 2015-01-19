@@ -24,6 +24,7 @@ typedef boost::function<void (ResponseError, const BfcpMsg&)> ResponseCallback;
 typedef boost::function<void (const BfcpMsg&)> NewRequestCallback;
 
 void defaultResponseCallback(ResponseError err, const BfcpMsg &msg);
+const char* getResponceErrorName(ResponseError err);
 
 } // namespace bfcp
 

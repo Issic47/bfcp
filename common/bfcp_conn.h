@@ -10,6 +10,7 @@
 #include <muduo/base/Atomic.h>
 #include <muduo/net/TimerId.h>
 #include <muduo/net/EventLoop.h>
+#include <muduo/net/InetAddress.h>
 
 #include "bfcp_callbacks.h"
 #include "bfcp_ex.h"
@@ -44,6 +45,22 @@ inline bool operator<(const bfcp_strans_entry &lhs, const bfcp_strans_entry &rhs
 
 } // namespace detail
 
+typedef struct BasicRequestParam
+{
+  ResponseCallback cb;
+  muduo::net::InetAddress dst;
+  uint32_t conferenceID;
+  uint16_t userID;
+} BasicRequestParam;
+
+typedef struct FloorRequestParam
+{
+  bfcp_floor_id_list floorIDs;
+  bfcp_priority priority;
+  int beneficiaryID;
+  muduo::string pInfo;  // participant provided info 
+} FloorRequestParam;
+
 class BfcpConnection : public boost::shared_ptr<BfcpConnection>,
                        boost::noncopyable
 {
@@ -59,18 +76,49 @@ public:
   void setNewRequestCallback(NewRequestCallback &&cb)
   { newRequestCallback_ = std::move(cb); }
 
-  /* request */
+  /* send request */
+  // NOTE: set beneficiaryID to -1 to ignore the beneficiary ID attribute
+  void sendFloorRequest(const BasicRequestParam &basicParam, const FloorRequestParam &extParam)
+  { sendRequest(&BfcpConnection::sendFloorRequestInLoop, basicParam, extParam); }
+
+  void sendFloorRelease(const BasicRequestParam &basicParam, uint16_t floorRequestID)
+  { sendRequest(&BfcpConnection::sendFloorReleaseInLoop, basicParam, floorRequestID); }
+
+  void sendFloorRequestQuery(const BasicRequestParam &basicParam, uint16_t floorRequestID)
+  { sendRequest(&BfcpConnection::sendFloorRequestQueryInLoop, basicParam, floorRequestID); }
+
+  void sendUserQuery(const BasicRequestParam &basicParam, uint16_t userID)
+  { sendRequest(&BfcpConnection::sendUserQueryInLoop, basicParam, userID); }
+
   //void request();
   //void notify();
   //void reply();
 
 private:
   static const int BFCP_T2_SEC = 10;
+  static const int BFCP_MBUF_SIZE = 65536;
 
   typedef muduo::detail::AtomicIntegerT<uint16_t> AtomicUInt16;
   typedef MBufWrapper MBufPtr;
   // FIXME: assigned MbufPtr mem_ref
   typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
+
+  template <typename Func, typename Arg1, typename Arg2>
+  void sendRequest(Func request_func, const Arg1 &basic, const Arg2 &ext)
+  {
+    if (loop_->isInLoopThread())
+    {
+      (this->*request_func)(basic, ext);
+    }
+    else
+    {
+      loop_->runInLoop(
+        boost::bind(request_func, 
+        this, // FIXME
+        basic, 
+        ext));
+    }
+  }
 
   bool tryHandleResponse(const BfcpMsg &msg);
   bool tryHandleRequest(const BfcpMsg &msg);
@@ -78,6 +126,20 @@ private:
   void onMessageInLoop(const BfcpMsg &msg);
   void onTimer();
 
+  void sendFloorRequestInLoop(const BasicRequestParam &basicParam, const FloorRequestParam &extParam);
+  void sendFloorReleaseInLoop(const BasicRequestParam &basicParam, uint16_t floorRequestID);
+  void sendFloorRequestQueryInLoop(const BasicRequestParam &basicParam, uint16_t floorRequestID);
+  void sendUserQueryInLoop(const BasicRequestParam &basicParam, uint16_t userID);
+
+  uint16_t getNextTransactionID();
+  void initEntity(bfcp_entity &entity, uint32_t cid, uint16_t uid) 
+  {
+    entity.conferenceID = cid;
+    entity.transactionID = getNextTransactionID();
+    entity.userID = uid;
+  }
+
+private:
   muduo::net::EventLoop *loop_;
   muduo::net::UdpSocketPtr socket_;
   std::map<::bfcp_entity, ClientTransactionPtr> ctrans_;  // use hash_map?

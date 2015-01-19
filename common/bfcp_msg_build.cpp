@@ -1,4 +1,4 @@
-#include "bfcp_msg_builder.h"
+#include "bfcp_msg_build.h"
 
 #include <cassert>
 
@@ -194,7 +194,7 @@ int build_msg_FloorRequest(mbuf_t *buf, uint8_t version, const bfcp_entity &enti
       if (err) break;
     }
 
-    if (pInfo)
+    if (pInfo && strlen(pInfo) != 0)
     {
       err = build_attr_PARTICIPANT_PROVIDED_INFO(buf, pInfo);
       if (err) break;

@@ -1,5 +1,5 @@
-#ifndef BFCP_MSG_BUILDER_H
-#define BFCP_MSG_BUILDER_H
+#ifndef BFCP_MSG_BUILD_H
+#define BFCP_MSG_BUILD_H
 
 #include "common/bfcp_ex.h"
 
@@ -45,4 +45,4 @@ int build_msg_GoodByeAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity
 
 } // namespace bfcp
 
-#endif // BFCP_MSG_BUILDER_H
+#endif // BFCP_MSG_BUILD_H

@@ -58,6 +58,7 @@ BfcpConnection::~BfcpConnection()
 
 void BfcpConnection::onTimer()
 {
+  LOG_TRACE << "BfcpConnection::onTimer deleting cached reply messages";
   cachedReplys_.push_back(ReplyBucket());
 }
 
@@ -67,27 +68,24 @@ void BfcpConnection::onMessage(Buffer *buf, const InetAddress &src)
   if (!msg.valid())
   {
     // FIXME: check error and report to the sender
-    LOG_ERROR << "Parse error(" << msg.error() << ":" << strerror_tl(msg.error()) 
-              << ") in BfcpConnection::onMessage";
+    LOG_ERROR << "Parse error{errcode=" << msg.error() << ",errstr=" << strerror_tl(msg.error()) 
+              << "} in BfcpConnection::onMessage";
     return;
   }
 
-  if (loop_->isInLoopThread())
-  {
-    onMessageInLoop(msg);
-  }
-  else
-  {
-    loop_->runInLoop(
-      boost::bind(&BfcpConnection::onMessageInLoop, 
-                  this, // FIXME
-                  msg));
-  }
+  runInLoop(&BfcpConnection::onMessageInLoop, msg);
 }
 
 void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
 {
   loop_->assertInLoopThread();
+  
+  LOG_INFO << "Received BFCP message{cid=" << msg.getConferenceID() 
+           << ",tid=" << msg.getTransactionID()
+           << ",uid=" << msg.getUserID()
+           << ",prim=" << bfcp_prim_name(msg.primivity()) 
+           << "} from " << msg.getSrc().toIpPort();
+
   if (tryHandleResponse(msg))
     return;
 
@@ -210,11 +208,14 @@ void BfcpConnection::notifyFloorRequestStatusInLoop(const BasicRequestParam &bas
     frqInfo);
 }
 
-template <typename BuildFunc>
-void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc, 
+template <typename BuildMsgFunc>
+void bfcp::BfcpConnection::sendRequestInLoop(BuildMsgFunc buildFunc, 
                                              const BasicRequestParam &basicParam)
 {
   loop_->assertInLoopThread();
+
+  // TODO: log
+
   // FIXME: get msg buf from pool
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -228,17 +229,20 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc,
   initEntity(entity, basicParam.conferenceID, basicParam.userID);
 
   int err = buildFunc(msgBuf, BFCP_VER2, entity);
-  // TODO: check error
+  // FIXME: check error
 
   startNewClientTransaction(basicParam.dst, entity, msgBuf);
 }
 
-template <typename BuildFunc, typename ExtParam>
-void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc, 
+template <typename BuildMsgFunc, typename ExtParam>
+void bfcp::BfcpConnection::sendRequestInLoop(BuildMsgFunc buildFunc, 
                                              const BasicRequestParam &basicParam, 
                                              const ExtParam &extParam)
 {
   loop_->assertInLoopThread();
+
+  // TODO: log
+
   // FIXME: get msg buf from pool
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -252,7 +256,7 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc,
   initEntity(entity, basicParam.conferenceID, basicParam.userID);
 
   int err = buildFunc(msgBuf, BFCP_VER2, entity, extParam);
-  // TODO: check error
+  // FIXME: check error
 
   startNewClientTransaction(basicParam.dst, entity, msgBuf);
 }
@@ -329,12 +333,14 @@ void BfcpConnection::replyWithFloorStatusInLoop(const BfcpMsg &msg,
     floorStatus);
 }
 
-template <typename BuildFunc>
-void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &msg)
+template <typename BuildMsgFunc>
+void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg)
 {
   loop_->assertInLoopThread();
   assert(msg.valid());
   assert(!msg.isResponse());
+
+  // TODO: log
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -351,14 +357,16 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &m
   startNewServerTransaction(msg.getSrc(), entity, msg.primivity(), msgBuf);
 }
 
-template <typename BuildFunc, typename ExtParam>
-void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc,
+template <typename BuildMsgFunc, typename ExtParam>
+void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc,
                                            const BfcpMsg &msg,
                                            const ExtParam &extParam)
 {
   loop_->assertInLoopThread();
   assert(msg.valid());
   assert(!msg.isResponse());
+
+  // TODO: log
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);

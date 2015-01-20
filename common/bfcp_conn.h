@@ -155,20 +155,20 @@ private:
   template <typename Func, typename Arg1, typename Arg2>
   void runInLoop(Func requestFunc, const Arg1 &basic, const Arg2 &ext);
 
-  template <typename BuildFunc>
-  void sendRequestInLoop(BuildFunc buildFunc, 
+  template <typename BuildMsgFunc>
+  void sendRequestInLoop(BuildMsgFunc buildFunc, 
                          const BasicRequestParam &basicParam);
 
-  template <typename BuildFunc, typename ExtParam>
-  void sendRequestInLoop(BuildFunc buildFunc, 
+  template <typename BuildMsgFunc, typename ExtParam>
+  void sendRequestInLoop(BuildMsgFunc buildFunc, 
                          const BasicRequestParam &basicParam, 
                          const ExtParam &extParam);
 
-  template <typename BuildFunc>
-  void sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &msg);
+  template <typename BuildMsgFunc>
+  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg);
 
-  template <typename BuildFunc, typename ExtParam>
-  void sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &msg, const ExtParam &extParam);
+  template <typename BuildMsgFunc, typename ExtParam>
+  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg, const ExtParam &extParam);
 
   bool tryHandleResponse(const BfcpMsg &msg);
   bool tryHandleRequest(const BfcpMsg &msg);
@@ -237,35 +237,35 @@ private:
 
 // TODO: use variadic template
 template <typename Func, typename Arg1>
-void BfcpConnection::runInLoop(Func requestFunc, const Arg1 &basic)
+void BfcpConnection::runInLoop(Func func, const Arg1 &arg1)
 {
   if (loop_->isInLoopThread())
   {
-    (this->*requestFunc)(basic);
+    (this->*func)(arg1);
   }
   else
   {
     loop_->runInLoop(
-      boost::bind(requestFunc, 
+      boost::bind(func, 
       this, // FIXME
-      basic)); // std::move?
+      arg1)); // std::move?
   }
 }
 
 template <typename Func, typename Arg1, typename Arg2>
-void BfcpConnection::runInLoop(Func requestFunc, const Arg1 &basic, const Arg2 &ext)
+void BfcpConnection::runInLoop(Func func, const Arg1 &arg1, const Arg2 &arg2)
 {
   if (loop_->isInLoopThread())
   {
-    (this->*requestFunc)(basic, ext);
+    (this->*func)(arg1, arg2);
   }
   else
   {
     loop_->runInLoop(
-      boost::bind(requestFunc, 
+      boost::bind(func, 
       this, // FIXME
-      basic, // std::move?
-      ext)); // std::move?
+      arg1, // std::move?
+      arg2)); // std::move?
   }
 }
 

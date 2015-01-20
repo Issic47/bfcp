@@ -79,41 +79,67 @@ public:
   { newRequestCallback_ = std::move(cb); }
 
   void sendFloorRequest(const BasicRequestParam &basicParam, const FloorRequestParam &floorRequest)
-  { sendMessage(&BfcpConnection::sendFloorRequestInLoop, basicParam, floorRequest); }
+  { runInLoop(&BfcpConnection::sendFloorRequestInLoop, basicParam, floorRequest); }
 
   void sendFloorRelease(const BasicRequestParam &basicParam, uint16_t floorRequestID)
-  { sendMessage(&BfcpConnection::sendFloorReleaseInLoop, basicParam, floorRequestID); }
+  { runInLoop(&BfcpConnection::sendFloorReleaseInLoop, basicParam, floorRequestID); }
 
   void sendFloorRequestQuery(const BasicRequestParam &basicParam, uint16_t floorRequestID)
-  { sendMessage(&BfcpConnection::sendFloorRequestQueryInLoop, basicParam, floorRequestID); }
+  { runInLoop(&BfcpConnection::sendFloorRequestQueryInLoop, basicParam, floorRequestID); }
 
   void sendUserQuery(const BasicRequestParam &basicParam, uint16_t userID)
-  { sendMessage(&BfcpConnection::sendUserQueryInLoop, basicParam, userID); }
+  { runInLoop(&BfcpConnection::sendUserQueryInLoop, basicParam, userID); }
 
   void sendFloorQuery(const BasicRequestParam &basicParam, const bfcp_floor_id_list &floorIDs)
-  { sendMessage(&BfcpConnection::sendFloorQueryInLoop, basicParam, floorIDs); }
-
-  void sendFloorStatus(const BasicRequestParam &basicParam, const FloorStatusParam &floorStatus)
-  { sendMessage(&BfcpConnection::sendFloorStatusInLoop, basicParam, floorStatus); }
+  { runInLoop(&BfcpConnection::sendFloorQueryInLoop, basicParam, floorIDs); }
 
   void sendChairAction(const BasicRequestParam &basicParam, const FloorRequestInfoParam &frqInfo)
-  { sendMessage(&BfcpConnection::sendChairActionInLoop, basicParam, frqInfo); }
+  { runInLoop(&BfcpConnection::sendChairActionInLoop, basicParam, frqInfo); }
 
   void sendHello(const BasicRequestParam &basicParam)
-  { sendMessage(&BfcpConnection::sendHelloInLoop, basicParam); }
+  { runInLoop(&BfcpConnection::sendHelloInLoop, basicParam); }
+
+  void sendGoodBye(const BasicRequestParam &basicParam)
+  { runInLoop(&BfcpConnection::sendGoodByeInLoop, basicParam); }
+
+  void replyWithFloorRequestStatus(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo)
+  { runInLoop(&BfcpConnection::replyWithFloorRequestStatusInLoop, msg, frqInfo); }
+
+  void replyWithFloorStatus(const BfcpMsg &msg, const FloorStatusParam &floorStatus) 
+  { runInLoop(&BfcpConnection::replyWithFloorStatusInLoop, msg, floorStatus); }
 
   void replyWithUserStatus(const BfcpMsg &msg, const UserStatusParam &userStatus)
-  { sendMessage(&BfcpConnection::replyWithUserStatusInLoop, msg, userStatus); }
+  { runInLoop(&BfcpConnection::replyWithUserStatusInLoop, msg, userStatus); }
 
   void replyWithChairActionAck(const BfcpMsg &msg) 
-  { sendMessage(&BfcpConnection::replyWithChairActionAckInLoop, msg); }
+  { runInLoop(&BfcpConnection::replyWithChairActionAckInLoop, msg); }
 
   void replyWithHelloAck(const BfcpMsg &msg, const HelloAckParam &helloAck)
-  { sendMessage(&BfcpConnection::replyWithHelloAck, msg, helloAck); }
+  { runInLoop(&BfcpConnection::replyWithHelloAckInLoop, msg, helloAck); }
 
-  //void request();
-  //void notify();
-  //void reply();
+  void replyWithError(const BfcpMsg &msg, const ErrorParam &error)
+  { runInLoop(&BfcpConnection::replyWithErrorInLoop, msg, error); }
+
+  void replyWithFloorRequestStatusAck(const BfcpMsg &msg)
+  { runInLoop(&BfcpConnection::replyWithFloorRequestStatusAckInLoop, msg); }
+
+  void replyWithFloorStatusAck(const BfcpMsg &msg)
+  { runInLoop(&BfcpConnection::replyWithFloorStatusAckInLoop, msg); }
+
+  void replyWithGoodByeAck(const BfcpMsg &msg)
+  { runInLoop(&BfcpConnection::replyWithGoodByeAckInLoop, msg); }
+
+  void notifyFloorRequestStatus(const BasicRequestParam &basicParam, 
+                                const FloorRequestInfoParam &frqInfo)
+  {
+    runInLoop(&BfcpConnection::notifyFloorRequestStatusInLoop, basicParam, frqInfo);
+  }
+
+  void notifyFloorStatus(const BasicRequestParam &basicParam, 
+    const FloorStatusParam &floorStatus)
+  { 
+    runInLoop(&BfcpConnection::notifyFloorStatusInLoop, basicParam, floorStatus); 
+  }
 
 private:
   static const int BFCP_T2_SEC = 10;
@@ -124,10 +150,10 @@ private:
   typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
 
   template <typename Func, typename Arg1>
-  void sendMessage(Func requestFunc, const Arg1 &basic);
+  void runInLoop(Func requestFunc, const Arg1 &basic);
 
   template <typename Func, typename Arg1, typename Arg2>
-  void sendMessage(Func requestFunc, const Arg1 &basic, const Arg2 &ext);
+  void runInLoop(Func requestFunc, const Arg1 &basic, const Arg2 &ext);
 
   template <typename BuildFunc>
   void sendRequestInLoop(BuildFunc buildFunc, 
@@ -155,13 +181,25 @@ private:
   void sendFloorRequestQueryInLoop(const BasicRequestParam &basicParam, uint16_t floorRequestID);
   void sendUserQueryInLoop(const BasicRequestParam &basicParam, uint16_t userID);
   void sendFloorQueryInLoop(const BasicRequestParam &basicParam, const bfcp_floor_id_list &floorIDs);
-  void sendFloorStatusInLoop(const BasicRequestParam &basicParam, const FloorStatusParam &floorStatus);
   void sendChairActionInLoop(const BasicRequestParam &basicParam, const FloorRequestInfoParam &frqInfo);
   void sendHelloInLoop(const BasicRequestParam &basicParam);
+  void sendGoodByeInLoop(const BasicRequestParam &basicParam);
+
   void replyWithUserStatusInLoop(const BfcpMsg &msg, const UserStatusParam &userStatus);
   void replyWithChairActionAckInLoop(const BfcpMsg &msg);
   void replyWithHelloAckInLoop(const BfcpMsg &msg, const HelloAckParam &helloAck);
+  void replyWithErrorInLoop(const BfcpMsg &msg, const ErrorParam &error);
+  void replyWithFloorRequestStatusAckInLoop(const BfcpMsg &msg);
+  void replyWithFloorStatusAckInLoop(const BfcpMsg &msg);
+  void replyWithGoodByeAckInLoop(const BfcpMsg &msg);
+  void replyWithFloorRequestStatusInLoop(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo);
+  void replyWithFloorStatusInLoop(const BfcpMsg &msg, const FloorStatusParam &floorStatus);
 
+  void notifyFloorRequestStatusInLoop(const BasicRequestParam &basicParam, 
+                                      const FloorRequestInfoParam &frqInfo);
+  void notifyFloorStatusInLoop(const BasicRequestParam &basicParam, 
+                               const FloorStatusParam &floorStatus);
+  
   uint16_t getNextTransactionID()
   {
     uint16_t tid = 0;
@@ -176,6 +214,15 @@ private:
     entity.userID = uid;
   }
 
+  void startNewClientTransaction(const muduo::net::InetAddress &dst,
+                                 const bfcp_entity &entity, 
+                                 mbuf_t *msgBuf);
+
+  void startNewServerTransaction(const muduo::net::InetAddress &dst,
+                                 const bfcp_entity &entity,
+                                 bfcp_prim primivity,
+                                 mbuf_t *msgBuf);
+
 private:
   muduo::net::EventLoop *loop_;
   muduo::net::UdpSocketPtr socket_;
@@ -188,8 +235,9 @@ private:
   AtomicUInt16 nextTid_;
 };
 
+// TODO: use variadic template
 template <typename Func, typename Arg1>
-void BfcpConnection::sendMessage(Func requestFunc, const Arg1 &basic)
+void BfcpConnection::runInLoop(Func requestFunc, const Arg1 &basic)
 {
   if (loop_->isInLoopThread())
   {
@@ -205,7 +253,7 @@ void BfcpConnection::sendMessage(Func requestFunc, const Arg1 &basic)
 }
 
 template <typename Func, typename Arg1, typename Arg2>
-void BfcpConnection::sendMessage(Func requestFunc, const Arg1 &basic, const Arg2 &ext)
+void BfcpConnection::runInLoop(Func requestFunc, const Arg1 &basic, const Arg2 &ext)
 {
   if (loop_->isInLoopThread())
   {

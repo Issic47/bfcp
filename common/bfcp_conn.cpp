@@ -176,15 +176,6 @@ void BfcpConnection::sendFloorQueryInLoop(const BasicRequestParam &basicParam,
   sendRequestInLoop(&build_msg_FloorQuery, basicParam, floorIDs);
 }
 
-void BfcpConnection::sendFloorStatusInLoop(const BasicRequestParam &basicParam, 
-                                           const FloorStatusParam &floorStatus)
-{
-  sendRequestInLoop(
-    boost::bind(&build_msg_FloorStatus, _1, false, _2, _3, _4), 
-    basicParam, 
-    floorStatus);
-}
-
 void BfcpConnection::sendChairActionInLoop(const BasicRequestParam &basicParam, 
                                            const FloorRequestInfoParam &frqInfo)
 {
@@ -194,6 +185,29 @@ void BfcpConnection::sendChairActionInLoop(const BasicRequestParam &basicParam,
 void BfcpConnection::sendHelloInLoop( const BasicRequestParam &basicParam )
 {
   sendRequestInLoop(&build_msg_Hello, basicParam);
+}
+
+void BfcpConnection::sendGoodByeInLoop( const BasicRequestParam &basicParam )
+{
+  sendRequestInLoop(&build_msg_GoodBye, basicParam);
+}
+
+void BfcpConnection::notifyFloorStatusInLoop(const BasicRequestParam &basicParam, 
+                                             const FloorStatusParam &floorStatus)
+{
+  sendRequestInLoop(
+    boost::bind(&build_msg_FloorStatus, _1, false, _2, _3, _4), 
+    basicParam, 
+    floorStatus);
+}
+
+void BfcpConnection::notifyFloorRequestStatusInLoop(const BasicRequestParam &basicParam, 
+                                                    const FloorRequestInfoParam &frqInfo)
+{
+  sendRequestInLoop(
+    boost::bind(&build_msg_FloorRequestStatus, _1, false, _2, _3, _4),
+    basicParam,
+    frqInfo);
 }
 
 template <typename BuildFunc>
@@ -216,10 +230,7 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc,
   int err = buildFunc(msgBuf, BFCP_VER2, entity);
   // TODO: check error
 
-  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
-    loop_, socket_, basicParam.dst, entity, msgBuf);
-  ctrans_.insert(std::make_pair(entity, ctran));
-  ctran->start();
+  startNewClientTransaction(basicParam.dst, entity, msgBuf);
 }
 
 template <typename BuildFunc, typename ExtParam>
@@ -243,8 +254,15 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc,
   int err = buildFunc(msgBuf, BFCP_VER2, entity, extParam);
   // TODO: check error
 
-  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
-    loop_, socket_, basicParam.dst, entity, msgBuf);
+  startNewClientTransaction(basicParam.dst, entity, msgBuf);
+}
+
+void BfcpConnection::startNewClientTransaction(const muduo::net::InetAddress &dst,
+                                               const bfcp_entity &entity, 
+                                               mbuf_t *msgBuf)
+{
+  ClientTransactionPtr ctran = 
+    boost::make_shared<ClientTransaction>(loop_, socket_, dst, entity, msgBuf);
   ctrans_.insert(std::make_pair(entity, ctran));
   ctran->start();
 }
@@ -252,17 +270,63 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc,
 void BfcpConnection::replyWithUserStatusInLoop(const BfcpMsg &msg, 
                                                const UserStatusParam &userStatus)
 { 
+  assert(msg.primivity() == BFCP_USER_QUERY);
   sendReplyInLoop(&build_msg_UserStatus, msg, userStatus); 
 }
 
 void BfcpConnection::replyWithChairActionAckInLoop( const BfcpMsg &msg )
 {
+  assert(msg.primivity() == BFCP_CHAIR_ACTION);
   sendReplyInLoop(&build_msg_ChairActionAck, msg);
 }
 
 void BfcpConnection::replyWithHelloAckInLoop( const BfcpMsg &msg, const HelloAckParam &helloAck )
 {
+  assert(msg.primivity() == BFCP_HELLO);
   sendReplyInLoop(&build_msg_HelloAck, msg, helloAck);
+}
+
+void BfcpConnection::replyWithErrorInLoop( const BfcpMsg &msg, const ErrorParam &error )
+{
+  sendReplyInLoop(&build_msg_Error, msg, error);
+}
+
+void BfcpConnection::replyWithFloorRequestStatusAckInLoop( const BfcpMsg &msg )
+{
+  assert(msg.primivity() == BFCP_FLOOR_REQ_STATUS);
+  sendReplyInLoop(&build_msg_FloorRequestStatusAck, msg);
+}
+
+void BfcpConnection::replyWithFloorStatusAckInLoop( const BfcpMsg &msg )
+{
+  assert(msg.primivity() == BFCP_FLOOR_STATUS);
+  sendReplyInLoop(&build_msg_FloorStatusAck, msg);
+}
+
+void BfcpConnection::replyWithGoodByeAckInLoop( const BfcpMsg &msg )
+{
+  assert(msg.primivity() == BFCP_GOODBYE);
+  sendReplyInLoop(&build_msg_GoodByeAck, msg);
+}
+
+void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsg &msg,
+                                                       const FloorRequestInfoParam &frqInfo)
+{
+  assert(msg.primivity() == BFCP_FLOOR_REQUEST_QUERY);
+  sendReplyInLoop(
+    boost::bind(&build_msg_FloorRequestStatus, _1, true, _2, _3, _4),
+    msg,
+    frqInfo);
+}
+
+void BfcpConnection::replyWithFloorStatusInLoop(const BfcpMsg &msg,
+                                                const FloorStatusParam &floorStatus)
+{
+  assert(msg.primivity() == BFCP_FLOOR_QUERY);
+  sendReplyInLoop(
+    boost::bind(&build_msg_FloorStatus, _1, true, _2, _3, _4),
+    msg, 
+    floorStatus);
 }
 
 template <typename BuildFunc>
@@ -270,6 +334,7 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &m
 {
   loop_->assertInLoopThread();
   assert(msg.valid());
+  assert(!msg.isResponse());
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -281,14 +346,9 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &m
 
   bfcp_entity entity =  msg.getEntity();
   int err = buildFunc(msgBuf, msg.getVersion(), entity);
-  // check error
+  // FIXME: check error
 
-  detail::bfcp_strans_entry entry;
-  entry.entity = entity;
-  entry.prim = msg.primivity();
-  cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
-
-  socket_->send(msg.getSrc(), msgBuf->buf, msgBuf->end);
+  startNewServerTransaction(msg.getSrc(), entity, msg.primivity(), msgBuf);
 }
 
 template <typename BuildFunc, typename ExtParam>
@@ -298,6 +358,7 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc,
 {
   loop_->assertInLoopThread();
   assert(msg.valid());
+  assert(!msg.isResponse());
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -309,14 +370,22 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc,
 
   bfcp_entity entity =  msg.getEntity();
   int err = buildFunc(msgBuf, msg.getVersion(), entity, extParam);
-  // check error
+  // FIXME: check error
 
+  startNewServerTransaction(msg.getSrc(), entity, msg.primivity(), msgBuf);
+}
+
+void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &dst,
+                                               const bfcp_entity &entity, 
+                                               bfcp_prim primivity, 
+                                               mbuf_t *msgBuf)
+{
   detail::bfcp_strans_entry entry;
   entry.entity = entity;
-  entry.prim = msg.primivity();
+  entry.prim = primivity;
   cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
 
-  socket_->send(msg.getSrc(), msgBuf->buf, msgBuf->end);
+  socket_->send(dst, msgBuf->buf, msgBuf->end);
 }
 
 } // namespace bfcp

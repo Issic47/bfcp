@@ -77,5 +77,8 @@
     <ClInclude Include="..\common\bfcp_msg_build.h">
       <Filter>common</Filter>
     </ClInclude>
+    <ClInclude Include="..\common\bfcp_build_param.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

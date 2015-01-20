@@ -66,6 +66,7 @@ void BfcpConnection::onMessage(Buffer *buf, const InetAddress &src)
   BfcpMsg msg(buf, src);
   if (!msg.valid())
   {
+    // FIXME: check error and report to the sender
     LOG_ERROR << "Parse error(" << msg.error() << ":" << strerror_tl(msg.error()) 
               << ") in BfcpConnection::onMessage";
     return;
@@ -146,92 +147,58 @@ void BfcpConnection::onRequestTimeout(const ClientTransactionPtr &transaction)
 }
 
 void BfcpConnection::sendFloorRequestInLoop(const BasicRequestParam &basicParam, 
-                                            const FloorRequestParam &extParam)
+                                            const FloorRequestParam &floorRequest)
 {
-  loop_->assertInLoopThread();
-  // FIXME: get msg buf from pool
-  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
-  detail::AutoDeref derefer(msgBuf);
-  if (!msgBuf)
-  {
-    // FIXME: do with no enough memory
-    LOG_SYSFATAL << "No enough memory to build BFCP message";
-  }
-  
-  bfcp_entity entity;
-  initEntity(entity, basicParam.conferenceID, basicParam.userID);
-
-  uint16_t bID = static_cast<uint16_t>(extParam.beneficiaryID);
-  int err = build_msg_FloorRequest(
-    msgBuf, BFCP_VER2, entity, 
-    extParam.floorIDs, 
-    extParam.beneficiaryID == -1 ? nullptr : &bID, 
-    extParam.pInfo.c_str(), 
-    &extParam.priority);
-  // FIXME: check err(ENOMEM)
-
-  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
-    loop_, socket_, basicParam.dst, entity, msgBuf);
-  ctrans_.insert(std::make_pair(entity, ctran));
-  ctran->start();
-}
-
-uint16_t BfcpConnection::getNextTransactionID()
-{
-  uint16_t tid = 0;
-  while ((tid = nextTid_.incrementAndGet()) == 0) {};
-  return tid;
+  sendRequestInLoop(&build_msg_FloorRequest, basicParam, floorRequest);
 }
 
 void BfcpConnection::sendFloorReleaseInLoop(const BasicRequestParam &basicParam,
                                             uint16_t floorRequestID)
 {
-  loop_->assertInLoopThread();
-  // FIXME: get msg buf from pool
-  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
-  detail::AutoDeref derefer(msgBuf);
-  if (!msgBuf)
-  {
-    // FIXME: do with no enough memory
-    LOG_SYSFATAL << "No enough memory to build BFCP message";
-  }
-
-  bfcp_entity entity;
-  initEntity(entity, basicParam.conferenceID, basicParam.userID);
-
-  build_msg_FloorRelease(msgBuf, BFCP_VER2, entity, floorRequestID);
-
-  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
-    loop_, socket_, basicParam.dst, entity, msgBuf);
-  ctrans_.insert(std::make_pair(entity, ctran));
-  ctran->start();
+  sendRequestInLoop(&build_msg_FloorRelease, basicParam, floorRequestID);
 }
 
 void BfcpConnection::sendFloorRequestQueryInLoop(const BasicRequestParam &basicParam, 
                                                  uint16_t floorRequestID)
 {
-  loop_->assertInLoopThread();
-  // FIXME: get msg buf from pool
-  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
-  detail::AutoDeref derefer(msgBuf);
-  if (!msgBuf)
-  {
-    // FIXME: do with no enough memory
-    LOG_SYSFATAL << "No enough memory to build BFCP message";
-  }
-
-  bfcp_entity entity;
-  initEntity(entity, basicParam.conferenceID, basicParam.userID);
-
-  build_msg_FloorRequestQuery(msgBuf, BFCP_VER2, entity, floorRequestID);
-
-  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
-    loop_, socket_, basicParam.dst, entity, msgBuf);
-  ctrans_.insert(std::make_pair(entity, ctran));
-  ctran->start();
+  sendRequestInLoop(&build_msg_FloorRequestQuery, basicParam, floorRequestID);
 }
 
-void BfcpConnection::sendUserQueryInLoop( const BasicRequestParam &basicParam, uint16_t userID )
+void BfcpConnection::sendUserQueryInLoop(const BasicRequestParam &basicParam, 
+                                         uint16_t userID)
+{
+  sendRequestInLoop(&build_msg_UserQuery, basicParam, userID);
+}
+
+void BfcpConnection::sendFloorQueryInLoop(const BasicRequestParam &basicParam, 
+                                          const bfcp_floor_id_list &floorIDs)
+{
+  sendRequestInLoop(&build_msg_FloorQuery, basicParam, floorIDs);
+}
+
+void BfcpConnection::sendFloorStatusInLoop(const BasicRequestParam &basicParam, 
+                                           const FloorStatusParam &floorStatus)
+{
+  sendRequestInLoop(
+    boost::bind(&build_msg_FloorStatus, _1, false, _2, _3, _4), 
+    basicParam, 
+    floorStatus);
+}
+
+void BfcpConnection::sendChairActionInLoop(const BasicRequestParam &basicParam, 
+                                           const FloorRequestInfoParam &frqInfo)
+{
+  sendRequestInLoop(&build_msg_ChairAction, basicParam, frqInfo); 
+}
+
+void BfcpConnection::sendHelloInLoop( const BasicRequestParam &basicParam )
+{
+  sendRequestInLoop(&build_msg_Hello, basicParam);
+}
+
+template <typename BuildFunc>
+void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc, 
+                                             const BasicRequestParam &basicParam)
 {
   loop_->assertInLoopThread();
   // FIXME: get msg buf from pool
@@ -246,12 +213,110 @@ void BfcpConnection::sendUserQueryInLoop( const BasicRequestParam &basicParam, u
   bfcp_entity entity;
   initEntity(entity, basicParam.conferenceID, basicParam.userID);
 
-  build_msg_UserQuery(msgBuf, BFCP_VER2, entity, userID);
+  int err = buildFunc(msgBuf, BFCP_VER2, entity);
+  // TODO: check error
 
   ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
     loop_, socket_, basicParam.dst, entity, msgBuf);
   ctrans_.insert(std::make_pair(entity, ctran));
   ctran->start();
+}
+
+template <typename BuildFunc, typename ExtParam>
+void bfcp::BfcpConnection::sendRequestInLoop(BuildFunc buildFunc, 
+                                             const BasicRequestParam &basicParam, 
+                                             const ExtParam &extParam)
+{
+  loop_->assertInLoopThread();
+  // FIXME: get msg buf from pool
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity;
+  initEntity(entity, basicParam.conferenceID, basicParam.userID);
+
+  int err = buildFunc(msgBuf, BFCP_VER2, entity, extParam);
+  // TODO: check error
+
+  ClientTransactionPtr ctran = boost::make_shared<ClientTransaction>(
+    loop_, socket_, basicParam.dst, entity, msgBuf);
+  ctrans_.insert(std::make_pair(entity, ctran));
+  ctran->start();
+}
+
+void BfcpConnection::replyWithUserStatusInLoop(const BfcpMsg &msg, 
+                                               const UserStatusParam &userStatus)
+{ 
+  sendReplyInLoop(&build_msg_UserStatus, msg, userStatus); 
+}
+
+void BfcpConnection::replyWithChairActionAckInLoop( const BfcpMsg &msg )
+{
+  sendReplyInLoop(&build_msg_ChairActionAck, msg);
+}
+
+void BfcpConnection::replyWithHelloAckInLoop( const BfcpMsg &msg, const HelloAckParam &helloAck )
+{
+  sendReplyInLoop(&build_msg_HelloAck, msg, helloAck);
+}
+
+template <typename BuildFunc>
+void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc, const BfcpMsg &msg)
+{
+  loop_->assertInLoopThread();
+  assert(msg.valid());
+
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity =  msg.getEntity();
+  int err = buildFunc(msgBuf, msg.getVersion(), entity);
+  // check error
+
+  detail::bfcp_strans_entry entry;
+  entry.entity = entity;
+  entry.prim = msg.primivity();
+  cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
+
+  socket_->send(msg.getSrc(), msgBuf->buf, msgBuf->end);
+}
+
+template <typename BuildFunc, typename ExtParam>
+void bfcp::BfcpConnection::sendReplyInLoop(BuildFunc buildFunc,
+                                           const BfcpMsg &msg,
+                                           const ExtParam &extParam)
+{
+  loop_->assertInLoopThread();
+  assert(msg.valid());
+
+  mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
+  detail::AutoDeref derefer(msgBuf);
+  if (!msgBuf)
+  {
+    // FIXME: do with no enough memory
+    LOG_SYSFATAL << "No enough memory to build BFCP message";
+  }
+
+  bfcp_entity entity =  msg.getEntity();
+  int err = buildFunc(msgBuf, msg.getVersion(), entity, extParam);
+  // check error
+
+  detail::bfcp_strans_entry entry;
+  entry.entity = entity;
+  entry.prim = msg.primivity();
+  cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
+
+  socket_->send(msg.getSrc(), msgBuf->buf, msgBuf->end);
 }
 
 } // namespace bfcp

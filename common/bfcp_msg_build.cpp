@@ -72,39 +72,51 @@ inline int bfcp_build_attr_USER_URI( mbuf_t *buf, const char *useruri )
   return bfcp_attrs_encode(buf, 1, BFCP_USER_URI, 0, useruri);
 }
 
-inline int build_attr_BENEFICIARY_INFORMATION( mbuf_t *buf, const bfcp_user_info &beneficiary )
+inline int build_attr_BENEFICIARY_INFORMATION( mbuf_t *buf, const UserInfoParam &beneficiary )
 {
+  const char *username = 
+    beneficiary.username.empty() ? nullptr : beneficiary.username.c_str();
+  const char *useruri = 
+    beneficiary.useruri.empty() ? nullptr : beneficiary.useruri.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_BENEFICIARY_INFO | BFCP_MANDATORY, 2, &beneficiary.id,
-    BFCP_USER_DISP_NAME, 0, beneficiary.username,
-    BFCP_USER_URI, 0, beneficiary.useruri);
+    BFCP_USER_DISP_NAME, 0, username,
+    BFCP_USER_URI, 0, useruri);
 }
 
-inline int build_attr_REQUESTED_BY_INFORMATION( mbuf_t *buf, const bfcp_user_info &requested_by )
+inline int build_attr_REQUESTED_BY_INFORMATION( mbuf_t *buf, const UserInfoParam &requested_by )
 {
+  const char *username = 
+    requested_by.username.empty() ? nullptr : requested_by.username.c_str();
+  const char *useruri = 
+    requested_by.useruri.empty() ? nullptr : requested_by.useruri.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_BENEFICIARY_INFO | BFCP_MANDATORY, 2, &requested_by.id,
-    BFCP_USER_DISP_NAME, 0, requested_by.username,
-    BFCP_USER_URI, 0, requested_by.useruri);
+    BFCP_USER_DISP_NAME, 0, username,
+    BFCP_USER_URI, 0, useruri);
 }
 
-inline int build_attr_FLOOR_REQUEST_STATUS( mbuf_t *buf, const bfcp_floor_request_status &fRS )
+inline int build_attr_FLOOR_REQUEST_STATUS( mbuf_t *buf, const FloorRequestStatusParam &fRS )
 {
+  const char *statusInfo = 
+    fRS.statusInfo.empty() ? nullptr : fRS.statusInfo.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_FLOOR_REQ_STATUS | BFCP_MANDATORY, 2, &fRS.floorID,
     BFCP_REQUEST_STATUS, 0, fRS.requestStatus,
-    BFCP_STATUS_INFO, 0, fRS.statusInfo);
+    BFCP_STATUS_INFO, 0, statusInfo);
 }
 
-inline int build_attr_OVERALL_REQUEST_STATUS( mbuf_t *buf, const bfcp_overall_request_status &oRS )
+inline int build_attr_OVERALL_REQUEST_STATUS( mbuf_t *buf, const OverallRequestStatusParam &oRS )
 {
+  const char *statusInfo = 
+    oRS.statusInfo.empty() ? nullptr : oRS.statusInfo.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_OVERALL_REQ_STATUS | BFCP_MANDATORY, 2, &oRS.floorRequestID,
     BFCP_REQUEST_STATUS, 0, oRS.requestStatus,
-    BFCP_STATUS_INFO, 0, oRS.statusInfo);
+    BFCP_STATUS_INFO, 0, statusInfo);
 }
 
-int build_attr_FLOOR_REQUEST_INFORMATION( mbuf_t *buf, const bfcp_floor_request_info &frqInfo )
+int build_attr_FLOOR_REQUEST_INFORMATION( mbuf_t *buf, const FloorRequestInfoParam &frqInfo )
 {
   size_t start = buf->pos;
   int err = 0;
@@ -133,19 +145,17 @@ int build_attr_FLOOR_REQUEST_INFORMATION( mbuf_t *buf, const bfcp_floor_request_
 
     if (frqInfo.valueType & kHasRequestedByInfo)
     {
-      err = build_attr_REQUESTED_BY_INFORMATION(buf, frqInfo.requested_by);
+      err = build_attr_REQUESTED_BY_INFORMATION(buf, frqInfo.requestedBy);
       if (err) break;
     }
 
-    if (frqInfo.priority)
-    {
-      err = build_attr_PRIORITY(buf, *frqInfo.priority);
-      if (err) break;
-    }
+    // NOTE: priority is optional
+    err = build_attr_PRIORITY(buf, frqInfo.priority);
+    if (err) break;
 
-    if (frqInfo.partPriovidedInfo)
+    if (!frqInfo.partPriovidedInfo.empty()) 
     {
-      err = build_attr_PARTICIPANT_PROVIDED_INFO(buf, frqInfo.partPriovidedInfo);
+      err = build_attr_PARTICIPANT_PROVIDED_INFO(buf, frqInfo.partPriovidedInfo.c_str());
       if (err) break;
     }
 
@@ -165,8 +175,10 @@ using namespace bfcp::detail;
 namespace bfcp
 {
 
-int build_msg_FloorRequest(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                           const bfcp_floor_id_list &fID, const uint16_t *bID, const char *pInfo, const bfcp_priority *priority)
+int build_msg_FloorRequest(mbuf_t *buf, 
+                           uint8_t version, 
+                           const bfcp_entity &entity, 
+                           const FloorRequestParam &floorRequest)
 {
   assert(buf);
 
@@ -182,29 +194,27 @@ int build_msg_FloorRequest(mbuf_t *buf, uint8_t version, const bfcp_entity &enti
       0);
     if (err) break;
 
-    for (auto floorID : fID)
+    for (auto floorID : floorRequest.floorIDs)
     {
       err = build_attr_FLOOR_ID(buf, floorID);
       if (err) break;
     }
 
-    if (bID)
+    if (floorRequest.hasBeneficiaryID)
     {
-      err = build_attr_BENEFICIARY_ID(buf, *bID);
+      err = build_attr_BENEFICIARY_ID(buf, floorRequest.beneficiaryID);
       if (err) break;
     }
 
-    if (pInfo && strlen(pInfo) != 0)
+    if (!floorRequest.pInfo.empty())
     {
-      err = build_attr_PARTICIPANT_PROVIDED_INFO(buf, pInfo);
+      err = build_attr_PARTICIPANT_PROVIDED_INFO(buf, floorRequest.pInfo.c_str());
       if (err) break;
     }
 
-    if (priority)
-    {
-      err = build_attr_PRIORITY(buf, *priority);
-      if (err) break;
-    }
+    // NOTE: priority is optional
+    err = build_attr_PRIORITY(buf, floorRequest.priority);
+    if (err) break;
 
     err = bfcp_msg_update_len(buf, start);
     if (err) break;
@@ -232,8 +242,9 @@ int build_msg_FloorRequestQuery( mbuf_t *buf, uint8_t version, const bfcp_entity
     1, BFCP_FLOOR_REQUEST_ID | BFCP_MANDATORY, 0, frqID);
 }
 
-int build_msg_FloorRequestStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                                 const bfcp_floor_request_info &frqInfo)
+int build_msg_FloorRequestStatus(mbuf_t *buf, bool response,
+                                 uint8_t version, const bfcp_entity &entity, 
+                                 const FloorRequestInfoParam &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -243,7 +254,7 @@ int build_msg_FloorRequestStatus(mbuf_t *buf, uint8_t version, const bfcp_entity
     err = bfcp_msg_encode(
       buf, 
       version, 
-      true, BFCP_FLOOR_REQUEST_STATUS, 
+      response, BFCP_FLOOR_REQUEST_STATUS, 
       entity.conferenceID, entity.transactionID, entity.userID, 
       0);
     if (err) break;
@@ -269,8 +280,9 @@ int build_msg_UserQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity
     1, BFCP_BENEFICIARY_ID | BFCP_MANDATORY, 0, bID);
 }
 
-int build_msg_UserStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                         const bfcp_user_info *beneficiary, const bfcp_floor_request_info_list &frqInfo)
+int build_msg_UserStatus(mbuf_t *buf, uint8_t version, 
+                         const bfcp_entity &entity, 
+                         const UserStatusParam &userStatus)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -284,13 +296,13 @@ int build_msg_UserStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity
       0);
     if (err) break;
 
-    if (beneficiary)
+    if (userStatus.hasBeneficiary)
     {
-      err = build_attr_BENEFICIARY_INFORMATION(buf, *beneficiary);
+      err = build_attr_BENEFICIARY_INFORMATION(buf, userStatus.beneficiary);
       if (err) break;
     }
 
-    for (auto & floorRequestInfo : frqInfo)
+    for (auto & floorRequestInfo : userStatus.frqInfoList)
     {
       err = build_attr_FLOOR_REQUEST_INFORMATION(buf, floorRequestInfo);
       if (err) break;
@@ -333,8 +345,9 @@ int build_msg_FloorQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity
   return err;
 }
 
-int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                          uint16_t floorID, const bfcp_floor_request_info_list &frqInfo)
+int build_msg_FloorStatus(mbuf_t *buf, bool response,
+                          uint8_t version, const bfcp_entity &entity, 
+                          const FloorStatusParam &floorStatus)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -343,15 +356,15 @@ int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entit
   {
     err = bfcp_msg_encode(
       buf, version, 
-      true, BFCP_FLOOR_STATUS, 
+      response, BFCP_FLOOR_STATUS, 
       entity.conferenceID, entity.transactionID, entity.userID, 
       0);
     if (err) break;
 
-    err = build_attr_FLOOR_ID(buf, floorID);
+    err = build_attr_FLOOR_ID(buf, floorStatus.floorID);
     if (err) break;
 
-    for (auto &floorRequestInfo : frqInfo)
+    for (auto &floorRequestInfo : floorStatus.frqInfoList)
     {
       err = build_attr_FLOOR_REQUEST_INFORMATION(buf, floorRequestInfo);
       if (err) break;
@@ -366,7 +379,7 @@ int build_msg_FloorStatus(mbuf_t *buf, uint8_t version, const bfcp_entity &entit
 }
 
 int build_msg_ChairAction(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, 
-                          const bfcp_floor_request_info &frqInfo)
+                          const FloorRequestInfoParam &frqInfo)
 {
   assert(buf);
   size_t start = buf->pos;
@@ -411,9 +424,19 @@ int build_msg_Hello( mbuf_t *buf, uint8_t version, const bfcp_entity &entity )
     0);
 }
 
-int build_msg_HelloAck( mbuf_t *buf, uint8_t version, const bfcp_entity &entity, const bfcp_supprim_t &primitives, const bfcp_supattr_t &attributes )
+int build_msg_HelloAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, const HelloAckParam &helloAck)
 {
   assert(buf);
+  bfcp_supprim_t primitives;
+  primitives.primc = helloAck.primitives.size();
+  primitives.primv = helloAck.primitives.empty() ? 
+    nullptr : const_cast<bfcp_prim*>(&helloAck.primitives[0]);
+
+  bfcp_supattr_t attributes;
+  attributes.attrc = helloAck.attributes.size();
+  attributes.attrv = helloAck.attributes.empty() ?
+    nullptr : const_cast<bfcp_attrib*>(&helloAck.attributes[0]);
+
   return bfcp_msg_encode(
     buf, version, 
     true, BFCP_HELLO_ACK, 
@@ -423,9 +446,20 @@ int build_msg_HelloAck( mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
     BFCP_SUPPORTED_ATTRS | BFCP_MANDATORY, 0, &attributes);
 }
 
-int build_msg_Error( mbuf_t *buf, uint8_t version, const bfcp_entity &entity, const bfcp_errcode_t &errcode, const char *eInfo )
+int build_msg_Error(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, const ErrorParam &error)
 {
   assert(buf);
+  
+  bfcp_errcode errcode;
+  auto &errorCode = error.errorCode;
+  errcode.code = errorCode.code;
+  errcode.len = errorCode.details.size();
+  errcode.details = errorCode.details.empty() ? 
+    nullptr : const_cast<uint8_t*>(&errorCode.details[0]);
+
+  const char *eInfo = error.errorInfo.empty() ? 
+    nullptr : error.errorInfo.c_str();
+
   return bfcp_msg_encode(
     buf, version, 
     true, BFCP_ERROR,

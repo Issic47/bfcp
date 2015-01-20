@@ -84,6 +84,7 @@
     <ClInclude Include="..\common\bfcp_mbuf_wrapper.h" />
     <ClInclude Include="..\common\bfcp_msg.h" />
     <ClInclude Include="..\common\bfcp_msg_build.h" />
+    <ClInclude Include="..\common\bfcp_build_param.h" />
     <ClInclude Include="..\common\utility\MemoryPool.h" />
     <ClInclude Include="..\common\utility\MemoryPool.hpp" />
     <ClInclude Include="bfcp_server.h" />

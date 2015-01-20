@@ -69,10 +69,9 @@ void ClientTransaction::onSendTimeout()
   double delay = (BFCP_T1 << txc_) / 1000.0;
   if (++txc_ > BFCP_TXC)
   {
-    LOG_WARN << "Client transaction("
-             << entity_.conferenceID << ":"
-             << entity_.transactionID << ":"
-             << entity_.userID <<  ") timeout";
+    LOG_WARN << "Client transaction{cid=" << entity_.conferenceID 
+             << ",tid=" << entity_.transactionID 
+             << ",uid=" << entity_.userID <<  "} timeout";
 
     if (requestTimeoutCallback_)
     {
@@ -98,6 +97,20 @@ void ClientTransaction::onSendTimeout()
 void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
 {
   loop_->cancel(timer1_);
+  if (err)
+  {
+    LOG_INFO << "Client transaction{cid=" << entity_.conferenceID
+             << ",tid=" << entity_.transactionID
+             << ",uid=" << entity_.userID
+             << "} on response with error: " << getResponceErrorName(err);
+  }
+  else
+  {
+    LOG_INFO << "Client transaction{cid=" << entity_.conferenceID
+             << ",tid=" << entity_.transactionID
+             << ",uid=" << entity_.userID
+             << "} on response with " << bfcp_prim_name(msg.primivity());
+  }
   loop_->queueInLoop(boost::bind(responseCallback_, err, msg));
 }
 

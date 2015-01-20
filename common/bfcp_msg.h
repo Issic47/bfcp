@@ -38,6 +38,7 @@ public:
   muduo::net::InetAddress getSrc() const 
   { return muduo::net::InetAddress(msg_->src.u.sa); }
 
+  uint8_t getVersion() const { return msg_->ver; }
   uint32_t getConferenceID() const { return msg_->confid; }
   uint16_t getUserID() const { return msg_->userid; }
   uint16_t getTransactionID() const { return msg_->tid; }

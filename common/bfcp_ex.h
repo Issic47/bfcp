@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <re.h>
+#include <muduo/base/Types.h>
 
 typedef struct mbuf mbuf_t;
 
@@ -83,6 +84,26 @@ inline bool operator==(const bfcp_entity &lhs, const bfcp_entity &rhs)
   return compare(lhs, rhs) == 0;
 }
 
+namespace bfcp 
+{
+  typedef muduo::string string;
+}
 
+inline bfcp::string toString(const bfcp_entity &entity)
+{
+  char buf[64];
+  snprintf(buf, sizeof buf, "{cid=%u,tid=%u,uid=%u}", 
+    entity.conferenceID, entity.transactionID, entity.userID);
+  return buf;
+}
+
+inline bfcp::string toString(const bfcp_entity &entity, bfcp_prim primitive)
+{
+  char buf[64];
+  snprintf(buf, sizeof buf, "{cid=%u,tid=%u,uid=%u,prim=%s}", 
+    entity.conferenceID, entity.transactionID, entity.userID,
+    bfcp_prim_name(primitive));
+  return buf;
+}
 
 #endif // BFCP_EX_H

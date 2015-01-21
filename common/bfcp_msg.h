@@ -33,7 +33,7 @@ public:
 
   bool isResponse() const { return msg_->r == 1; }
   bool isFragement() const { return msg_->f == 1; }
-  bfcp_prim primivity() const { return msg_->prim; }
+  bfcp_prim primitive() const { return msg_->prim; }
 
   muduo::net::InetAddress getSrc() const 
   { return muduo::net::InetAddress(msg_->src.u.sa); }
@@ -69,6 +69,8 @@ public:
     }
     err_ = other.err_;
   }
+
+  string toString() const;
 
 private:
   void setSrc(const muduo::net::InetAddress &src)

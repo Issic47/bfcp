@@ -1,7 +1,10 @@
 #include "common/bfcp_msg.h"
 
+#include <muduo/base/Logging.h>
+
 using muduo::net::Buffer;
 using muduo::net::InetAddress;
+using muduo::strerror_tl;
 
 namespace bfcp
 {
@@ -46,6 +49,24 @@ std::list<BfcpAttr> BfcpMsg::findAttributes( ::bfcp_attrib attrType ) const
       attrs.push_back(BfcpAttr(*attr));
   }
   return attrs;
+}
+
+string BfcpMsg::toString() const
+{
+  char buf[256];
+  if (!valid()) 
+  {
+    snprintf(buf, sizeof buf, "{errcode=%d,errstr='%s'}",
+      err_, strerror_tl(err_));
+  }
+  else
+  {
+    snprintf(buf, sizeof buf, "{ver=%u,cid=%u,tid=%u,uid=%u,prim=%s}",
+      msg_->ver, msg_->confid, msg_->tid, msg_->userid, 
+      bfcp_prim_name(msg_->prim));
+  }
+  return buf;
+  
 }
 
 } // namespace bfcp

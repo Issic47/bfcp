@@ -32,7 +32,7 @@ public:
   ClientTransaction(muduo::net::EventLoop *loop,
                     const muduo::net::UdpSocketPtr &socket,
                     const muduo::net::InetAddress &dst, 
-                    const bfcp_entity &entity, 
+                    const bfcp_entity &entity,
                     mbuf_t *msgBuf);
 
   ~ClientTransaction();
@@ -57,7 +57,6 @@ public:
   { requestTimeoutCallback_ = std::move(requestTimeoutCallback); }
 
 private:
-  void startInLoop();
   void onSendTimeout();
 
   muduo::net::EventLoop *loop_;

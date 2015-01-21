@@ -12,7 +12,7 @@ using muduo::net::InetAddress;
 namespace bfcp
 {
 
-const char* getResponceErrorName( ResponseError err )
+const char* responce_error_name( ResponseError err )
 {
   switch (err)
   {
@@ -26,14 +26,14 @@ void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
 {
   if (err)
   {
-    LOG_ERROR << "Response error: " << getResponceErrorName(err);
+    LOG_ERROR << "Response error: " << responce_error_name(err);
   }
 }
 
 ClientTransaction::ClientTransaction(EventLoop *loop,
                                      const UdpSocketPtr &socket, 
                                      const muduo::net::InetAddress &dst, 
-                                     const bfcp_entity &entity, 
+                                     const bfcp_entity &entity,
                                      mbuf_t *msgBuf)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
@@ -43,7 +43,7 @@ ClientTransaction::ClientTransaction(EventLoop *loop,
       txc_(1),
       responseCallback_(defaultResponseCallback)
 {
-
+  mem_ref(msgBuf);
 }
 
 ClientTransaction::~ClientTransaction()
@@ -69,16 +69,13 @@ void ClientTransaction::onSendTimeout()
   double delay = (BFCP_T1 << txc_) / 1000.0;
   if (++txc_ > BFCP_TXC)
   {
-    LOG_WARN << "Client transaction{cid=" << entity_.conferenceID 
-             << ",tid=" << entity_.transactionID 
-             << ",uid=" << entity_.userID <<  "} timeout";
-
+    loop_->cancel(timer1_);
     if (requestTimeoutCallback_)
     {
       loop_->queueInLoop(
         boost::bind(requestTimeoutCallback_, shared_from_this()));
-      return;
     }
+    return;
   }
 
   UdpSocketPtr socket = socket_.lock();
@@ -99,19 +96,17 @@ void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
   loop_->cancel(timer1_);
   if (err)
   {
-    LOG_INFO << "Client transaction{cid=" << entity_.conferenceID
-             << ",tid=" << entity_.transactionID
-             << ",uid=" << entity_.userID
-             << "} on response with error: " << getResponceErrorName(err);
+    LOG_INFO << "Client transaction" << toString(entity_)
+             << " on response with error: " << responce_error_name(err);
   }
   else
   {
-    LOG_INFO << "Client transaction{cid=" << entity_.conferenceID
-             << ",tid=" << entity_.transactionID
-             << ",uid=" << entity_.userID
-             << "} on response with " << bfcp_prim_name(msg.primivity());
+    assert(msg.valid());
+    LOG_INFO << "Client transaction" << toString(entity_)
+             << " on response with " << bfcp_prim_name(msg.primitive());
   }
-  loop_->queueInLoop(boost::bind(responseCallback_, err, msg));
+  if (responseCallback_)
+    loop_->queueInLoop(boost::bind(responseCallback_, err, msg));
 }
 
 } // namespace bfcp

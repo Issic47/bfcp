@@ -4,10 +4,18 @@
 #include <muduo/base/StringPiece.h>
 
 #include "common/bfcp_ex.h"
-typedef muduo::string string;
 
 namespace bfcp
 {
+
+class UserQueryParam
+{
+public:
+  UserQueryParam(): hasBeneficiaryID(false) {}
+
+  uint16_t beneficiaryID;
+  bool hasBeneficiaryID;
+};
 
 class FloorRequestParam
 {
@@ -23,7 +31,7 @@ public:
 
   bfcp_floor_id_list floorIDs;
   uint16_t beneficiaryID;
-  muduo::string pInfo;
+  string pInfo;
   bfcp_priority priority;
   bool hasBeneficiaryID;
 };

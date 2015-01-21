@@ -18,7 +18,9 @@ int build_msg_FloorRequestStatus(mbuf_t *buf, bool response,
                                  uint8_t version, const bfcp_entity &entity, 
                                  const FloorRequestInfoParam &frqInfo);
 
-int build_msg_UserQuery(mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t bID);
+int build_msg_UserQuery(mbuf_t *buf, uint8_t version, 
+                        const bfcp_entity &entity, 
+                        const UserQueryParam &userQuery);
 
 int build_msg_UserStatus(mbuf_t *buf, uint8_t version,
                          const bfcp_entity &entity, 

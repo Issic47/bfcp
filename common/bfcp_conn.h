@@ -87,8 +87,8 @@ public:
   void sendFloorRequestQuery(const BasicRequestParam &basicParam, uint16_t floorRequestID)
   { runInLoop(&BfcpConnection::sendFloorRequestQueryInLoop, basicParam, floorRequestID); }
 
-  void sendUserQuery(const BasicRequestParam &basicParam, uint16_t userID)
-  { runInLoop(&BfcpConnection::sendUserQueryInLoop, basicParam, userID); }
+  void sendUserQuery(const BasicRequestParam &basicParam, const UserQueryParam &userQuery)
+  { runInLoop(&BfcpConnection::sendUserQueryInLoop, basicParam, userQuery); }
 
   void sendFloorQuery(const BasicRequestParam &basicParam, const bfcp_floor_id_list &floorIDs)
   { runInLoop(&BfcpConnection::sendFloorQueryInLoop, basicParam, floorIDs); }
@@ -157,12 +157,12 @@ private:
 
   template <typename BuildMsgFunc>
   void sendRequestInLoop(BuildMsgFunc buildFunc, 
-                         const BasicRequestParam &basicParam);
+    const BasicRequestParam &basicParam);
 
   template <typename BuildMsgFunc, typename ExtParam>
   void sendRequestInLoop(BuildMsgFunc buildFunc, 
-                         const BasicRequestParam &basicParam, 
-                         const ExtParam &extParam);
+    const BasicRequestParam &basicParam, 
+    const ExtParam &extParam);
 
   template <typename BuildMsgFunc>
   void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg);
@@ -170,6 +170,7 @@ private:
   template <typename BuildMsgFunc, typename ExtParam>
   void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg, const ExtParam &extParam);
 
+  bool tryHandleMessageError(const BfcpMsg &msg);
   bool tryHandleResponse(const BfcpMsg &msg);
   bool tryHandleRequest(const BfcpMsg &msg);
   void onRequestTimeout(const ClientTransactionPtr &ctran);
@@ -179,7 +180,7 @@ private:
   void sendFloorRequestInLoop(const BasicRequestParam &basicParam, const FloorRequestParam &floorRequest);
   void sendFloorReleaseInLoop(const BasicRequestParam &basicParam, uint16_t floorRequestID);
   void sendFloorRequestQueryInLoop(const BasicRequestParam &basicParam, uint16_t floorRequestID);
-  void sendUserQueryInLoop(const BasicRequestParam &basicParam, uint16_t userID);
+  void sendUserQueryInLoop(const BasicRequestParam &basicParam, const UserQueryParam &userQuery);
   void sendFloorQueryInLoop(const BasicRequestParam &basicParam, const bfcp_floor_id_list &floorIDs);
   void sendChairActionInLoop(const BasicRequestParam &basicParam, const FloorRequestInfoParam &frqInfo);
   void sendHelloInLoop(const BasicRequestParam &basicParam);
@@ -200,27 +201,17 @@ private:
   void notifyFloorStatusInLoop(const BasicRequestParam &basicParam, 
                                const FloorStatusParam &floorStatus);
   
-  uint16_t getNextTransactionID()
-  {
-    uint16_t tid = 0;
-    while ((tid = nextTid_.incrementAndGet()) == 0) {};
-    return tid;
-  }
-
-  void initEntity(bfcp_entity &entity, uint32_t cid, uint16_t uid) 
-  {
-    entity.conferenceID = cid;
-    entity.transactionID = getNextTransactionID();
-    entity.userID = uid;
-  }
+  inline void initEntity(bfcp_entity &entity, uint32_t cid, uint16_t uid);
+  inline uint16_t getNextTransactionID();
 
   void startNewClientTransaction(const muduo::net::InetAddress &dst,
-                                 const bfcp_entity &entity, 
-                                 mbuf_t *msgBuf);
+                                 const bfcp_entity &entity,
+                                 mbuf_t *msgBuf,
+                                 const ResponseCallback &cb);
 
   void startNewServerTransaction(const muduo::net::InetAddress &dst,
                                  const bfcp_entity &entity,
-                                 bfcp_prim primivity,
+                                 bfcp_prim primitive,
                                  mbuf_t *msgBuf);
 
 private:
@@ -267,6 +258,20 @@ void BfcpConnection::runInLoop(Func func, const Arg1 &arg1, const Arg2 &arg2)
       arg1, // std::move?
       arg2)); // std::move?
   }
+}
+
+inline void BfcpConnection::initEntity(bfcp_entity &entity, uint32_t cid, uint16_t uid) 
+{
+  entity.conferenceID = cid;
+  entity.transactionID = getNextTransactionID();
+  entity.userID = uid;
+}
+
+inline uint16_t BfcpConnection::getNextTransactionID()
+{
+  uint16_t tid = 0;
+  while ((tid = nextTid_.incrementAndGet()) == 0) {};
+  return tid;
 }
 
 } // namespace bfcp

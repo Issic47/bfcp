@@ -1,43 +1,42 @@
-#ifndef BFCP_SERVER_H
-#define BFCP_SERVER_H
+#ifndef BFCP_CLIENT_H
+#define BFCP_CLIENT_H
 
 #include <boost/bind.hpp>
-
-#include <muduo/base/BlockingQueue.h>
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/Buffer.h>
 #include <muduo/net/EventLoop.h>
 #include <muduo/net/InetAddress.h>
-#include <muduo/net/UdpServer.h>
-
-#include <muduo/base/Thread.h>
+#include <muduo/net/UdpClient.h>
 
 #include "common/bfcp_callbacks.h"
 
 namespace bfcp
 {
+
 class BfcpConnection;
 typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
-class BfcpServer
+class BfcpClient : boost::noncopyable
 {
 public:
-  BfcpServer(muduo::net::EventLoop* loop, const muduo::net::InetAddress& listenAddr);
+  BfcpClient(muduo::net::EventLoop* loop, 
+             const muduo::net::InetAddress& serverAddr);
 
-  void start()
+  void connect()
   {
-    server_.start();
+    client_.connect();
   }
 
   void stop()
   {
-    server_.stop();
+    client_.disconnect();
   }
 
 private:
+  void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 
-                 muduo::net::Buffer* buf, 
-                 const muduo::net::InetAddress& src, 
+                 muduo::net::Buffer* buf,
+                 const muduo::net::InetAddress &src,
                  muduo::Timestamp time);
 
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
@@ -45,11 +44,14 @@ private:
   void onResponse(ResponseError err, const BfcpMsg &msg);
 
   muduo::net::EventLoop* loop_;
-  muduo::net::UdpServer server_;
+  muduo::net::UdpClient client_;
+  muduo::net::InetAddress serverAddr_;
 
   BfcpConnectionPtr connection_;
 };
 
 } // namespace bfcp
 
-#endif // BFCP_SERVER_H
+
+
+#endif // BFCP_CLIENT_H

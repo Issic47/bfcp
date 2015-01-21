@@ -66,11 +66,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\common\bfcp_attr.cpp" />
+    <ClCompile Include="..\common\bfcp_conn.cpp" />
+    <ClCompile Include="..\common\bfcp_ctrans.cpp" />
     <ClCompile Include="..\common\bfcp_msg.cpp" />
+    <ClCompile Include="..\common\bfcp_msg_build.cpp" />
+    <ClCompile Include="bfcp_client.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\common\bfcp_attr.h" />
+    <ClInclude Include="..\common\bfcp_buf_pool.h" />
+    <ClInclude Include="..\common\bfcp_build_param.h" />
+    <ClInclude Include="..\common\bfcp_callbacks.h" />
+    <ClInclude Include="..\common\bfcp_conn.h" />
+    <ClInclude Include="..\common\bfcp_ctrans.h" />
+    <ClInclude Include="..\common\bfcp_ex.h" />
+    <ClInclude Include="..\common\bfcp_mbuf_wrapper.h" />
     <ClInclude Include="..\common\bfcp_msg.h" />
+    <ClInclude Include="..\common\bfcp_msg_build.h" />
+    <ClInclude Include="bfcp_client.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

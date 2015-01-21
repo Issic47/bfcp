@@ -21,10 +21,55 @@
     <ClCompile Include="main.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\bfcp_attr.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\bfcp_conn.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\bfcp_ctrans.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\common\bfcp_msg_build.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="bfcp_client.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\bfcp_msg.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_attr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_buf_pool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_build_param.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_callbacks.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_conn.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_ctrans.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_ex.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_mbuf_wrapper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\common\bfcp_msg_build.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="bfcp_client.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

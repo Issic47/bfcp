@@ -270,14 +270,15 @@ int build_msg_FloorRequestStatus(mbuf_t *buf, bool response,
   return err;
 }
 
-int build_msg_UserQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t bID )
+int build_msg_UserQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity, const UserQueryParam &userQuery )
 {
   assert(buf);
   return bfcp_msg_encode(
     buf, version, 
     false, BFCP_USER_QUERY,
     entity.conferenceID, entity.transactionID, entity.userID,
-    1, BFCP_BENEFICIARY_ID | BFCP_MANDATORY, 0, bID);
+    (userQuery.hasBeneficiaryID ? 1 : 0), 
+    BFCP_BENEFICIARY_ID | BFCP_MANDATORY, 0, userQuery.beneficiaryID);
 }
 
 int build_msg_UserStatus(mbuf_t *buf, uint8_t version, 

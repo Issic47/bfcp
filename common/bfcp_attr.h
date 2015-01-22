@@ -25,8 +25,8 @@ public:
   const char* getErrorInfo() const { return attr_.v.errinfo; }
   const char* getParticipantProvidedInfo() const { return attr_.v.partprovinfo; }
   const char* getStatusInfo() const { return attr_.v.statusinfo; }
-  const bfcp_supattr_t& getSupportAttrs() const { return attr_.v.supattr; }
-  const bfcp_supprim_t& getSupportPrims() const { return attr_.v.supprim; }
+  const bfcp_supattr_t& getSupportedAttrs() const { return attr_.v.supattr; }
+  const bfcp_supprim_t& getSupportedPrims() const { return attr_.v.supprim; }
   const char* getUsername() const { return attr_.v.userdname; }
   const char* getUserURI() const { return attr_.v.useruri; }
   uint16_t getRequestByID() const { return attr_.v.reqbyid; }

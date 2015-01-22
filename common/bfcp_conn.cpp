@@ -430,9 +430,7 @@ void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &ds
   detail::bfcp_strans_entry entry;
   entry.entity = entity;
   entry.prim = primitive;
-  auto bucket = cachedReplys_.back();
-  bucket.insert(std::make_pair(entry, MBufPtr(msgBuf)));
-
+  cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
   socket_->send(dst, msgBuf->buf, msgBuf->end);
 }
 

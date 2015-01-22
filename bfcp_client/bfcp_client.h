@@ -1,7 +1,8 @@
 #ifndef BFCP_CLIENT_H
 #define BFCP_CLIENT_H
 
-#include <boost/bind.hpp>
+#include <hash_map>
+
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/Buffer.h>
 #include <muduo/net/EventLoop.h>
@@ -9,6 +10,8 @@
 #include <muduo/net/UdpClient.h>
 
 #include "common/bfcp_callbacks.h"
+#include "common/bfcp_build_param.h"
+enum bfcp_prim;
 
 namespace bfcp
 {
@@ -16,23 +19,41 @@ namespace bfcp
 class BfcpConnection;
 typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
+class BasicRequestParam;
+
 class BfcpClient : boost::noncopyable
 {
 public:
   BfcpClient(muduo::net::EventLoop* loop, 
-             const muduo::net::InetAddress& serverAddr);
+             const muduo::net::InetAddress& serverAddr,
+             uint32_t conferenceID,
+             uint16_t userID);
 
-  void connect()
-  {
+  void connect() 
+  { 
     client_.connect();
   }
 
-  void stop()
-  {
+  void stop() 
+  { 
     client_.disconnect();
   }
 
+  void sendFloorRequest(const FloorRequestParam &floorRequest);
+  void sendFloorRelease(uint16_t floorRequestID);
+  void sendFloorRequestQuery(uint16_t floorRequestID);
+  void sendUserQuery(const UserQueryParam userQuery);
+  void sendFloorQuery(const bfcp_floor_id_list &floorIDs);
+  void sendChairAction(const FloorRequestInfoParam &frqInfo);  
+  void sendHello();
+  void sendGoodBye();
+
+  // TODO: add notify functions
+
 private:
+  typedef boost::function<void (const BfcpMsg&)> Handler;
+  typedef std::hash_map<bfcp_prim, Handler> HandlerDict;
+
   void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 
                  muduo::net::Buffer* buf,
@@ -41,13 +62,29 @@ private:
 
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
   void onNewRequest(const BfcpMsg &msg);
-  void onResponse(ResponseError err, const BfcpMsg &msg);
+  void onResponse(bfcp_prim requestPrimitive, ResponseError err, const BfcpMsg &msg);
+
+  void initHandlers();
+  void handleFloorRequestStatus(const BfcpMsg &msg);
+  void handleUserStatus(const BfcpMsg &msg);
+  void handleFloorStatus(const BfcpMsg &msg);
+  void handleChairAcionAck(const BfcpMsg &msg);
+  void handleHelloAck(const BfcpMsg &msg);
+  void handleGoodbyeAck(const BfcpMsg &msg);
+  void handleError(const BfcpMsg &msg);
+
+  bool checkMsg(const BfcpMsg &msg, bfcp_prim expectedPrimitive) const;
+  void initBasicParam(BasicRequestParam &param, bfcp_prim primitive);
+  
 
   muduo::net::EventLoop* loop_;
   muduo::net::UdpClient client_;
   muduo::net::InetAddress serverAddr_;
-
   BfcpConnectionPtr connection_;
+  HandlerDict responseHandlers_;
+
+  uint32_t conferenceID_;
+  uint16_t userID_;
 };
 
 } // namespace bfcp

@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
   EventLoop loop;
   InetAddress serverAddr(AF_INET, "127.0.0.1", 7890);
   printf("connect to hostport:%s\n", serverAddr.toIpPort().c_str());
-  BfcpClient client(&loop, serverAddr);
+  BfcpClient client(&loop, serverAddr, 100, 1);
   client.connect();
 
   loop.loop();

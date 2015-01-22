@@ -157,12 +157,12 @@ private:
 
   template <typename BuildMsgFunc>
   void sendRequestInLoop(BuildMsgFunc buildFunc, 
-    const BasicRequestParam &basicParam);
+                         const BasicRequestParam &basicParam);
 
   template <typename BuildMsgFunc, typename ExtParam>
   void sendRequestInLoop(BuildMsgFunc buildFunc, 
-    const BasicRequestParam &basicParam, 
-    const ExtParam &extParam);
+                         const BasicRequestParam &basicParam, 
+                         const ExtParam &extParam);
 
   template <typename BuildMsgFunc>
   void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg);

@@ -105,6 +105,8 @@ bool BfcpConnection::tryHandleMessageError( const BfcpMsg &msg )
 
 bool BfcpConnection::tryHandleResponse(const BfcpMsg &msg)
 {
+  if (!msg.isResponse()) return false;
+
   ::bfcp_entity entity = msg.getEntity();
   auto it = ctrans_.find(entity);
   if (it != ctrans_.end())
@@ -119,6 +121,8 @@ bool BfcpConnection::tryHandleResponse(const BfcpMsg &msg)
 
 bool BfcpConnection::tryHandleRequest(const BfcpMsg &msg)
 {
+  if (msg.isResponse()) return false;
+
   detail::bfcp_strans_entry entry;
   entry.prim = msg.primitive();
   entry.entity = msg.getEntity();

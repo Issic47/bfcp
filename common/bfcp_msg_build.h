@@ -2,7 +2,7 @@
 #define BFCP_MSG_BUILD_H
 
 #include "common/bfcp_ex.h"
-#include "common/bfcp_build_param.h"
+#include "common/bfcp_param.h"
 
 namespace bfcp
 {

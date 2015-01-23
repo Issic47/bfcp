@@ -15,7 +15,7 @@
 #include "bfcp_callbacks.h"
 #include "bfcp_ex.h"
 #include "bfcp_mbuf_wrapper.h"
-#include "bfcp_build_param.h"
+#include "bfcp_param.h"
 #include "bfcp_msg.h"
 
 #include <vector>

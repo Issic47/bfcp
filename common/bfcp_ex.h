@@ -54,7 +54,7 @@ typedef struct bfcp_floor_request_info
   bfcp_overall_request_status oRS;
   bfcp_floor_request_status_list fRS;
   bfcp_user_info beneficiary;
-  bfcp_user_info requested_by;
+  bfcp_user_info requestedBy;
   const bfcp_priority *priority;
   const char *partPriovidedInfo;
 } bfcp_floor_request_info;

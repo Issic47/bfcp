@@ -71,6 +71,7 @@
     <ClCompile Include="..\common\bfcp_ctrans.cpp" />
     <ClCompile Include="..\common\bfcp_msg.cpp" />
     <ClCompile Include="..\common\bfcp_msg_build.cpp" />
+    <ClCompile Include="..\common\bfcp_param.cpp" />
     <ClCompile Include="bfcp_server.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>

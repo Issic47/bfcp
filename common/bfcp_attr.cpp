@@ -89,7 +89,7 @@ bfcp_floor_request_info BfcpAttr::getFloorRequestInfo() const
   if (requestedByInfo)
   {
     info.valueType &= kHasRequestedByInfo;
-    info.requested_by = BfcpAttr(*requestedByInfo).getRequestedByInfo();
+    info.requestedBy = BfcpAttr(*requestedByInfo).getRequestedByInfo();
   }
 
   bfcp_attr_t *priority = findSubAttr(BFCP_PRIORITY);

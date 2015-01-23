@@ -19,7 +19,8 @@ BfcpClient::BfcpClient(muduo::net::EventLoop* loop,
       client_(loop, serverAddr, "BfcpClient"),
       serverAddr_(serverAddr),
       conferenceID_(conferenceID),
-      userID_(userID)
+      userID_(userID),
+      state_(kDisconnected)
 {
   client_.setMessageCallback(
     boost::bind(&BfcpClient::onMessage, this, _1, _2, _3, _4));
@@ -28,10 +29,10 @@ BfcpClient::BfcpClient(muduo::net::EventLoop* loop,
   client_.setWriteCompleteCallback(
     boost::bind(&BfcpClient::onWriteComplete, this, _1, _2));
 
-  initHandlers();
+  initResponseHandlers();
 }
 
-void BfcpClient::initHandlers()
+void BfcpClient::initResponseHandlers()
 {
   responseHandlers_.insert(std::make_pair(
     BFCP_FLOOR_REQUEST, 
@@ -66,6 +67,52 @@ void BfcpClient::initHandlers()
     boost::bind(&BfcpClient::handleGoodbyeAck, this, _1)));
 }
 
+void BfcpClient::connect()
+{
+  if (state_ == kDisconnected)
+  {
+    client_.connect();
+    changeState(kConnecting);
+  }
+}
+
+void BfcpClient::disconnect()
+{
+  if (state_ == kConnected)
+  {
+    changeState(kDisconnecting);
+  }
+}
+
+void BfcpClient::forceDisconnect()
+{
+  client_.disconnect();
+  changeState(kDisconnected);
+}
+
+void BfcpClient::changeState( State state )
+{
+  if (state_ != state)
+  {
+    state_ = state;
+    LOG_TRACE << "BfcpClient::changeState is " << toString(state);
+    if (stateChangedCallback_)
+      stateChangedCallback_(state);
+  }
+}
+
+const char* BfcpClient::toString( State state ) const
+{
+  switch (state)
+  {
+    case kDisconnecting: return "disconnecting";
+    case kDisconnected: return "disconnected";
+    case kConnecting: return "connecting";
+    case kConnected: return "connected";
+    default: return "???";
+  }
+}
+
 void BfcpClient::onStartedRecv( const UdpSocketPtr& socket )
 {
   LOG_TRACE << socket->getLocalAddr().toIpPort() << " started receiving data from " 
@@ -78,30 +125,29 @@ void BfcpClient::onStartedRecv( const UdpSocketPtr& socket )
     connection_->setNewRequestCallback(
       boost::bind(&BfcpClient::onNewRequest, this, _1));
   }
-  // TODO: notify 
+  if (state_ == kConnecting)
+  {
+    sendHello();
+  }
 }
-
 
 void BfcpClient::sendFloorRequest( const FloorRequestParam &floorRequest )
 {
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_FLOOR_REQUEST);
-
-  connection_->sendFloorRequest(param, floorRequest);
+  connection_->sendFloorRequest(
+    generateBasicParam(BFCP_FLOOR_REQUEST),
+    floorRequest);
 }
 
 void BfcpClient::sendFloorRelease( uint16_t floorRequestID )
 {
   assert(client_.isConnected());
   assert(connection_);
-
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_FLOOR_RELEASE);
-
-  connection_->sendFloorRelease(param, floorRequestID);
+  connection_->sendFloorRelease(
+    generateBasicParam(BFCP_FLOOR_RELEASE), 
+    floorRequestID);
 }
 
 void BfcpClient::sendFloorRequestQuery( uint16_t floorRequestID )
@@ -109,10 +155,9 @@ void BfcpClient::sendFloorRequestQuery( uint16_t floorRequestID )
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_FLOOR_REQUEST_QUERY);
-
-  connection_->sendFloorRequestQuery(param, floorRequestID);
+  connection_->sendFloorRequestQuery(
+    generateBasicParam(BFCP_FLOOR_REQUEST_QUERY), 
+    floorRequestID);
 }
 
 void BfcpClient::sendUserQuery( const UserQueryParam userQuery )
@@ -120,10 +165,9 @@ void BfcpClient::sendUserQuery( const UserQueryParam userQuery )
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_USER_QUERY);
-
-  connection_->sendUserQuery(param, userQuery);
+  connection_->sendUserQuery(
+    generateBasicParam(BFCP_USER_QUERY), 
+    userQuery);
 }
 
 void BfcpClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
@@ -131,10 +175,9 @@ void BfcpClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_FLOOR_QUERY);
-
-  connection_->sendFloorQuery(param, floorIDs);
+  connection_->sendFloorQuery(
+    generateBasicParam(BFCP_FLOOR_QUERY), 
+    floorIDs);
 }
 
 void BfcpClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
@@ -142,10 +185,9 @@ void BfcpClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_CHAIR_ACTION);
-
-  connection_->sendChairAction(param, frqInfo);
+  connection_->sendChairAction(
+    generateBasicParam(BFCP_CHAIR_ACTION),
+    frqInfo);
 }
 
 void BfcpClient::sendHello()
@@ -153,10 +195,7 @@ void BfcpClient::sendHello()
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_HELLO);
-
-  connection_->sendHello(param);
+  connection_->sendHello(generateBasicParam(BFCP_HELLO));
 }
 
 void BfcpClient::sendGoodBye()
@@ -164,18 +203,17 @@ void BfcpClient::sendGoodBye()
   assert(client_.isConnected());
   assert(connection_);
 
-  BasicRequestParam param;
-  initBasicParam(param, BFCP_GOODBYE);
-
-  connection_->sendGoodBye(param);
+  connection_->sendGoodBye(generateBasicParam(BFCP_GOODBYE));
 }
 
-void BfcpClient::initBasicParam( BasicRequestParam &param, bfcp_prim primitive )
+BasicRequestParam BfcpClient::generateBasicParam( bfcp_prim primitive )
 {
+  BasicRequestParam param;
   param.cb = boost::bind(&BfcpClient::onResponse, this, primitive, _1, _2);
   param.conferenceID = conferenceID_;
   param.userID = userID_;
   param.dst = serverAddr_;
+  return param;
 }
 
 void BfcpClient::onMessage(const UdpSocketPtr& socket, 
@@ -222,11 +260,11 @@ void BfcpClient::onResponse(bfcp_prim requestPrimitive,
                             ResponseError err, 
                             const BfcpMsg &msg)
 {
-  if (!msg.valid())
+  if (err != kNoError)
   {
     LOG_TRACE << "BfcpClient received response with error " 
               << responce_error_name(err);
-    // TODO: handle response error: timeout
+    changeState(kDisconnected);
   }
   else
   {
@@ -258,13 +296,18 @@ void BfcpClient::handleFloorRequestStatus( const BfcpMsg &msg )
   if (!attr) 
   {
     LOG_ERROR << "No FLOOR-REQUEST-INFORMATION found in BFCP FloorRequestStatus message";
+    // TODO: 
     return;
   }
   else
   {
     BfcpAttr frqInfoAttr(*attr);
     bfcp_floor_request_info info = frqInfoAttr.getFloorRequestInfo();
-    // TODO: handle info
+
+    FloorRequestInfoParam param;
+    param.set(info);
+
+    // TODO: notify info
   }
 }
 
@@ -272,21 +315,25 @@ void BfcpClient::handleUserStatus( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_USER_STATUS)) return;
-  
+
+  UserStatusParam param;
   auto attr = msg.findAttribute(BFCP_BENEFICIARY_INFO);
   if (attr) 
   {
     BfcpAttr beneficiaryInfoAttr(*attr);
     bfcp_user_info info = beneficiaryInfoAttr.getBeneficiaryInfo();
-    // TODO: handle info
+    param.setBeneficiary(info);
   }
 
   auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
+  param.frqInfoList.reserve(attrs.size());
   for (auto &attr : attrs)
   {
     bfcp_floor_request_info frqInfo = attr.getFloorRequestInfo();
-    // TODO: handle frqInfo
+    param.addFloorRequestInfo(frqInfo);
   }
+
+  // TODO: notify the user status
 
 }
 
@@ -299,21 +346,22 @@ void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
     connection_->replyWithFloorStatusAck(msg);
   }
 
-  // notify floor status
   auto attr = msg.findAttribute(BFCP_FLOOR_ID);
   if (attr)
   {
     BfcpAttr floorIDAttr(*attr);
-    uint16_t floorID = floorIDAttr.getFloorID();
-    // TODO: handle floorID
+    FloorStatusParam param;
+    param.floorID = floorIDAttr.getFloorID();
 
     auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
+    param.frqInfoList.reserve(attrs.size());
     for (auto &attr : attrs)
     {
       bfcp_floor_request_info info = attr.getFloorRequestInfo();
-      // TODO: handle info
+      param.addFloorRequestInfo(info);
     }
   }
+  // TODO: notify floor status
 }
 
 void BfcpClient::handleChairAcionAck( const BfcpMsg &msg )
@@ -327,11 +375,14 @@ void BfcpClient::handleHelloAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_HELLO_ACK)) return;
+  
+  changeState(kConnected);
 
   auto attr = msg.findAttribute(BFCP_SUPPORTED_PRIMS);
   if (!attr)
   {
     LOG_ERROR << "No SUPPORTED-PRIMITIVES found in BFCP HelloAck message";
+    // TODO:
     return;
   }
   else
@@ -359,7 +410,12 @@ void BfcpClient::handleGoodbyeAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_GOODBYE_ACK)) return;
-  // TODO: notify that client can exit
+
+  if (state_ == kDisconnecting)
+  {
+    client_.disconnect();
+    changeState(kDisconnected);
+  }
 }
 
 void BfcpClient::handleError( const BfcpMsg &msg )
@@ -367,17 +423,19 @@ void BfcpClient::handleError( const BfcpMsg &msg )
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_ERROR)) return;
   
+  ErrorParam param;
   auto attr = msg.findAttribute(BFCP_ERROR_CODE);
   if (!attr)
   {
     LOG_ERROR << "No ERROR-CODE found in BFCP Error message";
+    // TODO:
     return;
   }
   else
   {
     BfcpAttr errorCodeAttr(*attr);
     bfcp_errcode errcode = errorCodeAttr.getErrorCode();
-    // TODO: handle with error code
+    param.errorCode.set(errcode);
   }
 
   attr = msg.findAttribute(BFCP_ERROR_INFO);
@@ -385,8 +443,9 @@ void BfcpClient::handleError( const BfcpMsg &msg )
   {
     BfcpAttr errorInfoAttr(*attr);
     const char *errorInfo = errorInfoAttr.getErrorInfo();
-    // TODO: handle with error info
+    param.setErrorInfo(errorInfo);
   }
+  // TODO: notify error
 }
 
 bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) const

@@ -39,6 +39,9 @@
     <ClCompile Include="..\common\bfcp_msg_build.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="..\common\bfcp_param.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\bfcp_conn.h">

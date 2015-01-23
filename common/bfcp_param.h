@@ -1,5 +1,5 @@
-#ifndef BFCP_BUILD_PARAM_H
-#define BFCP_BUILD_PARAM_H
+#ifndef BFCP_PARAM_H
+#define BFCP_PARAM_H
 
 #include <muduo/base/StringPiece.h>
 
@@ -7,6 +7,16 @@
 
 namespace bfcp
 {
+namespace detail
+{
+inline void setString(string &str, const char *cstr)
+{
+  if (cstr)
+    str = cstr;
+  else
+    str.clear();
+}
+} // namespace detail
 
 class UserQueryParam
 {
@@ -46,6 +56,8 @@ public:
     useruri(std::move(param.useruri))
   {}
 
+  void set(const bfcp_user_info &info);
+
   uint16_t id;
   string username;
   string useruri;
@@ -61,6 +73,8 @@ public:
         statusInfo(std::move(param.statusInfo)),
         hasRequestStatus(param.hasRequestStatus)
   {}
+
+  void set(const bfcp_overall_request_status &oRS);
 
   uint16_t floorRequestID;
   bfcp_reqstatus_t requestStatus;
@@ -79,6 +93,8 @@ public:
         hasRequestStatus(param.hasRequestStatus)
 
   {}
+
+  void set(const bfcp_floor_request_status &frqStatus);
 
   uint16_t floorID;
   bfcp_reqstatus_t requestStatus;
@@ -106,8 +122,10 @@ public:
         partPriovidedInfo(std::move(param.partPriovidedInfo))
   {}
 
+  void set(const bfcp_floor_request_info &info);
+
   uint16_t floorRequestID;
-  AttrValueType valueType;
+  uint32_t valueType;
   OverallRequestStatusParam oRS;
   FloorRequestStatusParamList fRS;
   UserInfoParam beneficiary;
@@ -128,6 +146,19 @@ public:
         hasBeneficiary(param.hasBeneficiary)
   {}
 
+  void setBeneficiary(const bfcp_user_info &info)
+  {
+    hasBeneficiary = true;
+    beneficiary.set(info);
+  }
+
+  void addFloorRequestInfo(const bfcp_floor_request_info &info)
+  {
+    FloorRequestInfoParam param;
+    param.set(info);
+    frqInfoList.push_back(std::move(param));
+  }
+
   UserInfoParam beneficiary;
   FloorRequestInfoParamList frqInfoList;
   bool hasBeneficiary;
@@ -141,6 +172,13 @@ public:
       : floorID(param.floorID),
         frqInfoList(std::move(param.frqInfoList))
   {}
+
+  void addFloorRequestInfo(const bfcp_floor_request_info &info)
+  {
+    FloorRequestInfoParam param;
+    param.set(info);
+    frqInfoList.push_back(std::move(param));
+  }
 
   uint16_t floorID;
   FloorRequestInfoParamList frqInfoList;
@@ -168,6 +206,8 @@ public:
         details(std::move(param.details))
   {}
 
+  void set(const bfcp_errcode_t &errcode);
+
   bfcp_err code;
   std::vector<uint8_t> details;
 };
@@ -180,6 +220,12 @@ public:
       : errorCode(std::move(param.errorCode)),
         errorInfo(std::move(param.errorInfo))
   {}
+  
+  void setErrorCode(const bfcp_errcode_t &errcode)
+  { errorCode.set(errcode); }
+
+  void setErrorInfo(const char *errInfo)
+  { detail::setString(errorInfo, errInfo); }
 
   ErrorCodeParam errorCode;
   string errorInfo;
@@ -188,4 +234,4 @@ public:
 
 } // namespace bfcp
 
-#endif // BFCP_BUILD_PARAM_H
+#endif // BFCP_PARAM_H

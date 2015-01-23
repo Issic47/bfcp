@@ -10,7 +10,7 @@
 #include <muduo/net/UdpClient.h>
 
 #include "common/bfcp_callbacks.h"
-#include "common/bfcp_build_param.h"
+#include "common/bfcp_param.h"
 enum bfcp_prim;
 
 namespace bfcp
@@ -24,20 +24,33 @@ class BasicRequestParam;
 class BfcpClient : boost::noncopyable
 {
 public:
+  enum State
+  {
+    kDisconnecting = 0,
+    kDisconnected = 1,
+    kConnecting = 2,
+    kConnected = 3,
+  };
+
+  typedef boost::function<void (State)> StateChangedCallback;
+
   BfcpClient(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& serverAddr,
              uint32_t conferenceID,
              uint16_t userID);
 
-  void connect() 
-  { 
-    client_.connect();
-  }
+  // WARN: not thread-safe
+  void connect();
+  // WARN: not thread-safe
+  void disconnect();
+  // WARN: not thread-safe
+  void forceDisconnect();
 
-  void stop() 
-  { 
-    client_.disconnect();
-  }
+  void setStateChangedCallback(const StateChangedCallback &cb)
+  { stateChangedCallback_ = cb; }
+
+  void setStateChangedCallback(StateChangedCallback &&cb)
+  { stateChangedCallback_ = std::move(cb); }
 
   void sendFloorRequest(const FloorRequestParam &floorRequest);
   void sendFloorRelease(uint16_t floorRequestID);
@@ -64,7 +77,7 @@ private:
   void onNewRequest(const BfcpMsg &msg);
   void onResponse(bfcp_prim requestPrimitive, ResponseError err, const BfcpMsg &msg);
 
-  void initHandlers();
+  void initResponseHandlers();
   void handleFloorRequestStatus(const BfcpMsg &msg);
   void handleUserStatus(const BfcpMsg &msg);
   void handleFloorStatus(const BfcpMsg &msg);
@@ -74,8 +87,10 @@ private:
   void handleError(const BfcpMsg &msg);
 
   bool checkMsg(const BfcpMsg &msg, bfcp_prim expectedPrimitive) const;
-  void initBasicParam(BasicRequestParam &param, bfcp_prim primitive);
-  
+  BasicRequestParam generateBasicParam(bfcp_prim primitive);
+
+  void changeState(State state);
+  const char* toString(State state) const;
 
   muduo::net::EventLoop* loop_;
   muduo::net::UdpClient client_;
@@ -85,6 +100,9 @@ private:
 
   uint32_t conferenceID_;
   uint16_t userID_;
+
+  State state_;
+  StateChangedCallback stateChangedCallback_;
 };
 
 } // namespace bfcp

@@ -32,18 +32,23 @@ public:
     kConnected = 3,
   };
 
+  enum Error
+  {
+    kNoError = 0,
+    kMissingMandatoryAttr = 1,
+  };
+
   typedef boost::function<void (State)> StateChangedCallback;
+  // FIXME: use boost::any instead of void*?
+  typedef boost::function<void (Error, bfcp_prim, void*)> ResponseReceivedCallback;
 
   BfcpClient(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& serverAddr,
              uint32_t conferenceID,
              uint16_t userID);
 
-  // WARN: not thread-safe
   void connect();
-  // WARN: not thread-safe
   void disconnect();
-  // WARN: not thread-safe
   void forceDisconnect();
 
   void setStateChangedCallback(const StateChangedCallback &cb)
@@ -51,6 +56,12 @@ public:
 
   void setStateChangedCallback(StateChangedCallback &&cb)
   { stateChangedCallback_ = std::move(cb); }
+
+  void setResponseReceivedCallback(const ResponseReceivedCallback &cb)
+  { responseReceivedCallback_ = cb; }
+
+  void setResponseReceivedCallback(ResponseReceivedCallback &&cb)
+  { responseReceivedCallback_ = std::move(cb); }
 
   void sendFloorRequest(const FloorRequestParam &floorRequest);
   void sendFloorRelease(uint16_t floorRequestID);
@@ -60,8 +71,6 @@ public:
   void sendChairAction(const FloorRequestInfoParam &frqInfo);  
   void sendHello();
   void sendGoodBye();
-
-  // TODO: add notify functions
 
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
@@ -103,6 +112,7 @@ private:
 
   State state_;
   StateChangedCallback stateChangedCallback_;
+  ResponseReceivedCallback responseReceivedCallback_;
 };
 
 } // namespace bfcp

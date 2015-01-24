@@ -296,8 +296,8 @@ void BfcpClient::handleFloorRequestStatus( const BfcpMsg &msg )
   if (!attr) 
   {
     LOG_ERROR << "No FLOOR-REQUEST-INFORMATION found in BFCP FloorRequestStatus message";
-    // TODO: 
-    return;
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kMissingMandatoryAttr, BFCP_FLOOR_REQUEST_STATUS, nullptr);
   }
   else
   {
@@ -307,7 +307,8 @@ void BfcpClient::handleFloorRequestStatus( const BfcpMsg &msg )
     FloorRequestInfoParam param;
     param.set(info);
 
-    // TODO: notify info
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kNoError, BFCP_FLOOR_REQUEST_STATUS, &param);
   }
 }
 
@@ -333,8 +334,8 @@ void BfcpClient::handleUserStatus( const BfcpMsg &msg )
     param.addFloorRequestInfo(frqInfo);
   }
 
-  // TODO: notify the user status
-
+  if (responseReceivedCallback_)
+    responseReceivedCallback_(kNoError, BFCP_USER_STATUS, &param);
 }
 
 void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
@@ -347,7 +348,12 @@ void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
   }
 
   auto attr = msg.findAttribute(BFCP_FLOOR_ID);
-  if (attr)
+  if (!attr)
+  {
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kNoError, BFCP_FLOOR_STATUS, nullptr);
+  }
+  else
   {
     BfcpAttr floorIDAttr(*attr);
     FloorStatusParam param;
@@ -360,15 +366,18 @@ void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
       bfcp_floor_request_info info = attr.getFloorRequestInfo();
       param.addFloorRequestInfo(info);
     }
+
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kNoError, BFCP_FLOOR_STATUS, &param);
   }
-  // TODO: notify floor status
 }
 
 void BfcpClient::handleChairAcionAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_CHAIR_ACTION_ACK)) return;
-  // TODO: notify 
+  if (responseReceivedCallback_)
+    responseReceivedCallback_(kNoError, BFCP_CHAIR_ACTION_ACK, nullptr);
 }
 
 void BfcpClient::handleHelloAck( const BfcpMsg &msg )
@@ -382,7 +391,8 @@ void BfcpClient::handleHelloAck( const BfcpMsg &msg )
   if (!attr)
   {
     LOG_ERROR << "No SUPPORTED-PRIMITIVES found in BFCP HelloAck message";
-    // TODO:
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kMissingMandatoryAttr, BFCP_HELLO_ACK, nullptr);
     return;
   }
   else
@@ -396,6 +406,8 @@ void BfcpClient::handleHelloAck( const BfcpMsg &msg )
   if (!attr)
   {
     LOG_ERROR << "No SUPPORTED-ATTRIBUTES found in BFCP HelloAck message";
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kMissingMandatoryAttr, BFCP_HELLO_ACK, nullptr);
     return;
   }
   else
@@ -404,6 +416,9 @@ void BfcpClient::handleHelloAck( const BfcpMsg &msg )
     auto &supAttrs = supportedAttrsAttr.getSupportedAttrs();
     // TODO: check supported attributes
   }
+
+  if (responseReceivedCallback_)
+    responseReceivedCallback_(kNoError, BFCP_HELLO_ACK, nullptr);
 }
 
 void BfcpClient::handleGoodbyeAck( const BfcpMsg &msg )
@@ -428,15 +443,14 @@ void BfcpClient::handleError( const BfcpMsg &msg )
   if (!attr)
   {
     LOG_ERROR << "No ERROR-CODE found in BFCP Error message";
-    // TODO:
+    if (responseReceivedCallback_)
+      responseReceivedCallback_(kMissingMandatoryAttr, BFCP_ERROR, nullptr);
     return;
   }
-  else
-  {
-    BfcpAttr errorCodeAttr(*attr);
-    bfcp_errcode errcode = errorCodeAttr.getErrorCode();
-    param.errorCode.set(errcode);
-  }
+
+  BfcpAttr errorCodeAttr(*attr);
+  bfcp_errcode errcode = errorCodeAttr.getErrorCode();
+  param.errorCode.set(errcode);
 
   attr = msg.findAttribute(BFCP_ERROR_INFO);
   if (attr)
@@ -445,7 +459,9 @@ void BfcpClient::handleError( const BfcpMsg &msg )
     const char *errorInfo = errorInfoAttr.getErrorInfo();
     param.setErrorInfo(errorInfo);
   }
-  // TODO: notify error
+  
+  if (responseReceivedCallback_)
+    responseReceivedCallback_(kNoError, BFCP_ERROR, &param);
 }
 
 bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) const
@@ -470,6 +486,15 @@ bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) con
               << " but get " << bfcp_prim_name(msg.primitive());
     return false;
   }
+
+  auto &unknownAttrs = msg.getUnknownAttrs();
+  if (unknownAttrs.typec != 0)
+  {
+    LOG_WARN << "Ignore " << unknownAttrs.typec 
+             << " unknown attributes in the received " 
+             << bfcp_prim_name(msg.primitive());
+  }
+
   return true;
 }
 

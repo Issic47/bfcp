@@ -42,6 +42,9 @@
     <ClCompile Include="..\common\bfcp_param.cpp">
       <Filter>common</Filter>
     </ClCompile>
+    <ClCompile Include="bfcp_conference.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\common\bfcp_conn.h">
@@ -80,8 +83,17 @@
     <ClInclude Include="..\common\bfcp_msg_build.h">
       <Filter>common</Filter>
     </ClInclude>
-    <ClInclude Include="..\common\bfcp_build_param.h">
+    <ClInclude Include="..\common\bfcp_param.h">
       <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="bfcp_conference.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="bfcp_floor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="bfcp_user.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

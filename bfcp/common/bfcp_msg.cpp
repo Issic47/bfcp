@@ -1,4 +1,4 @@
-#include "common/bfcp_msg.h"
+#include <bfcp/common/bfcp_msg.h>
 
 #include <muduo/base/Logging.h>
 

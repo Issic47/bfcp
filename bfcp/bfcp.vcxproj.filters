@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="common">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="server">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="client">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="common\utility">
+      <UniqueIdentifier>{c2228660-163c-4203-a610-2b2fd84998cf}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="common\bfcp_attr.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\bfcp_conn.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\bfcp_ctrans.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\bfcp_msg.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\bfcp_msg_build.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="common\bfcp_param.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="client\bfcp_client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="server\bfcp_conference.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\bfcp_server.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="common\bfcp_attr.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_buf_pool.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_callbacks.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_conn.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_ctrans.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_ex.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_mbuf_wrapper.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_msg.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_msg_build.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\bfcp_param.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="common\utility\MemoryPool.h">
+      <Filter>common\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="common\utility\MemoryPool.hpp">
+      <Filter>common\utility</Filter>
+    </ClInclude>
+    <ClInclude Include="client\bfcp_client.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="server\bfcp_conference.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\bfcp_floor.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\bfcp_server.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\bfcp_user.h">
+      <Filter>server</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

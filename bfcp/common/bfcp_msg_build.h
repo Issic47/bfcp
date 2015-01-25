@@ -1,8 +1,8 @@
 #ifndef BFCP_MSG_BUILD_H
 #define BFCP_MSG_BUILD_H
 
-#include "common/bfcp_ex.h"
-#include "common/bfcp_param.h"
+#include <bfcp/common/bfcp_ex.h>
+#include <bfcp/common/bfcp_param.h>
 
 namespace bfcp
 {

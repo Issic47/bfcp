@@ -9,8 +9,8 @@
 #include <muduo/net/InetAddress.h>
 #include <muduo/net/UdpClient.h>
 
-#include "common/bfcp_callbacks.h"
-#include "common/bfcp_param.h"
+#include <bfcp/common/bfcp_callbacks.h>
+#include <bfcp/common/bfcp_param.h>
 enum bfcp_prim;
 
 namespace bfcp

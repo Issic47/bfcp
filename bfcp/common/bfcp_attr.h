@@ -1,7 +1,7 @@
 #ifndef BFCP_ATTR_H
 #define BFCP_ATTR_H
 
-#include "common/bfcp_ex.h"
+#include <bfcp/common/bfcp_ex.h>
 
 #include <list>
 

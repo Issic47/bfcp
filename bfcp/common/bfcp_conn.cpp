@@ -1,4 +1,4 @@
-#include "bfcp_conn.h"
+#include <bfcp/common/bfcp_conn.h>
 
 #include <boost/bind.hpp>
 
@@ -8,9 +8,9 @@
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/EventLoop.h>
 
-#include "common/bfcp_msg.h"
-#include "common/bfcp_ctrans.h"
-#include "common/bfcp_msg_build.h"
+#include <bfcp/common/bfcp_msg.h>
+#include <bfcp/common/bfcp_ctrans.h>
+#include <bfcp/common/bfcp_msg_build.h>
 
 using muduo::net::UdpSocketPtr;
 using muduo::net::InetAddress;

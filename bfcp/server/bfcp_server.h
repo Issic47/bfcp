@@ -12,7 +12,7 @@
 
 #include <muduo/base/Thread.h>
 
-#include "common/bfcp_callbacks.h"
+#include <bfcp/common/bfcp_callbacks.h>
 
 namespace bfcp
 {

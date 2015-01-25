@@ -1,9 +1,9 @@
-#include "bfcp_server.h"
+#include <bfcp/server/bfcp_server.h>
 
 #include <muduo/base/Logging.h>
 
-#include "common/bfcp_buf_pool.h"
-#include "common/bfcp_conn.h"
+#include <bfcp/common/bfcp_buf_pool.h>
+#include <bfcp/common/bfcp_conn.h>
 
 using namespace muduo;
 using namespace muduo::net;

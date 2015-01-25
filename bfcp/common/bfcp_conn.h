@@ -12,11 +12,11 @@
 #include <muduo/net/EventLoop.h>
 #include <muduo/net/InetAddress.h>
 
-#include "bfcp_callbacks.h"
-#include "bfcp_ex.h"
-#include "bfcp_mbuf_wrapper.h"
-#include "bfcp_param.h"
-#include "bfcp_msg.h"
+#include <bfcp/common/bfcp_callbacks.h>
+#include <bfcp/common/bfcp_ex.h>
+#include <bfcp/common/bfcp_mbuf_wrapper.h>
+#include <bfcp/common/bfcp_param.h>
+#include <bfcp/common/bfcp_msg.h>
 
 #include <vector>
 #include <map>

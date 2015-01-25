@@ -1,4 +1,4 @@
-#include "bfcp_msg_build.h"
+#include <bfcp/common/bfcp_msg_build.h>
 
 #include <cassert>
 

@@ -5,8 +5,8 @@
 #include <muduo/net/InetAddress.h>
 #include <muduo/base/copyable.h>
 
-#include "common/bfcp_ex.h"
-#include "common/bfcp_attr.h"
+#include <bfcp/common/bfcp_ex.h>
+#include <bfcp/common/bfcp_attr.h>
 
 namespace bfcp
 {

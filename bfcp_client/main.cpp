@@ -7,7 +7,7 @@
 #include <muduo/net/EventLoop.h>
 #include <muduo/net/InetAddress.h>
 
-#include "bfcp_client.h"
+#include <bfcp/client/bfcp_client.h>
 
 using namespace muduo;
 using namespace muduo::net;

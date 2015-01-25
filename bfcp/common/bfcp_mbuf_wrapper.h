@@ -1,7 +1,7 @@
 #ifndef BFCP_MBUF_WRAPPER_H
 #define BFCP_MBUF_WRAPPER_H
 
-#include "common/bfcp_ex.h"
+#include <bfcp/common/bfcp_ex.h>
 
 namespace bfcp
 {

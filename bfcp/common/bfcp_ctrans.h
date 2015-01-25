@@ -11,8 +11,8 @@
 #include <muduo/net/TimerId.h>
 #include <muduo/net/InetAddress.h>
 
-#include "bfcp_msg.h"
-#include "bfcp_callbacks.h"
+#include <bfcp/common/bfcp_msg.h>
+#include <bfcp/common/bfcp_callbacks.h>
 
 namespace bfcp
 {

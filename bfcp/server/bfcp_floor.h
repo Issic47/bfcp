@@ -1,7 +1,7 @@
 #ifndef BFCP_FLOOR_H
 #define BFCP_FLOOR_H
 
-#include "common/bfcp_ex.h"
+#include <bfcp/common/bfcp_ex.h>
 
 namespace bfcp
 {

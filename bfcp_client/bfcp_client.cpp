@@ -95,7 +95,7 @@ void BfcpClient::changeState( State state )
   if (state_ != state)
   {
     state_ = state;
-    LOG_TRACE << "BfcpClient::changeState is " << toString(state);
+    LOG_TRACE << "BfcpClient change state to " << toString(state);
     if (stateChangedCallback_)
       stateChangedCallback_(state);
   }
@@ -491,7 +491,7 @@ bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) con
   if (unknownAttrs.typec != 0)
   {
     LOG_WARN << "Ignore " << unknownAttrs.typec 
-             << " unknown attributes in the received " 
+             << " unknown attribute(s) in the received " 
              << bfcp_prim_name(msg.primitive());
   }
 

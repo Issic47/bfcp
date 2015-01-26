@@ -1,7 +1,7 @@
 #ifndef BFCP_CLIENT_H
 #define BFCP_CLIENT_H
 
-#include <hash_map>
+#include <unordered_map>
 
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/Buffer.h>
@@ -74,7 +74,7 @@ public:
 
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
-  typedef std::hash_map<bfcp_prim, Handler> HandlerDict;
+  typedef std::unordered_map<bfcp_prim, Handler> HandlerDict;
 
   void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 

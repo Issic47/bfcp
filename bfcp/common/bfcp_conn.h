@@ -217,7 +217,8 @@ private:
 private:
   muduo::net::EventLoop *loop_;
   muduo::net::UdpSocketPtr socket_;
-  std::map<::bfcp_entity, ClientTransactionPtr> ctrans_;  // use hash_map?
+  // FIXME: use std::unordered_map instead?
+  std::map<::bfcp_entity, ClientTransactionPtr> ctrans_;
   NewRequestCallback newRequestCallback_;
 
   boost::circular_buffer<ReplyBucket> cachedReplys_;

@@ -36,13 +36,25 @@
     <ClCompile Include="common\bfcp_param.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="client\bfcp_client.cpp">
-      <Filter>client</Filter>
-    </ClCompile>
-    <ClCompile Include="server\bfcp_conference.cpp">
+    <ClCompile Include="server\bfcp_server.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="server\bfcp_server.cpp">
+    <ClCompile Include="server\user.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\conference.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\floor_manager.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\user_manager.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="client\base_client.cpp">
+      <Filter>client</Filter>
+    </ClCompile>
+    <ClCompile Include="server\floor_request_node.cpp">
       <Filter>server</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,19 +95,28 @@
     <ClInclude Include="common\utility\MemoryPool.hpp">
       <Filter>common\utility</Filter>
     </ClInclude>
-    <ClInclude Include="client\bfcp_client.h">
-      <Filter>client</Filter>
-    </ClInclude>
-    <ClInclude Include="server\bfcp_conference.h">
-      <Filter>server</Filter>
-    </ClInclude>
-    <ClInclude Include="server\bfcp_floor.h">
-      <Filter>server</Filter>
-    </ClInclude>
     <ClInclude Include="server\bfcp_server.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="server\bfcp_user.h">
+    <ClInclude Include="server\floor.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\user.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\conference.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\user_manager.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\floor_manager.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="client\base_client.h">
+      <Filter>client</Filter>
+    </ClInclude>
+    <ClInclude Include="server\floor_request_node.h">
       <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>

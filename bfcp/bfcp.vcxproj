@@ -11,18 +11,22 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="client\bfcp_client.cpp" />
+    <ClCompile Include="client\base_client.cpp" />
     <ClCompile Include="common\bfcp_attr.cpp" />
     <ClCompile Include="common\bfcp_conn.cpp" />
     <ClCompile Include="common\bfcp_ctrans.cpp" />
     <ClCompile Include="common\bfcp_msg.cpp" />
     <ClCompile Include="common\bfcp_msg_build.cpp" />
     <ClCompile Include="common\bfcp_param.cpp" />
-    <ClCompile Include="server\bfcp_conference.cpp" />
+    <ClCompile Include="server\conference.cpp" />
+    <ClCompile Include="server\floor_manager.cpp" />
+    <ClCompile Include="server\floor_request_node.cpp" />
     <ClCompile Include="server\bfcp_server.cpp" />
+    <ClCompile Include="server\user.cpp" />
+    <ClCompile Include="server\user_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="client\bfcp_client.h" />
+    <ClInclude Include="client\base_client.h" />
     <ClInclude Include="common\bfcp_attr.h" />
     <ClInclude Include="common\bfcp_buf_pool.h" />
     <ClInclude Include="common\bfcp_callbacks.h" />
@@ -35,10 +39,13 @@
     <ClInclude Include="common\bfcp_param.h" />
     <ClInclude Include="common\utility\MemoryPool.h" />
     <ClInclude Include="common\utility\MemoryPool.hpp" />
-    <ClInclude Include="server\bfcp_conference.h" />
-    <ClInclude Include="server\bfcp_floor.h" />
+    <ClInclude Include="server\conference.h" />
+    <ClInclude Include="server\floor.h" />
+    <ClInclude Include="server\floor_manager.h" />
+    <ClInclude Include="server\floor_request_node.h" />
     <ClInclude Include="server\bfcp_server.h" />
-    <ClInclude Include="server\bfcp_user.h" />
+    <ClInclude Include="server\user.h" />
+    <ClInclude Include="server\user_manager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B24C9EB9-7162-4F12-9D46-A41CB886B2F0}</ProjectGuid>

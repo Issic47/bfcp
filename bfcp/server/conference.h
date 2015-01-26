@@ -2,40 +2,24 @@
 #define BFCP_CONFERENCE_H
 
 #include <bfcp/common/bfcp_param.h>
-#include <bfcp/server/bfcp_user.h>
+#include <bfcp/server/user.h>
 
 namespace bfcp
 {
 
-typedef struct FloorRequest
-{
-  uint16_t floorRequestID;
-  uint16_t userID;
-  FloorRequestParam param;
-  string chairProvidedInfo;
-  std::vector<uint16_t> floorRequestQuery;
-  
-
-} FloorRequest;
-
-class BfcpConference
+class Conference
 {
 public:
-  BfcpConference();
-  ~BfcpConference();
+  Conference();
+  ~Conference();
 
   uint32_t getConferenceID() const { return conferenceID_; }
 
-  
   void addUser(uint16_t userID, const string &userURI, const string &displayName);
   bool containsUser(uint16_t userID);
   int removeUser(uint16_t userID);
-  BfcpUser* getUser(uint16_t userID);
-  const BfcpUser* getUser(uint16_t userID) const;
-
-
-
-
+  User* getUser(uint16_t userID);
+  const User* getUser(uint16_t userID) const;
 
 private:
   uint32_t conferenceID_;

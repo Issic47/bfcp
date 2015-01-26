@@ -21,7 +21,10 @@ typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
 class BasicRequestParam;
 
-class BfcpClient : boost::noncopyable
+namespace client
+{
+
+class BaseClient : boost::noncopyable
 {
 public:
   enum State
@@ -42,7 +45,7 @@ public:
   // FIXME: use boost::any instead of void*?
   typedef boost::function<void (Error, bfcp_prim, void*)> ResponseReceivedCallback;
 
-  BfcpClient(muduo::net::EventLoop* loop, 
+  BaseClient(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& serverAddr,
              uint32_t conferenceID,
              uint16_t userID);
@@ -114,6 +117,8 @@ private:
   StateChangedCallback stateChangedCallback_;
   ResponseReceivedCallback responseReceivedCallback_;
 };
+
+}
 
 } // namespace bfcp
 

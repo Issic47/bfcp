@@ -1,4 +1,4 @@
-#include <bfcp/client/bfcp_client.h>
+#include <bfcp/client/base_client.h>
 
 #include <boost/bind.hpp>
 #include <muduo/base/Logging.h>
@@ -11,7 +11,10 @@ using namespace muduo::net;
 namespace bfcp
 {
 
-BfcpClient::BfcpClient(muduo::net::EventLoop* loop, 
+namespace client
+{
+
+BaseClient::BaseClient(muduo::net::EventLoop* loop, 
                        const muduo::net::InetAddress& serverAddr, 
                        uint32_t conferenceID, 
                        uint16_t userID)
@@ -23,51 +26,51 @@ BfcpClient::BfcpClient(muduo::net::EventLoop* loop,
       state_(kDisconnected)
 {
   client_.setMessageCallback(
-    boost::bind(&BfcpClient::onMessage, this, _1, _2, _3, _4));
+    boost::bind(&BaseClient::onMessage, this, _1, _2, _3, _4));
   client_.setStartedRecvCallback(
-    boost::bind(&BfcpClient::onStartedRecv, this, _1));
+    boost::bind(&BaseClient::onStartedRecv, this, _1));
   client_.setWriteCompleteCallback(
-    boost::bind(&BfcpClient::onWriteComplete, this, _1, _2));
+    boost::bind(&BaseClient::onWriteComplete, this, _1, _2));
 
   initResponseHandlers();
 }
 
-void BfcpClient::initResponseHandlers()
+void BaseClient::initResponseHandlers()
 {
   responseHandlers_.insert(std::make_pair(
     BFCP_FLOOR_REQUEST, 
-    boost::bind(&BfcpClient::handleFloorRequestStatus, this, _1)));
+    boost::bind(&BaseClient::handleFloorRequestStatus, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_FLOOR_RELEASE,
-    boost::bind(&BfcpClient::handleFloorRequestStatus, this, _1)));
+    boost::bind(&BaseClient::handleFloorRequestStatus, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_FLOOR_REQUEST_QUERY,
-    boost::bind(&BfcpClient::handleFloorRequestStatus, this, _1)));
+    boost::bind(&BaseClient::handleFloorRequestStatus, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_USER_QUERY,
-    boost::bind(&BfcpClient::handleUserStatus, this, _1)));
+    boost::bind(&BaseClient::handleUserStatus, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_FLOOR_QUERY,
-    boost::bind(&BfcpClient::handleFloorStatus, this, _1)));
+    boost::bind(&BaseClient::handleFloorStatus, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_CHAIR_ACTION,
-    boost::bind(&BfcpClient::handleChairAcionAck, this, _1)));
+    boost::bind(&BaseClient::handleChairAcionAck, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_HELLO, 
-    boost::bind(&BfcpClient::handleHelloAck, this, _1)));
+    boost::bind(&BaseClient::handleHelloAck, this, _1)));
 
   responseHandlers_.insert(std::make_pair(
     BFCP_GOODBYE,
-    boost::bind(&BfcpClient::handleGoodbyeAck, this, _1)));
+    boost::bind(&BaseClient::handleGoodbyeAck, this, _1)));
 }
 
-void BfcpClient::connect()
+void BaseClient::connect()
 {
   if (state_ == kDisconnected)
   {
@@ -76,7 +79,7 @@ void BfcpClient::connect()
   }
 }
 
-void BfcpClient::disconnect()
+void BaseClient::disconnect()
 {
   if (state_ == kConnected)
   {
@@ -84,13 +87,13 @@ void BfcpClient::disconnect()
   }
 }
 
-void BfcpClient::forceDisconnect()
+void BaseClient::forceDisconnect()
 {
   client_.disconnect();
   changeState(kDisconnected);
 }
 
-void BfcpClient::changeState( State state )
+void BaseClient::changeState( State state )
 {
   if (state_ != state)
   {
@@ -101,7 +104,7 @@ void BfcpClient::changeState( State state )
   }
 }
 
-const char* BfcpClient::toString( State state ) const
+const char* BaseClient::toString( State state ) const
 {
   switch (state)
   {
@@ -113,7 +116,7 @@ const char* BfcpClient::toString( State state ) const
   }
 }
 
-void BfcpClient::onStartedRecv( const UdpSocketPtr& socket )
+void BaseClient::onStartedRecv( const UdpSocketPtr& socket )
 {
   LOG_TRACE << socket->getLocalAddr().toIpPort() << " started receiving data from " 
             << socket->getPeerAddr().toIpPort();
@@ -123,7 +126,7 @@ void BfcpClient::onStartedRecv( const UdpSocketPtr& socket )
   {
     connection_ = boost::make_shared<BfcpConnection>(loop_, client_.socket());
     connection_->setNewRequestCallback(
-      boost::bind(&BfcpClient::onNewRequest, this, _1));
+      boost::bind(&BaseClient::onNewRequest, this, _1));
   }
   if (state_ == kConnecting)
   {
@@ -131,7 +134,7 @@ void BfcpClient::onStartedRecv( const UdpSocketPtr& socket )
   }
 }
 
-void BfcpClient::sendFloorRequest( const FloorRequestParam &floorRequest )
+void BaseClient::sendFloorRequest( const FloorRequestParam &floorRequest )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -141,7 +144,7 @@ void BfcpClient::sendFloorRequest( const FloorRequestParam &floorRequest )
     floorRequest);
 }
 
-void BfcpClient::sendFloorRelease( uint16_t floorRequestID )
+void BaseClient::sendFloorRelease( uint16_t floorRequestID )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -150,7 +153,7 @@ void BfcpClient::sendFloorRelease( uint16_t floorRequestID )
     floorRequestID);
 }
 
-void BfcpClient::sendFloorRequestQuery( uint16_t floorRequestID )
+void BaseClient::sendFloorRequestQuery( uint16_t floorRequestID )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -160,7 +163,7 @@ void BfcpClient::sendFloorRequestQuery( uint16_t floorRequestID )
     floorRequestID);
 }
 
-void BfcpClient::sendUserQuery( const UserQueryParam userQuery )
+void BaseClient::sendUserQuery( const UserQueryParam userQuery )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -170,7 +173,7 @@ void BfcpClient::sendUserQuery( const UserQueryParam userQuery )
     userQuery);
 }
 
-void BfcpClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
+void BaseClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -180,7 +183,7 @@ void BfcpClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
     floorIDs);
 }
 
-void BfcpClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
+void BaseClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -190,7 +193,7 @@ void BfcpClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
     frqInfo);
 }
 
-void BfcpClient::sendHello()
+void BaseClient::sendHello()
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -198,7 +201,7 @@ void BfcpClient::sendHello()
   connection_->sendHello(generateBasicParam(BFCP_HELLO));
 }
 
-void BfcpClient::sendGoodBye()
+void BaseClient::sendGoodBye()
 {
   assert(client_.isConnected());
   assert(connection_);
@@ -206,17 +209,17 @@ void BfcpClient::sendGoodBye()
   connection_->sendGoodBye(generateBasicParam(BFCP_GOODBYE));
 }
 
-BasicRequestParam BfcpClient::generateBasicParam( bfcp_prim primitive )
+BasicRequestParam BaseClient::generateBasicParam( bfcp_prim primitive )
 {
   BasicRequestParam param;
-  param.cb = boost::bind(&BfcpClient::onResponse, this, primitive, _1, _2);
+  param.cb = boost::bind(&BaseClient::onResponse, this, primitive, _1, _2);
   param.conferenceID = conferenceID_;
   param.userID = userID_;
   param.dst = serverAddr_;
   return param;
 }
 
-void BfcpClient::onMessage(const UdpSocketPtr& socket, 
+void BaseClient::onMessage(const UdpSocketPtr& socket, 
                            Buffer* buf, 
                            const InetAddress &src, 
                            Timestamp time)
@@ -231,12 +234,12 @@ void BfcpClient::onMessage(const UdpSocketPtr& socket,
   }
 }
 
-void BfcpClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
+void BaseClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
 {
   LOG_TRACE << "message " << messageId << " write completed";
 }
 
-void BfcpClient::onNewRequest( const BfcpMsg &msg )
+void BaseClient::onNewRequest( const BfcpMsg &msg )
 {
   LOG_TRACE << "BfcpClient received new request " 
             << bfcp_prim_name(msg.primitive());
@@ -256,7 +259,7 @@ void BfcpClient::onNewRequest( const BfcpMsg &msg )
   }
 }
 
-void BfcpClient::onResponse(bfcp_prim requestPrimitive, 
+void BaseClient::onResponse(bfcp_prim requestPrimitive, 
                             ResponseError err, 
                             const BfcpMsg &msg)
 {
@@ -283,7 +286,7 @@ void BfcpClient::onResponse(bfcp_prim requestPrimitive,
   }
 }
 
-void BfcpClient::handleFloorRequestStatus( const BfcpMsg &msg )
+void BaseClient::handleFloorRequestStatus( const BfcpMsg &msg )
 {
   if (!checkMsg(msg, BFCP_FLOOR_REQUEST_STATUS)) return;
 
@@ -312,7 +315,7 @@ void BfcpClient::handleFloorRequestStatus( const BfcpMsg &msg )
   }
 }
 
-void BfcpClient::handleUserStatus( const BfcpMsg &msg )
+void BaseClient::handleUserStatus( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_USER_STATUS)) return;
@@ -338,7 +341,7 @@ void BfcpClient::handleUserStatus( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_USER_STATUS, &param);
 }
 
-void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
+void BaseClient::handleFloorStatus( const BfcpMsg &msg )
 {
   if (!checkMsg(msg, BFCP_FLOOR_STATUS)) return;
 
@@ -372,7 +375,7 @@ void BfcpClient::handleFloorStatus( const BfcpMsg &msg )
   }
 }
 
-void BfcpClient::handleChairAcionAck( const BfcpMsg &msg )
+void BaseClient::handleChairAcionAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_CHAIR_ACTION_ACK)) return;
@@ -380,7 +383,7 @@ void BfcpClient::handleChairAcionAck( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_CHAIR_ACTION_ACK, nullptr);
 }
 
-void BfcpClient::handleHelloAck( const BfcpMsg &msg )
+void BaseClient::handleHelloAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_HELLO_ACK)) return;
@@ -421,7 +424,7 @@ void BfcpClient::handleHelloAck( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_HELLO_ACK, nullptr);
 }
 
-void BfcpClient::handleGoodbyeAck( const BfcpMsg &msg )
+void BaseClient::handleGoodbyeAck( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_GOODBYE_ACK)) return;
@@ -433,7 +436,7 @@ void BfcpClient::handleGoodbyeAck( const BfcpMsg &msg )
   }
 }
 
-void BfcpClient::handleError( const BfcpMsg &msg )
+void BaseClient::handleError( const BfcpMsg &msg )
 {
   assert(msg.isResponse());
   if (!checkMsg(msg, BFCP_ERROR)) return;
@@ -464,7 +467,7 @@ void BfcpClient::handleError( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_ERROR, &param);
 }
 
-bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) const
+bool BaseClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) const
 {
   if (msg.getConferenceID() != conferenceID_)
   {
@@ -498,4 +501,5 @@ bool BfcpClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) con
   return true;
 }
 
-}
+} // namespace client
+} // namespace bfcp

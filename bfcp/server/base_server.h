@@ -1,5 +1,5 @@
-#ifndef BFCP_SERVER_H
-#define BFCP_SERVER_H
+#ifndef BFCP_BASE_SERVER_H
+#define BFCP_BASE_SERVER_H
 
 #include <boost/bind.hpp>
 
@@ -19,10 +19,10 @@ namespace bfcp
 class BfcpConnection;
 typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
-class BfcpServer
+class BaseServer
 {
 public:
-  BfcpServer(muduo::net::EventLoop* loop, const muduo::net::InetAddress& listenAddr);
+  BaseServer(muduo::net::EventLoop* loop, const muduo::net::InetAddress& listenAddr);
 
   void start()
   {
@@ -52,4 +52,4 @@ private:
 
 } // namespace bfcp
 
-#endif // BFCP_SERVER_H
+#endif // BFCP_BASE_SERVER_H

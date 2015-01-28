@@ -7,7 +7,7 @@
 #include <muduo/net/InetAddress.h>
 
 #include <bfcp/common/bfcp_buf_pool.h>
-#include <bfcp/server/bfcp_server.h>
+#include <bfcp/server/base_server.h>
 
 using namespace muduo;
 using namespace muduo::net;
@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
   EventLoop loop;
   InetAddress listenAddr(AF_INET, 7890);
   printf("hostport: %s\n", listenAddr.toIpPort().c_str());
-  BfcpServer server(&loop, listenAddr);
+  BaseServer server(&loop, listenAddr);
 
   server.start();
 

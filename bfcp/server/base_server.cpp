@@ -1,4 +1,4 @@
-#include <bfcp/server/bfcp_server.h>
+#include <bfcp/server/base_server.h>
 
 #include <muduo/base/Logging.h>
 
@@ -11,14 +11,14 @@ using namespace muduo::net;
 namespace bfcp
 {
 
-BfcpServer::BfcpServer(EventLoop* loop, const InetAddress& listenAddr ) : loop_(loop),
+BaseServer::BaseServer(EventLoop* loop, const InetAddress& listenAddr ) : loop_(loop),
   server_(loop, listenAddr, "BfcpServer", UdpServer::kReuseAddr)
 {
   server_.setMessageCallback(
-    boost::bind(&BfcpServer::onMessage, this, _1, _2, _3, _4));
+    boost::bind(&BaseServer::onMessage, this, _1, _2, _3, _4));
 }
 
-void BfcpServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetAddress& src, Timestamp time )
+void BaseServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetAddress& src, Timestamp time )
 {
   LOG_TRACE << server_.name() << " recv " << buf->readableBytes() << " bytes at " << time.toString()
             << " from " << src.toIpPort();
@@ -27,18 +27,18 @@ void BfcpServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetA
   {
     connection_ = boost::make_shared<BfcpConnection>(loop_, socket);
     connection_->setNewRequestCallback(
-      boost::bind(&BfcpServer::onNewRequest, this, _1));
+      boost::bind(&BaseServer::onNewRequest, this, _1));
   }
 
   connection_->onMessage(buf, src);
 }
 
-void BfcpServer::onWriteComplete( const UdpSocketPtr& socket, int messageId )
+void BaseServer::onWriteComplete( const UdpSocketPtr& socket, int messageId )
 {
   LOG_TRACE << "message " << messageId << " write completed";
 }
 
-void BfcpServer::onNewRequest( const BfcpMsg &msg )
+void BaseServer::onNewRequest( const BfcpMsg &msg )
 {
   LOG_TRACE << "BfcpServer received new request";
   if (msg.primitive() == BFCP_GOODBYE) 
@@ -47,7 +47,7 @@ void BfcpServer::onNewRequest( const BfcpMsg &msg )
   }
 }
 
-void BfcpServer::onResponse( ResponseError err, const BfcpMsg &msg )
+void BaseServer::onResponse( ResponseError err, const BfcpMsg &msg )
 {
   LOG_TRACE << "BfcpServer received response";
 }

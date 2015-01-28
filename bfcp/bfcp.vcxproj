@@ -21,7 +21,7 @@
     <ClCompile Include="server\conference.cpp" />
     <ClCompile Include="server\floor_manager.cpp" />
     <ClCompile Include="server\floor_request_node.cpp" />
-    <ClCompile Include="server\bfcp_server.cpp" />
+    <ClCompile Include="server\base_server.cpp" />
     <ClCompile Include="server\user.cpp" />
     <ClCompile Include="server\user_manager.cpp" />
   </ItemGroup>
@@ -43,7 +43,7 @@
     <ClInclude Include="server\floor.h" />
     <ClInclude Include="server\floor_manager.h" />
     <ClInclude Include="server\floor_request_node.h" />
-    <ClInclude Include="server\bfcp_server.h" />
+    <ClInclude Include="server\base_server.h" />
     <ClInclude Include="server\user.h" />
     <ClInclude Include="server\user_manager.h" />
   </ItemGroup>

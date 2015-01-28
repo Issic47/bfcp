@@ -36,9 +36,6 @@
     <ClCompile Include="common\bfcp_param.cpp">
       <Filter>common</Filter>
     </ClCompile>
-    <ClCompile Include="server\bfcp_server.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
     <ClCompile Include="server\user.cpp">
       <Filter>server</Filter>
     </ClCompile>
@@ -55,6 +52,9 @@
       <Filter>client</Filter>
     </ClCompile>
     <ClCompile Include="server\floor_request_node.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\base_server.cpp">
       <Filter>server</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,9 +95,6 @@
     <ClInclude Include="common\utility\MemoryPool.hpp">
       <Filter>common\utility</Filter>
     </ClInclude>
-    <ClInclude Include="server\bfcp_server.h">
-      <Filter>server</Filter>
-    </ClInclude>
     <ClInclude Include="server\floor.h">
       <Filter>server</Filter>
     </ClInclude>
@@ -117,6 +114,9 @@
       <Filter>client</Filter>
     </ClInclude>
     <ClInclude Include="server\floor_request_node.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\base_server.h">
       <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>

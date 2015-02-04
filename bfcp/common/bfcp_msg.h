@@ -50,6 +50,8 @@ public:
 
   std::list<BfcpAttr> findAttributes(::bfcp_attrib attrType) const;
 
+  bfcp_floor_id_list getFloorIDs() const;
+
   bfcp_entity getEntity() const
   {
     bfcp_entity entity;

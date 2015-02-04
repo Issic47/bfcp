@@ -69,4 +69,16 @@ string BfcpMsg::toString() const
   
 }
 
+bfcp_floor_id_list BfcpMsg::getFloorIDs() const
+{
+  bfcp_floor_id_list floorIDs;
+  auto attrs = findAttributes(BFCP_FLOOR_ID);
+  floorIDs.reserve(attrs.size());
+  for (auto &attr : attrs)
+  {
+    floorIDs.push_back(attr.getFloorID());
+  }
+  return floorIDs;
+}
+
 } // namespace bfcp

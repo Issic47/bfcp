@@ -30,7 +30,10 @@ public:
 class FloorRequestParam
 {
 public:
-  FloorRequestParam(): hasBeneficiaryID(false) {}
+  FloorRequestParam(): 
+    hasBeneficiaryID(false),
+    priority(BFCP_PRIO_NORMAL)
+  {}
 
   FloorRequestParam(FloorRequestParam &&param)
       : floorIDs(std::move(param.floorIDs)),
@@ -167,9 +170,10 @@ public:
 class FloorStatusParam
 {
 public:
-  FloorStatusParam() {}
+  FloorStatusParam() : hasFloorID(false) {}
   FloorStatusParam(FloorStatusParam &&param)
       : floorID(param.floorID),
+        hasFloorID(param.hasFloorID),
         frqInfoList(std::move(param.frqInfoList))
   {}
 
@@ -180,7 +184,14 @@ public:
     frqInfoList.push_back(std::move(param));
   }
 
+  void setFloorID(uint16_t fID)
+  {
+    floorID = fID;
+    hasFloorID = true;
+  }
+
   uint16_t floorID;
+  bool hasFloorID;
   FloorRequestInfoParamList frqInfoList;
 };
 

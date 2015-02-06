@@ -362,8 +362,11 @@ int build_msg_FloorStatus(mbuf_t *buf, bool response,
       0);
     if (err) break;
 
-    err = build_attr_FLOOR_ID(buf, floorStatus.floorID);
-    if (err) break;
+    if (floorStatus.hasFloorID)
+    {
+      err = build_attr_FLOOR_ID(buf, floorStatus.floorID);
+      if (err) break;
+    }
 
     for (auto &floorRequestInfo : floorStatus.frqInfoList)
     {

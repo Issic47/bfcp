@@ -97,8 +97,8 @@ void BaseClient::changeState( State state )
 {
   if (state_ != state)
   {
-    state_ = state;
     LOG_TRACE << "BfcpClient change state to " << toString(state);
+    state_ = state;
     if (stateChangedCallback_)
       stateChangedCallback_(state);
   }
@@ -228,10 +228,8 @@ void BaseClient::onMessage(const UdpSocketPtr& socket,
             << " bytes at " << time.toString() 
             << " from " << src.toIpPort();
 
-  if (connection_)
-  {
-    connection_->onMessage(buf, src);
-  }
+  assert(connection_);
+  connection_->onMessage(buf, src);
 }
 
 void BaseClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
@@ -266,7 +264,7 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
   if (err != kNoError)
   {
     LOG_TRACE << "BfcpClient received response with error " 
-              << responce_error_name(err);
+              << response_error_name(err);
     changeState(kDisconnected);
   }
   else
@@ -330,7 +328,6 @@ void BaseClient::handleUserStatus( const BfcpMsg &msg )
   }
 
   auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
-  param.frqInfoList.reserve(attrs.size());
   for (auto &attr : attrs)
   {
     bfcp_floor_request_info frqInfo = attr.getFloorRequestInfo();
@@ -363,7 +360,6 @@ void BaseClient::handleFloorStatus( const BfcpMsg &msg )
     param.floorID = floorIDAttr.getFloorID();
 
     auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
-    param.frqInfoList.reserve(attrs.size());
     for (auto &attr : attrs)
     {
       bfcp_floor_request_info info = attr.getFloorRequestInfo();
@@ -471,14 +467,14 @@ bool BaseClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) con
 {
   if (msg.getConferenceID() != conferenceID_)
   {
-    LOG_ERROR << "Expected BFCP conference ID is " << conferenceID_
+    LOG_ERROR << "Expected BFCP Conference ID is " << conferenceID_
               << " but get " << msg.getConferenceID();
     return false;
   }
 
   if (msg.getUserID() != userID_)
   {
-    LOG_ERROR << "Expected BFCP user ID is " << userID_
+    LOG_ERROR << "Expected BFCP User ID is " << userID_
               << " but get " << msg.getUserID();
     return false;
   }

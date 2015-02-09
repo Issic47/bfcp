@@ -1,7 +1,11 @@
 #ifndef BFCP_CONN_H
 #define BFCP_CONN_H
 
+#include <vector>
+#include <map>
+
 #include <boost/noncopyable.hpp>
+#include <boost/bind.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/circular_buffer.hpp>
@@ -17,9 +21,6 @@
 #include <bfcp/common/bfcp_mbuf_wrapper.h>
 #include <bfcp/common/bfcp_param.h>
 #include <bfcp/common/bfcp_msg.h>
-
-#include <vector>
-#include <map>
 
 namespace bfcp
 {
@@ -69,6 +70,8 @@ class BfcpConnection : public boost::shared_ptr<BfcpConnection>,
 public:
   BfcpConnection(muduo::net::EventLoop *loop, const muduo::net::UdpSocketPtr &socket);
   ~BfcpConnection();
+
+  muduo::net::EventLoop* getEventLoop() { return loop_; }
 
   void onMessage(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
 
@@ -129,12 +132,14 @@ public:
   void replyWithGoodByeAck(const BfcpMsg &msg)
   { runInLoop(&BfcpConnection::replyWithGoodByeAckInLoop, msg); }
 
+  // FIXME: make frqInfo to smart pointer
   void notifyFloorRequestStatus(const BasicRequestParam &basicParam, 
                                 const FloorRequestInfoParam &frqInfo)
   {
     runInLoop(&BfcpConnection::notifyFloorRequestStatusInLoop, basicParam, frqInfo);
   }
 
+  // FIXME: make floorStatusParam to smart pointer
   void notifyFloorStatus(const BasicRequestParam &basicParam, 
     const FloorStatusParam &floorStatus)
   { 

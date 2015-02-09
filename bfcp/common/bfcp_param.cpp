@@ -51,7 +51,6 @@ void FloorRequestInfoParam::set( const bfcp_floor_request_info &info )
     oRS.set(info.oRS);
   }
 
-  fRS.reserve(info.fRS.size());
   for (auto &status : info.fRS)
   {
     FloorRequestStatusParam floorRequestStatus;

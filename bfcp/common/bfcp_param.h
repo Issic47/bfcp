@@ -1,8 +1,8 @@
 #ifndef BFCP_PARAM_H
 #define BFCP_PARAM_H
 
+#include <list>
 #include <muduo/base/StringPiece.h>
-
 #include <bfcp/common/bfcp_ex.h>
 
 namespace bfcp
@@ -23,6 +23,12 @@ class UserQueryParam
 public:
   UserQueryParam(): hasBeneficiaryID(false) {}
 
+  void setBeneficiaryID(uint16_t bID)
+  {
+    beneficiaryID = bID;
+    hasBeneficiaryID = true;
+  }
+
   uint16_t beneficiaryID;
   bool hasBeneficiaryID;
 };
@@ -41,6 +47,12 @@ public:
         pInfo(std::move(param.pInfo)),
         priority(param.priority)
   {}
+
+  void setBeneficiaryID(uint16_t bID)
+  {
+    beneficiaryID = bID;
+    hasBeneficiaryID = true;
+  }
 
   bfcp_floor_id_list floorIDs;
   uint16_t beneficiaryID;
@@ -105,7 +117,7 @@ public:
   bool hasRequestStatus;
 };
 
-typedef std::vector<FloorRequestStatusParam> FloorRequestStatusParamList;
+typedef std::list<FloorRequestStatusParam> FloorRequestStatusParamList;
 
 class FloorRequestInfoParam
 {
@@ -137,7 +149,7 @@ public:
   string partPriovidedInfo;
 };
 
-typedef std::vector<FloorRequestInfoParam> FloorRequestInfoParamList;
+typedef std::list<FloorRequestInfoParam> FloorRequestInfoParamList;
 
 class UserStatusParam
 {

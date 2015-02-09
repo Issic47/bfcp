@@ -12,7 +12,7 @@ using muduo::net::InetAddress;
 namespace bfcp
 {
 
-const char* responce_error_name( ResponseError err )
+const char* response_error_name( ResponseError err )
 {
   switch (err)
   {
@@ -26,7 +26,7 @@ void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
 {
   if (err)
   {
-    LOG_ERROR << "Response error: " << responce_error_name(err);
+    LOG_ERROR << "Response error: " << response_error_name(err);
   }
 }
 
@@ -97,7 +97,7 @@ void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
   if (err)
   {
     LOG_INFO << "Client transaction" << toString(entity_)
-             << " on response with error: " << responce_error_name(err);
+             << " on response with error: " << response_error_name(err);
   }
   else
   {

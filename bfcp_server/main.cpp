@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
   InetAddress listenAddr(AF_INET, 7890);
   printf("hostport: %s\n", listenAddr.toIpPort().c_str());
   BaseServer server(&loop, listenAddr);
-
+  server.enableConnectionThread();
   server.start();
 
   loop.loop();

@@ -18,12 +18,12 @@
     <ClCompile Include="common\bfcp_msg.cpp" />
     <ClCompile Include="common\bfcp_msg_build.cpp" />
     <ClCompile Include="common\bfcp_param.cpp" />
-    <ClCompile Include="server\conference.cpp" />
-    <ClCompile Include="server\floor_manager.cpp" />
+    <ClCompile Include="server\conference.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="server\floor_request_node.cpp" />
     <ClCompile Include="server\base_server.cpp" />
     <ClCompile Include="server\user.cpp" />
-    <ClCompile Include="server\user_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="client\base_client.h" />
@@ -39,13 +39,17 @@
     <ClInclude Include="common\bfcp_param.h" />
     <ClInclude Include="common\utility\MemoryPool.h" />
     <ClInclude Include="common\utility\MemoryPool.hpp" />
-    <ClInclude Include="server\conference.h" />
+    <ClInclude Include="common\utility\SpinLock.h" />
+    <ClInclude Include="server\conference.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="server\floor.h" />
-    <ClInclude Include="server\floor_manager.h" />
     <ClInclude Include="server\floor_request_node.h" />
     <ClInclude Include="server\base_server.h" />
+    <ClInclude Include="server\message_queue.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="server\user.h" />
-    <ClInclude Include="server\user_manager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B24C9EB9-7162-4F12-9D46-A41CB886B2F0}</ProjectGuid>

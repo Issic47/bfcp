@@ -3,16 +3,11 @@
 namespace bfcp
 {
 
-bool User::increaseFloorRequestCountOfAFloor(
-  uint16_t floorID, uint16_t maxFloorRequestCount)
+void User::addOneRequestOfFloor(uint16_t floorID)
 {
   auto it = floorRequestCounter_.lower_bound(floorID);
   if (it != floorRequestCounter_.end() && (*it).first == floorID)
   {
-    if ((*it).second + 1 > maxFloorRequestCount)
-    {
-      return false;
-    }
     ++(*it).second;
   }
   else
@@ -20,10 +15,9 @@ bool User::increaseFloorRequestCountOfAFloor(
     floorRequestCounter_.insert(
       it, std::pair<uint16_t, uint16_t>(floorID, 1));
   }
-  return true;
 }
 
-void User::decreaseFloorRequestCountOfAFloor( uint16_t floorID )
+void User::removeOneRequestOfFloor( uint16_t floorID )
 {
   auto it = floorRequestCounter_.find(floorID);
   if (it != floorRequestCounter_.end())
@@ -32,7 +26,7 @@ void User::decreaseFloorRequestCountOfAFloor( uint16_t floorID )
   }
 }
 
-uint16_t User::getFloorRequestCountOfAFloor( uint16_t floorID ) const
+uint16_t User::getRequestCountOfFloor( uint16_t floorID ) const
 {
   auto it = floorRequestCounter_.find(floorID);
   if (it != floorRequestCounter_.end())
@@ -42,7 +36,7 @@ uint16_t User::getFloorRequestCountOfAFloor( uint16_t floorID ) const
   return 0;
 }
 
-void User::clearFloorRequestCountOfAFloor( uint16_t floorID )
+void User::resetRequestCountOfFloor( uint16_t floorID )
 {
   auto it = floorRequestCounter_.find(floorID);
   if (it != floorRequestCounter_.end())
@@ -50,9 +44,5 @@ void User::clearFloorRequestCountOfAFloor( uint16_t floorID )
     (*it).second = 0;
   }
 }
-
-
-
-
 
 } // namespace bfcp

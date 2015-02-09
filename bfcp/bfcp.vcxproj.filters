@@ -39,22 +39,16 @@
     <ClCompile Include="server\user.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="server\conference.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
-    <ClCompile Include="server\floor_manager.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
-    <ClCompile Include="server\user_manager.cpp">
-      <Filter>server</Filter>
-    </ClCompile>
     <ClCompile Include="client\base_client.cpp">
       <Filter>client</Filter>
     </ClCompile>
-    <ClCompile Include="server\floor_request_node.cpp">
+    <ClCompile Include="server\base_server.cpp">
       <Filter>server</Filter>
     </ClCompile>
-    <ClCompile Include="server\base_server.cpp">
+    <ClCompile Include="server\conference.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\floor_request_node.cpp">
       <Filter>server</Filter>
     </ClCompile>
   </ItemGroup>
@@ -101,22 +95,22 @@
     <ClInclude Include="server\user.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="server\conference.h">
+    <ClInclude Include="server\base_server.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="server\user_manager.h">
-      <Filter>server</Filter>
+    <ClInclude Include="common\utility\SpinLock.h">
+      <Filter>common\utility</Filter>
     </ClInclude>
-    <ClInclude Include="server\floor_manager.h">
+    <ClInclude Include="server\message_queue.h">
       <Filter>server</Filter>
     </ClInclude>
     <ClInclude Include="client\base_client.h">
       <Filter>client</Filter>
     </ClInclude>
-    <ClInclude Include="server\floor_request_node.h">
+    <ClInclude Include="server\conference.h">
       <Filter>server</Filter>
     </ClInclude>
-    <ClInclude Include="server\base_server.h">
+    <ClInclude Include="server\floor_request_node.h">
       <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>

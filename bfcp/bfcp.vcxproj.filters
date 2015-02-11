@@ -51,6 +51,12 @@
     <ClCompile Include="server\floor_request_node.cpp">
       <Filter>server</Filter>
     </ClCompile>
+    <ClCompile Include="server\task_queue.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\thread_pool.cpp">
+      <Filter>server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common\bfcp_attr.h">
@@ -101,9 +107,6 @@
     <ClInclude Include="common\utility\SpinLock.h">
       <Filter>common\utility</Filter>
     </ClInclude>
-    <ClInclude Include="server\message_queue.h">
-      <Filter>server</Filter>
-    </ClInclude>
     <ClInclude Include="client\base_client.h">
       <Filter>client</Filter>
     </ClInclude>
@@ -111,6 +114,12 @@
       <Filter>server</Filter>
     </ClInclude>
     <ClInclude Include="server\floor_request_node.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\task_queue.h">
+      <Filter>server</Filter>
+    </ClInclude>
+    <ClInclude Include="server\thread_pool.h">
       <Filter>server</Filter>
     </ClInclude>
   </ItemGroup>

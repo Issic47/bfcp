@@ -18,6 +18,8 @@
     <ClCompile Include="common\bfcp_msg.cpp" />
     <ClCompile Include="common\bfcp_msg_build.cpp" />
     <ClCompile Include="common\bfcp_param.cpp" />
+    <ClCompile Include="server\thread_pool.cpp" />
+    <ClCompile Include="server\task_queue.cpp" />
     <ClCompile Include="server\conference.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClCompile>
@@ -46,8 +48,10 @@
     <ClInclude Include="server\floor.h" />
     <ClInclude Include="server\floor_request_node.h" />
     <ClInclude Include="server\base_server.h" />
-    <ClInclude Include="server\message_queue.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+    <ClInclude Include="server\thread_pool.h" />
+    <ClInclude Include="server\task_queue.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="server\user.h" />
   </ItemGroup>

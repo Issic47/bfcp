@@ -68,7 +68,12 @@ private:
 
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
   void onNewRequest(const BfcpMsg &msg);
-  void onResponse(ResponseError err, const BfcpMsg &msg);
+  void onResponse(
+    uint32_t conferenceID, 
+    uint16_t userID, 
+    bfcp_prim expectedPrimitive, 
+    ResponseError err, 
+    const BfcpMsg &msg);
 
   muduo::net::EventLoop* loop_;
   muduo::net::UdpServer server_;

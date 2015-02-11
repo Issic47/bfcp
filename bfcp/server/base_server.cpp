@@ -59,7 +59,11 @@ void BaseServer::onNewRequest( const BfcpMsg &msg )
   }
 }
 
-void BaseServer::onResponse( ResponseError err, const BfcpMsg &msg )
+void BaseServer::onResponse(uint32_t conferenceID, 
+                            uint16_t userID, 
+                            bfcp_prim expectedPrimitive, 
+                            ResponseError err, 
+                            const BfcpMsg &msg)
 {
   LOG_TRACE << "BfcpServer received response";
 }
@@ -75,9 +79,12 @@ void BaseServer::start()
 {
   if (started_.getAndSet(1) == 0)
   {
-    assert(!connectionThread_);
-    connectionThread_.reset(new EventLoopThread);
-    connectionLoop_ = connectionThread_->startLoop();
+    if (enableConnectionThread_)
+    {
+      assert(!connectionThread_);
+      connectionThread_.reset(new EventLoopThread);
+      connectionLoop_ = connectionThread_->startLoop();
+    }
     server_.start();
   }
 }
@@ -86,7 +93,10 @@ void BaseServer::stop()
 {
   if (started_.getAndSet(0) == 1)
   {
-    connectionThread_.reset(nullptr);
+    if (enableConnectionThread_)
+    {
+      connectionThread_.reset(nullptr);
+    }
     server_.stop();
   }
 }

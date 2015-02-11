@@ -76,6 +76,9 @@ const bfcp_attrib SUPPORTED_ATTRS[] =
 
 } // namespace detail
 
+
+const double Conference::kDefaultTimeForChairAction = 5.0;
+
 Conference::Conference(muduo::net::EventLoop *loop,
                        const BfcpConnectionPtr &connection, 
                        uint32_t conferenceID, 
@@ -96,6 +99,8 @@ Conference::Conference(muduo::net::EventLoop *loop,
 {
   assert(connection_);
   initRequestHandlers();
+  if (timeForChairAction_ < 0.0)
+    timeForChairAction_ = kDefaultTimeForChairAction;
 }
 
 void Conference::initRequestHandlers()
@@ -131,6 +136,39 @@ void Conference::initRequestHandlers()
   requestHandler_.insert(std::make_pair(
     BFCP_GOODBYE,
     boost::bind(&Conference::handleGoodBye, this, _1)));
+}
+
+
+Conference::ControlError 
+Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
+{
+  maxFloorRequest_ = maxFloorRequest; 
+  return kNoError;
+}
+
+Conference::ControlError 
+Conference::setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount)
+{
+  auto floor = findFloor(floorID);
+  if (!floor)
+  {
+    return kFloorNoExist;
+  }
+  floor->setMaxGrantedCount(maxGrantedCount);
+  return kNoError;
+}
+
+Conference::ControlError 
+Conference::setAcceptPolicy(AcceptPolicy policy, double timeForChairAction)
+{
+  if (timeForChairAction < 0.0)
+  {
+    LOG_ERROR << "Invalid timeout for chair action: " << timeForChairAction;
+    timeForChairAction = kDefaultTimeForChairAction;
+  }
+  timeForChairAction_ = timeForChairAction;
+  acceptPolicy_ = policy;
+  return kNoError;
 }
 
 Conference::ControlError 
@@ -178,7 +216,7 @@ Conference::ControlError Conference::removeUser( uint16_t userID )
 
   cancelFloorRequestsFromPendingByUserID(userID);
   cancelFloorRequestsFromAcceptedByUserID(userID);
-  cancelFloorRequestsFromGrantedByUserID(userID);
+  releaseFloorRequestsFromGrantedByUserID(userID);
 
   users_.erase(userID);
 
@@ -232,7 +270,7 @@ void Conference::cancelFloorRequestsFromAcceptedByUserID( uint16_t userID )
   }
 }
 
-void Conference::cancelFloorRequestsFromGrantedByUserID( uint16_t userID )
+void Conference::releaseFloorRequestsFromGrantedByUserID( uint16_t userID )
 {
   for (auto it = granted_.begin(); it != granted_.end();)
   {
@@ -281,7 +319,7 @@ Conference::ControlError Conference::removeFloor( uint16_t floorID )
   }
   cancelFloorRequestsFromPendingByFloorID(floorID);
   cancelFloorRequestsFromAcceptedByFloorID(floorID);
-  cancelFloorRequestsFromGrantedByFloorID(floorID);
+  releaseFloorRequestsFromGrantedByFloorID(floorID);
   
   floors_.erase(floorID);
 
@@ -325,7 +363,7 @@ void Conference::cancelFloorRequestsFromAcceptedByFloorID(uint16_t floorID)
   }
 }
 
-void Conference::cancelFloorRequestsFromGrantedByFloorID(uint16_t floorID)
+void Conference::releaseFloorRequestsFromGrantedByFloorID(uint16_t floorID)
 {
   for (auto it = granted_.begin(); it != granted_.end();)
   {
@@ -630,7 +668,7 @@ void Conference::notifyWithFloorStatus( uint16_t floorID )
       basicParam.dst = user->getAddr();
       basicParam.cb = boost::bind(clientReponseCallback_,
         BFCP_FLOOR_STATUS_ACK, userID, _1, _2);
-      user->trySendMessageAction(
+      user->runSendMessageTask(
         boost::bind(&BfcpConnection::notifyFloorStatus,
         connection_, basicParam, floorStatusParam));
     }
@@ -653,7 +691,7 @@ void Conference::notifyWithFloorRequestStatus(
       param.dst = user->getAddr();
       param.cb = boost::bind(clientReponseCallback_, 
         BFCP_FLOOR_REQ_STATUS_ACK, userID, _1, _2);
-      user->trySendMessageAction(
+      user->runSendMessageTask(
         boost::bind(&BfcpConnection::notifyFloorRequestStatus, 
         connection_, param, frqInfo));
     }
@@ -1544,7 +1582,7 @@ void Conference::notifyWithFloorStatus(uint16_t userID, uint16_t floorID)
     basicParam.dst = user->getAddr();
     basicParam.cb = boost::bind(
       clientReponseCallback_, BFCP_FLOOR_STATUS_ACK, user->getUserID(), _1, _2);
-    user->trySendMessageAction(boost::bind(&BfcpConnection::notifyFloorStatus,
+    user->runSendMessageTask(boost::bind(&BfcpConnection::notifyFloorStatus,
       connection_, basicParam, getFloorStatusParam(floorID)));
   }
 }
@@ -1593,7 +1631,7 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
     LOG_INFO << "Set User " << userID << " in Conference " << conferenceID_ 
              <<" to unavailable";
     user->setAvailable(false);
-    user->clearAllSendMessageAction();
+    user->clearAllSendMessageTasks();
   }
   else
   {
@@ -1605,9 +1643,10 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
       LOG_ERROR << "Expected BFCP " << bfcp_prim_name(expectedPrimitive) 
                 << " but get " << bfcp_prim_name(msg.primitive());
     }
-    user->callNextSendMessageAction();
+    user->runNextSendMessageTask();
   }
 }
+
 
 
 

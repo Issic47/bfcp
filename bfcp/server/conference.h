@@ -54,6 +54,9 @@ public:
     kConferenceAlreadyExist,
   };
 
+  static const double kDefaultTimeForChairAction;
+
+public:
   Conference(
     muduo::net::EventLoop *loop,
     const BfcpConnectionPtr &connection,
@@ -67,6 +70,10 @@ public:
   uint32_t getConferenceID() const { return conferenceID_; }
 
   // methods for control
+  ControlError setMaxFloorRequest(uint16_t maxFloorRequest);
+  ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
+  ControlError setAcceptPolicy(AcceptPolicy policy, double timeForChairAction);
+
   ControlError addUser(uint16_t userID, const string &userURI, const string &displayName);
   ControlError removeUser(uint16_t userID);
   
@@ -75,7 +82,7 @@ public:
 
   ControlError addChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);
-
+  
   // NOTE: if TimeoutForChairActionCallback is set,
   // onTimeoutForChairAction should be called in cb.
   void setChairActionTimeoutCallback(const ChairActionTimeoutCallback &cb)
@@ -97,7 +104,7 @@ public:
     ResponseError err, 
     const BfcpMsg &msg);
   void onTimeoutForChairAction(uint16_t floorRequestID);
-    
+
 private:
   typedef std::list<FloorRequestNodePtr> FloorRequestQueue;
 
@@ -161,11 +168,11 @@ private:
 
   void cancelFloorRequestsFromPendingByFloorID(uint16_t floorID);
   void cancelFloorRequestsFromAcceptedByFloorID(uint16_t floorID);
-  void cancelFloorRequestsFromGrantedByFloorID(uint16_t floorID);
+  void releaseFloorRequestsFromGrantedByFloorID(uint16_t floorID);
   
   void cancelFloorRequestsFromPendingByUserID(uint16_t userID);
   void cancelFloorRequestsFromAcceptedByUserID(uint16_t userID);
-  void cancelFloorRequestsFromGrantedByUserID(uint16_t userID);
+  void releaseFloorRequestsFromGrantedByUserID(uint16_t userID);
 
   void acceptFloorRequest(
     const BfcpMsg &msg,

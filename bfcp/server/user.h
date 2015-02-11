@@ -15,7 +15,7 @@ namespace bfcp
 class User : boost::noncopyable
 {
 public:
-  typedef boost::function<void ()> SendMessageAction;
+  typedef boost::function<void ()> SendMessageTask;
 
   User(uint16_t userID, const string &displayName, const string &uri)
       : userID_(userID),
@@ -53,32 +53,33 @@ public:
     return param;
   }
 
-  void trySendMessageAction(SendMessageAction &&action)
+  void runSendMessageTask(SendMessageTask &&task)
   {
-    if (actions_.empty())
+    if (tasks_.empty())
     {
-      action();
+      task();
     }
-    actions_.push_back(std::move(action));
+    tasks_.emplace_back(std::move(task));
   }
 
-  void trySendMessageAction(const SendMessageAction &action)
+  void runSendMessageTask(const SendMessageTask &task)
   {
-    if (actions_.empty())
+    if (tasks_.empty())
     {
-      action();
+      task();
     }
-    actions_.push_back(action);
+    tasks_.emplace_back(task);
   }
 
-  void clearAllSendMessageAction()
-  { actions_.clear(); }
+  void clearAllSendMessageTasks()
+  { tasks_.clear(); }
 
-  void callNextSendMessageAction()
+  void runNextSendMessageTask()
   {
-    actions_.pop_front();
-    if (actions_.empty()) return;
-    actions_.front()();
+    assert(!tasks_.empty());
+    tasks_.pop_front();
+    if (tasks_.empty()) return;
+    tasks_.front()();
   }
 
 private:
@@ -90,7 +91,7 @@ private:
   string uri_;
   muduo::net::InetAddress addr_;
   FloorRequestMap floorRequestCounter_;
-  std::list<SendMessageAction> actions_;
+  std::list<SendMessageTask> tasks_;
   bool isAvailable_;
 };
 

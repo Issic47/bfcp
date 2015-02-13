@@ -9,7 +9,7 @@ TaskQueue::TaskQueue( ThreadPool *runner, size_t maxQueueSize )
   : runner_(CHECK_NOTNULL(runner)),
     maxQueueSize_(maxQueueSize),
     mutex_(),
-    notFull_(mutex_),
+    notFull_(maxQueueSize > 0 ? new muduo::Condition(mutex_) : nullptr),
     isInGlobal_(false),
     isReleasing_(false)
 {
@@ -20,7 +20,7 @@ void TaskQueue::put( Task &&action, ThreadPool::Priority priority )
   muduo::MutexLockGuard lock(mutex_);
   while (isFull())
   {
-    notFull_.wait();
+    notFull_->wait();
   }
   assert(!isFull());
   if (priority == ThreadPool::kHighPriority)
@@ -38,7 +38,7 @@ void TaskQueue::put( const Task &action, ThreadPool::Priority priority )
   muduo::MutexLockGuard lock(mutex_);
   while (isFull())
   {
-    notFull_.wait();
+    notFull_->wait();
   }
   assert(!isFull());
   if (priority == ThreadPool::kHighPriority)
@@ -62,7 +62,7 @@ TaskQueue::Task TaskQueue::take()
     highPriorityTasks_.pop_front();
     if (maxQueueSize_ > 0)
     {
-      notFull_.notify();
+      notFull_->notify();
     }
   }
   else if (!normalPriorityTasks_.empty())
@@ -71,7 +71,7 @@ TaskQueue::Task TaskQueue::take()
     normalPriorityTasks_.pop_front();
     if (maxQueueSize_ > 0)
     {
-      notFull_.notify();
+      notFull_->notify();
     }
   }
 

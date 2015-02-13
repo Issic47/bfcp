@@ -4,9 +4,8 @@
 #include <deque>
 
 #include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <muduo/base/Mutex.h>
 #include <muduo/base/Condition.h>
 
@@ -15,7 +14,7 @@
 namespace bfcp
 {
 
-class TaskQueue : public boost::enable_shared_from_this<TaskQueue>
+class TaskQueue : boost::noncopyable
 {
 public:
   typedef ThreadPool::Task Task;
@@ -41,14 +40,12 @@ private:
   ThreadPool *runner_;
   size_t maxQueueSize_;
   muduo::MutexLock mutex_;
-  muduo::Condition notFull_;
+  boost::scoped_ptr<muduo::Condition> notFull_;
   std::deque<Task> highPriorityTasks_;
   std::deque<Task> normalPriorityTasks_;
   bool isInGlobal_;
   bool isReleasing_;
 };
-
-typedef boost::shared_ptr<TaskQueue> TaskQueuePtr;
 
 } // namespace bfcp
 

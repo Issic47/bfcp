@@ -244,8 +244,8 @@ void BfcpConnection::runInLoop(Func func, const Arg1 &arg1)
   {
     loop_->runInLoop(
       boost::bind(func, 
-      this, // FIXME
-      arg1)); // std::move?
+        this, // FIXME
+        arg1)); // std::move?
   }
 }
 
@@ -260,9 +260,9 @@ void BfcpConnection::runInLoop(Func func, const Arg1 &arg1, const Arg2 &arg2)
   {
     loop_->runInLoop(
       boost::bind(func, 
-      this, // FIXME
-      arg1, // std::move?
-      arg2)); // std::move?
+        this, // FIXME
+        arg1, // std::move?
+        arg2)); // std::move?
   }
 }
 

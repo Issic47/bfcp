@@ -12,6 +12,7 @@
 
 #include <bfcp/common/bfcp_param.h>
 #include <bfcp/common/bfcp_callbacks.h>
+#include <bfcp/server/conference_define.h>
 
 namespace bfcp
 {
@@ -30,29 +31,13 @@ typedef std::map<uint16_t, UserPtr> UserDict;
 class Conference
 {
 public:
-  typedef boost::function<void (uint16_t)> ChairActionTimeoutCallback;
   typedef boost::function<
-    void (bfcp_prim, uint16_t, ResponseError, const BfcpMsg&)
+    void (uint32_t, uint16_t)
+  > ChairActionTimeoutCallback;
+  
+  typedef boost::function<
+    void (uint32_t, bfcp_prim, uint16_t, ResponseError, const BfcpMsg&)
   > ClientResponseCallback;
-
-  enum AcceptPolicy
-  {
-    kAutoAccept = 0,
-    kAutoDeny = 1,
-  };
-
-  enum ControlError
-  {
-    kNoError = 0,
-    kUserNoExist,
-    kUserAlreadyExist,
-    kFloorNoExist,
-    kFloorAlreadyExist,
-    kChairNoExist,
-    kChairAlreadyExist,
-    kConferenceNoExist,
-    kConferenceAlreadyExist,
-  };
 
   static const double kDefaultTimeForChairAction;
 
@@ -74,7 +59,7 @@ public:
   ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
   ControlError setAcceptPolicy(AcceptPolicy policy, double timeForChairAction);
 
-  ControlError addUser(uint16_t userID, const string &userURI, const string &displayName);
+  ControlError addUser(const UserInfoParam &user);
   ControlError removeUser(uint16_t userID);
   
   ControlError addFloor(uint16_t floorID, uint16_t maxGrantedCount);
@@ -83,14 +68,12 @@ public:
   ControlError addChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);
   
-  // NOTE: if TimeoutForChairActionCallback is set,
   // onTimeoutForChairAction should be called in cb.
   void setChairActionTimeoutCallback(const ChairActionTimeoutCallback &cb)
   { chairActionTimeoutCallback_ = cb; }
   void setChairActionTimeoutCallback(ChairActionTimeoutCallback &&cb)
   { chairActionTimeoutCallback_ = std::move(cb); }
 
-  // NOTE: if ClientResponseCallback is set,
   // onResponse should be callback in cb.
   void setClientReponseCallback(const ClientResponseCallback &cb)
   { clientReponseCallback_ = cb; }

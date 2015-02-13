@@ -1,11 +1,13 @@
 #ifndef BFCP_BASE_SERVER_H
 #define BFCP_BASE_SERVER_H
 
+#include <map>
+
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 
 #include <muduo/base/Atomic.h>
-#include <muduo/base/BlockingQueue.h>
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/Buffer.h>
 #include <muduo/net/EventLoop.h>
@@ -13,76 +15,232 @@
 #include <muduo/net/UdpServer.h>
 #include <muduo/net/EventLoopThread.h>
 
-#include <muduo/base/Thread.h>
-
 #include <bfcp/common/bfcp_callbacks.h>
-#include <bfcp/server/conference.h>
+#include <bfcp/common/bfcp_param.h>
+#include <bfcp/server/conference_define.h>
 
 namespace bfcp
 {
 class BfcpConnection;
+class ThreadPool;
+class Conference;
 typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
+typedef boost::shared_ptr<Conference> ConferencePtr;
 
 class BaseServer
 {
 public:
-  typedef boost::function<void()> WorkerThreadInitCallback;
+  typedef boost::function<void ()> WorkerThreadInitCallback;
+  typedef boost::function<void (ControlError)> ResultCallback;
 
-  BaseServer(muduo::net::EventLoop* loop, const muduo::net::InetAddress& listenAddr);
+  BaseServer(muduo::net::EventLoop* loop, 
+             const muduo::net::InetAddress& listenAddr);
+
+  muduo::net::EventLoop* getLoop() { return loop_; }
 
   // NOTE: call before start
   void enableConnectionThread();
+
+  void setWorkerThreadNum(int numThreads) { numThreads_ = numThreads; }
+  
+  void setWorkerThreadInitCallback(const WorkerThreadInitCallback &cb)
+  { workerThreadInitCallback_ = cb; }
+  void setWorkerThreadInitCallback(WorkerThreadInitCallback &&cb)
+  { workerThreadInitCallback_ = std::move(cb); }
+
   void start();
   void stop();
 
-  int addConference(uint32_t conferenceID, 
-                    uint16_t maxFloorRequest, 
-                    Conference::AcceptPolicy policy, 
-                    uint32_t timeForChairAction);
-  int removeConference(uint32_t conferenceID);
-  int changeMaxFloorRequest(uint32_t conferenceID, uint16_t maxFloorRequest);
-  int changeAcceptPolicy(uint32_t conferenceID, Conference::AcceptPolicy policy);
+  void addConference(
+    uint32_t conferenceID, 
+    uint16_t maxFloorRequest, 
+    AcceptPolicy policy, 
+    double timeForChairAction,
+    const ResultCallback &cb);
 
-  int addFloor(uint32_t conferenceID, 
-               uint16_t floorID, 
-               int chairID,
-               uint16_t maxGrantedNum);
-  int removeFloor(uint32_t conferenceID, uint16_t floorID);
-  int changeMaxGrantedNum(uint32_t conferenceID, uint16_t floorID, uint16_t maxGrantedNum);
+  void removeConference(
+    uint32_t conferenceID, 
+    const ResultCallback &cb);
 
-  int addUser(uint32_t conferenceID,
-              uint16_t userID,
-              const string &displayName,
-              const string &uri);
-  int removeUser(uint32_t conferenceID, uint16_t userID);
+  void changeMaxFloorRequest(
+    uint32_t conferenceID, 
+    uint16_t maxFloorRequest,
+    const ResultCallback &cb);
 
-  int addChair(uint32_t conferenceID, uint16_t floorID, uint16_t userID);
-  int removeChair(uint32_t conferenceID, uint16_t floorID);
+  void changeAcceptPolicy(
+    uint32_t conferenceID, 
+    AcceptPolicy policy, 
+    double timeForChairAction,
+    const ResultCallback &cb);
+
+  void addFloor(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    uint16_t maxGrantedNum,
+    const ResultCallback &cb);
+
+  void removeFloor(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    const ResultCallback &cb);
+
+  void changeMaxGrantedNum(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    uint16_t maxGrantedNum,
+    const ResultCallback &cb);
+
+  void addUser(
+    uint32_t conferenceID,
+    const UserInfoParam &user,
+    const ResultCallback &cb);
+
+  void removeUser(
+    uint32_t conferenceID, 
+    uint16_t userID,
+    const ResultCallback &cb);
+
+  void addChair(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    uint16_t userID,
+    const ResultCallback &cb);
+
+  void removeChair(
+    uint32_t conferenceID,
+    uint16_t floorID,
+    const ResultCallback &cb);
  
 private:
+  typedef boost::function<ControlError ()> ConferenceTask;
+
   void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 
                  muduo::net::Buffer* buf, 
                  const muduo::net::InetAddress& src, 
                  muduo::Timestamp time);
-
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
+
   void onNewRequest(const BfcpMsg &msg);
   void onResponse(
     uint32_t conferenceID, 
-    uint16_t userID, 
     bfcp_prim expectedPrimitive, 
+    uint16_t userID,
     ResponseError err, 
     const BfcpMsg &msg);
+  void onChairActionTimeout(
+    uint32_t conferenceID,
+    uint16_t floorRequestID);
 
+  void addConferenceInLoop(
+    uint32_t conferenceID, 
+    uint16_t maxFloorRequest,
+    AcceptPolicy policy,
+    double timeForChairAction,
+    const ResultCallback &cb);
+
+  void removeConferenceInLoop(
+    uint32_t conferenceID, 
+    const ResultCallback &cb);
+
+  void changeMaxFloorRequestInLoop(
+    uint32_t conferenceID, 
+    uint16_t maxFloorRequest,
+    const ResultCallback &cb);
+
+  void changeAcceptPolicyInLoop(
+    uint32_t conferenceID, 
+    AcceptPolicy policy, 
+    double timeForChairAction,
+    const ResultCallback &cb);
+
+  void addFloorInLoop(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    uint16_t maxGrantedNum,
+    const ResultCallback &cb);
+
+  void removeFloorInLoop(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    const ResultCallback &cb);
+
+  void changeMaxGrantedNumInLoop(
+    uint32_t conferenceID, 
+    uint16_t floorID, 
+    uint16_t maxGrantedNum, 
+    const ResultCallback &cb);
+
+  void addUserInLoop(
+    uint32_t conferenceID, 
+    const UserInfoParam &user,
+    const ResultCallback &cb);
+
+  void removeUserInLoop(
+    uint32_t conferenceID, 
+    uint16_t userID, 
+    const ResultCallback &cb);
+
+  void addChairInLoop(
+    uint32_t conferenceID,
+    uint16_t floorID,
+    uint16_t userID,
+    const ResultCallback &cb);
+
+  void removeChairInLoop(
+    uint32_t conferenceID,
+    uint16_t floorID,
+    const ResultCallback &cb);
+
+  void wrapTaskAndCallback(
+    const ConferenceTask &task, 
+    const ResultCallback &cb)
+  {
+    ControlError err = task();
+    if (cb) 
+    {
+      cb(err);
+    }
+  }
+
+  template <typename Func, typename Arg1, typename Arg2>
+  void runInLoop(
+    Func func, const Arg1 &arg1, const Arg2 &arg2);
+
+  template <typename Func, typename Arg1, typename Arg2, typename Arg3>
+  void runInLoop(
+    Func func, const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3);
+
+  template <typename Func, typename Arg1, typename Arg2, typename Arg3, typename Arg4>
+  void runInLoop(
+    Func func, const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3, const Arg4 &arg4);
+
+  template <typename Func, typename Arg1>
+  void runTask(
+    Func func,
+    uint32_t conferenceID, 
+    const Arg1 &arg1, 
+    const ResultCallback &cb);
+
+  template <typename Func, typename Arg1, typename Arg2>
+  void runTask(
+    Func func, 
+    uint32_t conferenceID, 
+    const Arg1 &arg1,
+    const Arg2 &arg2, 
+    const ResultCallback &cb);
+
+private:
   muduo::net::EventLoop* loop_;
   muduo::net::UdpServer server_;
-
   BfcpConnectionPtr connection_;
   muduo::net::EventLoop *connectionLoop_;
   boost::scoped_ptr<muduo::net::EventLoopThread> connectionThread_;
-
+  WorkerThreadInitCallback workerThreadInitCallback_;
+  int numThreads_;
+  boost::shared_ptr<ThreadPool> threadPool_;
   muduo::AtomicInt32 started_;
+  std::map<uint32_t, ConferencePtr> conferenceMap_;
   bool enableConnectionThread_;
 };
 

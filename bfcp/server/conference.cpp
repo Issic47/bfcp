@@ -76,6 +76,18 @@ const bfcp_attrib SUPPORTED_ATTRS[] =
 
 } // namespace detail
 
+const char * toString( AcceptPolicy policy )
+{
+  switch (policy)
+  {
+  case AcceptPolicy::kAutoAccept:
+    return "AutoAccept";
+  case AcceptPolicy::kAutoDeny:
+    return "AutoDeny";
+  default:
+    return "???";
+  }
+}
 
 const double Conference::kDefaultTimeForChairAction = 5.0;
 
@@ -91,15 +103,12 @@ Conference::Conference(muduo::net::EventLoop *loop,
       nextFloorRequestID_(0),
       maxFloorRequest_(maxFloorRequest),
       timeForChairAction_(timeForChairAction),
-      acceptPolicy_(acceptPolicy),
-      chairActionTimeoutCallback_(
-        boost::bind(&Conference::onTimeoutForChairAction, this, _1)),
-      clientReponseCallback_(
-        boost::bind(&Conference::onResponse, this, _1, _2, _3, _4))
+      acceptPolicy_(acceptPolicy)
 {
+  LOG_TRACE << "Conference::Conference [" << conferenceID << "] constructing";
   assert(connection_);
   initRequestHandlers();
-  if (timeForChairAction_ < 0.0)
+  if (timeForChairAction_ <= 0.0)
     timeForChairAction_ = kDefaultTimeForChairAction;
 }
 
@@ -138,29 +147,42 @@ void Conference::initRequestHandlers()
     boost::bind(&Conference::handleGoodBye, this, _1)));
 }
 
-
-Conference::ControlError 
-Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
+Conference::~Conference()
 {
-  maxFloorRequest_ = maxFloorRequest; 
-  return kNoError;
+  LOG_TRACE << "Conference::~Conference [" << conferenceID_ << "] destructing";
 }
 
-Conference::ControlError 
-Conference::setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount)
+ControlError Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
 {
+  LOG_TRACE << "Set max floor request " << maxFloorRequest 
+            << " in Conference " << conferenceID_;
+  maxFloorRequest_ = maxFloorRequest;
+  return ControlError::kNoError;
+}
+
+ControlError Conference::setFloorMaxGrantedCount(
+  uint16_t floorID, uint16_t maxGrantedCount)
+{
+  LOG_TRACE << "Set max floor granted " << maxGrantedCount 
+            << " of Floor " << floorID 
+            << " in Conference " << conferenceID_;
   auto floor = findFloor(floorID);
   if (!floor)
   {
-    return kFloorNoExist;
+    LOG_ERROR << "Floor " << floorID 
+              << " not exist in Conference " << conferenceID_;
+    return ControlError::kFloorNotExist;
   }
   floor->setMaxGrantedCount(maxGrantedCount);
-  return kNoError;
+  return ControlError::kNoError;
 }
 
-Conference::ControlError 
-Conference::setAcceptPolicy(AcceptPolicy policy, double timeForChairAction)
+ControlError Conference::setAcceptPolicy(
+  AcceptPolicy policy, double timeForChairAction)
 {
+  LOG_TRACE << "Set accept policy " << toString(policy)
+            << " and chair action time to " << timeForChairAction 
+            << "s in Conference " << conferenceID_;
   if (timeForChairAction < 0.0)
   {
     LOG_ERROR << "Invalid timeout for chair action: " << timeForChairAction;
@@ -168,35 +190,41 @@ Conference::setAcceptPolicy(AcceptPolicy policy, double timeForChairAction)
   }
   timeForChairAction_ = timeForChairAction;
   acceptPolicy_ = policy;
-  return kNoError;
+  return ControlError::kNoError;
 }
 
-Conference::ControlError 
-Conference::addUser( uint16_t userID, const string &userURI, const string &displayName )
+ControlError Conference::addUser(const UserInfoParam &user)
 {
-  ControlError err = kNoError;
-  auto lb = users_.lower_bound(userID);
-  if (lb == users_.end() || users_.key_comp()((*lb).first, userID))
+  LOG_TRACE << "Add User " << user.id << " to Conference " << conferenceID_;
+  ControlError err = ControlError::kNoError;
+  auto lb = users_.lower_bound(user.id);
+  if (lb == users_.end() || users_.key_comp()((*lb).first, user.id))
   {
     auto res = users_.emplace_hint(
       lb,
-      userID, 
-      boost::make_shared<User>(userID, displayName, userURI));
+      user.id, 
+      boost::make_shared<User>(user.id, user.username, user.useruri));
     // FIXME: check if insert success
   }
   else // This user already exists
   {
-    err = kUserAlreadyExist;
+    LOG_ERROR << "User " << user.id 
+              << " already exist in Conference " << conferenceID_;
+    err = ControlError::kUserAlreadyExist;
   }
   return err;
 }
 
-Conference::ControlError Conference::removeUser( uint16_t userID )
+ControlError Conference::removeUser( uint16_t userID )
 {
+  LOG_TRACE << "Remove User " << userID 
+            << " from Conference " << conferenceID_;
   auto user = findUser(userID);
   if (!user)
   {
-    return kUserNoExist;
+    LOG_ERROR << "User " << userID 
+              << " not exist in Conference " << conferenceID_;
+    return ControlError::kUserNotExist;
   }
 
   // remove floor query
@@ -222,7 +250,7 @@ Conference::ControlError Conference::removeUser( uint16_t userID )
 
   tryToGrantFloorRequestsWithAllFloors();
 
-  return kNoError;
+  return ControlError::kNoError;
 }
 
 
@@ -235,6 +263,8 @@ void Conference::cancelFloorRequestsFromPendingByUserID(uint16_t userID)
         (floorRequest->hasBeneficiary() && 
          floorRequest->getBeneficiaryID() == userID))
     {
+      LOG_INFO << "Cancel FloorRequest " << floorRequest->getFloorRequestID()
+               << " from Pending Queue in Conference " << conferenceID_;
       it = pending_.erase(it);
       loop_->cancel(floorRequest->getTimerForChairAction());
       floorRequest->setOverallStatus(BFCP_CANCELLED);
@@ -257,6 +287,8 @@ void Conference::cancelFloorRequestsFromAcceptedByUserID( uint16_t userID )
         (floorRequest->hasBeneficiary() && 
          floorRequest->getBeneficiaryID() == userID))
     {
+      LOG_INFO << "Cancel FloorRequest " << floorRequest->getFloorRequestID()
+               << " from Accepted Queue in Conference " << conferenceID_;
       it = accepted_.erase(it);
       floorRequest->setOverallStatus(BFCP_CANCELLED);
       floorRequest->removeQueryUser(userID);
@@ -279,6 +311,8 @@ void Conference::releaseFloorRequestsFromGrantedByUserID( uint16_t userID )
         (floorRequest->hasBeneficiary() && 
          floorRequest->getBeneficiaryID() == userID))
     {
+      LOG_INFO << "Release FloorRequest " << floorRequest->getFloorRequestID()
+               << " from Granted Queue in Conference " << conferenceID_;
       it = granted_.erase(it);
       floorRequest->setOverallStatus(BFCP_RELEASED);
       floorRequest->removeQueryUser(userID);
@@ -290,10 +324,10 @@ void Conference::releaseFloorRequestsFromGrantedByUserID( uint16_t userID )
   }
 }
 
-Conference::ControlError 
-Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
+ControlError Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
 {
-  ControlError err = kNoError;
+  LOG_TRACE << "Add Floor " << floorID << " to Conference " << conferenceID_;
+  ControlError err = ControlError::kNoError;
   auto lb = floors_.lower_bound(floorID);
   if (lb == floors_.end() || floors_.key_comp()((*lb).first, floorID))
   {
@@ -305,17 +339,23 @@ Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
   }
   else // This floor already exists
   {
-    err = kFloorAlreadyExist;
+    LOG_ERROR << "Floor " << floorID 
+              << " already exist in Conference " << conferenceID_;
+    err = ControlError::kFloorAlreadyExist;
   }
   return err;
 }
 
-Conference::ControlError Conference::removeFloor( uint16_t floorID )
+ControlError Conference::removeFloor( uint16_t floorID )
 {
+  LOG_TRACE << "Remove Floor " << floorID 
+            << " from Conference " << conferenceID_;
   auto floor = findFloor(floorID);
   if (!floor)
   {
-    return kFloorNoExist;
+    LOG_ERROR << "Floor " << floorID
+              << " not exist in Conference " << conferenceID_;
+    return ControlError::kFloorNotExist;
   }
   cancelFloorRequestsFromPendingByFloorID(floorID);
   cancelFloorRequestsFromAcceptedByFloorID(floorID);
@@ -324,7 +364,7 @@ Conference::ControlError Conference::removeFloor( uint16_t floorID )
   floors_.erase(floorID);
 
   tryToGrantFloorRequestsWithAllFloors();
-  return kNoError;
+  return ControlError::kNoError;
 }
 
 void Conference::cancelFloorRequestsFromPendingByFloorID(uint16_t floorID)
@@ -333,6 +373,8 @@ void Conference::cancelFloorRequestsFromPendingByFloorID(uint16_t floorID)
   {
     if ((*it)->findFloor(floorID))
     {
+      LOG_INFO << "Cancel FloorRequest " << (*it)->getFloorRequestID()
+               << " from Pending Queue in Conference " << conferenceID_;
       auto floorRequest = *it;
       loop_->cancel(floorRequest->getTimerForChairAction());
       floorRequest->setOverallStatus(BFCP_CANCELLED);
@@ -351,6 +393,8 @@ void Conference::cancelFloorRequestsFromAcceptedByFloorID(uint16_t floorID)
   {
     if ((*it)->findFloor(floorID))
     {
+      LOG_INFO << "Cancel FloorRequest " << (*it)->getFloorRequestID()
+               << " from Accepted Queue in Conference " << conferenceID_;
       auto floorRequest = *it;
       floorRequest->setOverallStatus(BFCP_CANCELLED);
       it = accepted_.erase(it);
@@ -369,6 +413,8 @@ void Conference::releaseFloorRequestsFromGrantedByFloorID(uint16_t floorID)
   {
     if ((*it)->findFloor(floorID))
     {
+      LOG_INFO << "Release FloorRequest " << (*it)->getFloorRequestID()
+               << " from Granted Queue in Conference " << conferenceID_;
       auto floorRequest = *it;
       floorRequest->setOverallStatus(BFCP_RELEASED);
       it = granted_.erase(it);
@@ -380,27 +426,34 @@ void Conference::releaseFloorRequestsFromGrantedByFloorID(uint16_t floorID)
   }
 }
 
-Conference::ControlError
-Conference::addChair( uint16_t floorID, uint16_t userID )
+ControlError Conference::addChair( uint16_t floorID, uint16_t userID )
 {
-  ControlError err = kNoError;
+  LOG_TRACE << "Add Chair " << userID << " of Floor " << floorID
+            << " in Conference " << conferenceID_;
+  ControlError err = ControlError::kNoError;
   do 
   {
     auto user = findUser(userID);
     if (!user)
     {
-      err = kUserNoExist;
+      LOG_ERROR << "User " << userID 
+                << " not exist in Conference " << conferenceID_;
+      err = ControlError::kUserNotExist;
       break;
     }
     auto floor = findFloor(floorID);
     if (!floor)
     {
-      err = kFloorNoExist;
+      LOG_ERROR << "Floor " << floorID 
+                << " not exist in Conference " << conferenceID_;
+      err = ControlError::kFloorNotExist;
       break;
     }
     if (floor->isAssigned())
     {
-      err = kChairAlreadyExist;
+      LOG_ERROR << "Chair of Floor " << floorID 
+                << " already exist";
+      err = ControlError::kChairAlreadyExist;
       break;
     }
     floor->assignedToChair(userID);
@@ -420,30 +473,34 @@ bfcp::FloorPtr Conference::findFloor( uint16_t floorID )
   return it != floors_.end() ? (*it).second : nullptr;
 }
 
-Conference::ControlError Conference::removeChair( uint16_t floorID )
+ControlError Conference::removeChair( uint16_t floorID )
 {
-  ControlError err = kNoError;
+  LOG_TRACE << "Remove Chair of Floor " << floorID 
+            << " in Conference " << conferenceID_;
+  ControlError err = ControlError::kNoError;
   do 
   {
     auto floor = findFloor(floorID);
     if (!floor)
     {
-      err = kFloorNoExist;
+      LOG_ERROR << "Floor " << floorID 
+                << " not exist in Conference " << conferenceID_;
+      err = ControlError::kFloorNotExist;
       break;
     }
 
     if (!floor->isAssigned())
     {
-      err = kChairNoExist;
+      err = ControlError::kChairNotExist;
       break;
     }
 
     assert(findUser(floor->getChairID()));
-    if (acceptPolicy_ == kAutoDeny)
+    if (acceptPolicy_ == AcceptPolicy::kAutoDeny)
     {
       cancelFloorRequestsFromPendingByFloorID(floorID);
     }
-    else if (acceptPolicy_ == kAutoAccept)
+    else if (acceptPolicy_ == AcceptPolicy::kAutoAccept)
     {
       if (tryToAcceptFloorRequestsWithFloor(floor))
       {
@@ -493,6 +550,8 @@ bool Conference::tryToAcceptFloorRequestsWithFloor(FloorPtr &floor)
 void Conference::insertFloorRequestToPendingQueue( 
   FloorRequestNodePtr &floorRequest)
 {
+  LOG_INFO << "Insert FloorRequest " << floorRequest->getFloorRequestID()
+           << " to Pending Queue in Conference " << conferenceID_;
   assert(floorRequest->isAnyFloorStatus(BFCP_PENDING));
   floorRequest->setOverallStatus(BFCP_PENDING);
   floorRequest->setQueuePosition(0);
@@ -503,6 +562,8 @@ void Conference::insertFloorRequestToPendingQueue(
 void Conference::insertFloorRequestToAcceptedQueue( 
   FloorRequestNodePtr &floorRequest)
 {
+  LOG_INFO << "Insert FloorRequest " << floorRequest->getFloorRequestID()
+           << "to Accepted Queue in Conference " << conferenceID_;
   assert(floorRequest->isAllFloorStatus(BFCP_ACCEPTED));
   floorRequest->setOverallStatus(BFCP_ACCEPTED);
   floorRequest->setPrioriy(BFCP_PRIO_LOWEST);
@@ -514,6 +575,8 @@ void Conference::insertFloorRequestToAcceptedQueue(
 void Conference::insertFloorRequestToGrantedQueue(
   FloorRequestNodePtr &floorRequest)
 {
+  LOG_INFO << "Insert FloorRequest " << floorRequest->getFloorRequestID()
+           << " to Granted Queue in Conference " << conferenceID_;
   assert(floorRequest->isAllFloorStatus(BFCP_GRANTED));
   floorRequest->setOverallStatus(BFCP_GRANTED);
   floorRequest->setQueuePosition(0);
@@ -666,8 +729,9 @@ void Conference::notifyWithFloorStatus( uint16_t floorID )
     {
       basicParam.userID = userID;
       basicParam.dst = user->getAddr();
+      assert(clientReponseCallback_);
       basicParam.cb = boost::bind(clientReponseCallback_,
-        BFCP_FLOOR_STATUS_ACK, userID, _1, _2);
+        conferenceID_, BFCP_FLOOR_STATUS_ACK, userID, _1, _2);
       user->runSendMessageTask(
         boost::bind(&BfcpConnection::notifyFloorStatus,
         connection_, basicParam, floorStatusParam));
@@ -689,8 +753,9 @@ void Conference::notifyWithFloorRequestStatus(
     {
       param.userID = userID;
       param.dst = user->getAddr();
+      assert(clientReponseCallback_);
       param.cb = boost::bind(clientReponseCallback_, 
-        BFCP_FLOOR_REQ_STATUS_ACK, userID, _1, _2);
+        conferenceID_, BFCP_FLOOR_REQ_STATUS_ACK, userID, _1, _2);
       user->runSendMessageTask(
         boost::bind(&BfcpConnection::notifyFloorRequestStatus, 
         connection_, param, frqInfo));
@@ -845,7 +910,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
     uint16_t floorID = floorNode.getFloorID();
     auto floor = findFloor(floorID);
     assert(floor);
-    if (!floor->isAssigned() && acceptPolicy_ == kAutoDeny)
+    if (!floor->isAssigned() && acceptPolicy_ == AcceptPolicy::kAutoDeny)
     {
       floorNode.setStatus(BFCP_DENIED);
       newFloorRequest->setOverallStatus(BFCP_DENIED);
@@ -888,7 +953,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
     assert(floor);
     if (!floor->isAssigned())
     {
-      assert(acceptPolicy_ == kAutoAccept);
+      assert(acceptPolicy_ == AcceptPolicy::kAutoAccept);
       floorNode.setStatus(BFCP_ACCEPTED);
     }
     else
@@ -896,10 +961,12 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
       uint16_t chairID = floor->getChairID();
       assert(findUser(chairID));
       // start timer for chair action
+      assert(chairActionTimeoutCallback_);
       muduo::net::TimerId timerId = loop_->runAfter(
         timeForChairAction_, 
         boost::bind(
           chairActionTimeoutCallback_, 
+          conferenceID_,
           newFloorRequest->getFloorRequestID()));
       newFloorRequest->setTimerForChairAction(timerId);
     }
@@ -1027,16 +1094,19 @@ bool Conference::tryToGrantFloorRequestWithAllFloors(
 
 void Conference::onTimeoutForChairAction( uint16_t floorRequestID )
 {
+  LOG_TRACE << "FloorRequest " << floorRequestID 
+            << " is timeout in Conference " << conferenceID_;
   auto floorRequest = findFloorRequest(pending_, floorRequestID);
   if (!floorRequest) return;
 
-  LOG_INFO << "FloorRequest " << floorRequestID << " is cancelled for timeout";
   for (auto &floorNode : floorRequest->getFloorNodeList())
   {
     if (floorNode.getStatus() == BFCP_PENDING)
       floorNode.setStatus(BFCP_CANCELLED);
   }
 
+  LOG_INFO << "Cancel FloorRequest " << floorRequestID
+           << " from Pending Queue in Conference " << conferenceID_;
   pending_.remove(floorRequest);
   revokeFloorsFromFloorRequest(floorRequest);
   floorRequest->setOverallStatus(BFCP_CANCELLED);
@@ -1094,6 +1164,8 @@ FloorRequestNodePtr Conference::removeFloorRequest(
     extractFloorRequestFromQueue(pending_, floorRequestID, userID);
   if (floorRequest)
   {
+    LOG_INFO << "Cancel FloorRequest " << floorRequestID 
+             << " from Pending Queue in Conference " << conferenceID_;
     floorRequest->setOverallStatus(BFCP_CANCELLED);
     loop_->cancel(floorRequest->getTimerForChairAction());
     return floorRequest;
@@ -1104,6 +1176,8 @@ FloorRequestNodePtr Conference::removeFloorRequest(
     extractFloorRequestFromQueue(accepted_, floorRequestID, userID);
   if (floorRequest)
   {
+    LOG_INFO << "Cancel FloorRequest " << floorRequestID 
+             << " from Accepted Queue in Conference " << conferenceID_;
     floorRequest->setOverallStatus(BFCP_CANCELLED);
     floorRequest->setQueuePosition(0);
     updateQueuePosition(accepted_);
@@ -1115,6 +1189,8 @@ FloorRequestNodePtr Conference::removeFloorRequest(
     extractFloorRequestFromQueue(granted_, floorRequestID, userID);
   if (floorRequest)
   {
+    LOG_INFO << "Release FloorRequest " << floorRequestID 
+             << " from Granted Queue in Conference " << conferenceID_;
     floorRequest->setOverallStatus(BFCP_RELEASED);
     return floorRequest;
   }
@@ -1450,6 +1526,9 @@ void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
   }
 
   replyWithFloorRequestStatus(msg, floorRequest);
+  LOG_INFO << "Add Query User " << msg.getUserID() 
+           << " to FloorRequest " << floorRequestID
+           << " in Conference " << conferenceID_;
   floorRequest->addQueryUser(msg.getUserID()); 
 }
 
@@ -1526,6 +1605,9 @@ void Conference::handleFloorQuery( const BfcpMsg &msg )
     auto floor = findFloor(floorID);
     if (floor)
     {
+      LOG_INFO << "Add Query User " << msg.getUserID() 
+               << " to Floor " << floorID
+               << " in Conference " << conferenceID_;
       floor->addQueryUser(userID);
     }
     else
@@ -1580,8 +1662,9 @@ void Conference::notifyWithFloorStatus(uint16_t userID, uint16_t floorID)
     basicParam.conferenceID = conferenceID_;
     basicParam.userID = user->getUserID();
     basicParam.dst = user->getAddr();
-    basicParam.cb = boost::bind(
-      clientReponseCallback_, BFCP_FLOOR_STATUS_ACK, user->getUserID(), _1, _2);
+    assert(clientReponseCallback_);
+    basicParam.cb = boost::bind(clientReponseCallback_, 
+      conferenceID_, BFCP_FLOOR_STATUS_ACK, user->getUserID(), _1, _2);
     user->runSendMessageTask(boost::bind(&BfcpConnection::notifyFloorStatus,
       connection_, basicParam, getFloorStatusParam(floorID)));
   }
@@ -1611,8 +1694,8 @@ void Conference::getFloorRequestInfoParamsByFloorID(
   }
 }
 
-void Conference::onResponse(bfcp_prim expectedPrimitive, 
-                            uint16_t userID, 
+void Conference::onResponse(bfcp_prim expectedPrimitive,
+                            uint16_t userID,
                             ResponseError err, 
                             const BfcpMsg &msg)
 {
@@ -1624,7 +1707,7 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
     return;
   }
 
-  if (err != kNoError)
+  if (err != ResponseError::kNoError)
   {
     LOG_TRACE << "Conference received response with error " 
               << response_error_name(err);

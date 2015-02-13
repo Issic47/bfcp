@@ -52,6 +52,7 @@ int ThreadPool::releaseQueue( uint32_t queueID )
 
 void ThreadPool::start( int numThreads )
 {
+  assert(0 <= numThreads);
   assert(threads_.empty());
   running_ = true;
   threads_.reserve(numThreads);
@@ -191,6 +192,7 @@ void ThreadPool::put( const TaskQueuePtr &taskQueue )
   }
   taskQueue->setInGlobal(true);
   globalQueue_.push_back(taskQueue);
+  notEmpty_.notify();
 }
 
 } // namespace bfcp

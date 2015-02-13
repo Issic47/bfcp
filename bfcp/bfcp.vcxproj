@@ -42,6 +42,7 @@
     <ClInclude Include="common\utility\MemoryPool.h" />
     <ClInclude Include="common\utility\MemoryPool.hpp" />
     <ClInclude Include="common\utility\SpinLock.h" />
+    <ClInclude Include="server\conference_define.h" />
     <ClInclude Include="server\conference.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
     </ClInclude>

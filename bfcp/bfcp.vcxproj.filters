@@ -122,5 +122,8 @@
     <ClInclude Include="server\thread_pool.h">
       <Filter>server</Filter>
     </ClInclude>
+    <ClInclude Include="server\conference_define.h">
+      <Filter>server</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

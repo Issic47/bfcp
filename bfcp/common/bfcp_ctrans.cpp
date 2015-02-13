@@ -16,15 +16,15 @@ const char* response_error_name( ResponseError err )
 {
   switch (err)
   {
-    case bfcp::kNoError: return "NoError";
-    case bfcp::kTimeout: return "Timeout";
+    case ResponseError::kNoError: return "NoError";
+    case ResponseError::kTimeout: return "Timeout";
     default: return "???";
   }
 }
 
 void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
 {
-  if (err)
+  if (err != ResponseError::kNoError)
   {
     LOG_ERROR << "Response error: " << response_error_name(err);
   }
@@ -94,7 +94,7 @@ void ClientTransaction::onSendTimeout()
 void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
 {
   loop_->cancel(timer1_);
-  if (err)
+  if (err != ResponseError::kNoError)
   {
     LOG_INFO << "Client transaction" << toString(entity_)
              << " on response with error: " << response_error_name(err);

@@ -14,7 +14,7 @@ class BfcpMsg;
 class ClientTransaction;
 typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
 
-enum ResponseError
+enum class ResponseError
 {
   kNoError = 0,
   kTimeout = 1,

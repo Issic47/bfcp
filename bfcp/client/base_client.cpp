@@ -261,7 +261,7 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
                             ResponseError err, 
                             const BfcpMsg &msg)
 {
-  if (err != kNoError)
+  if (err != ResponseError::kNoError)
   {
     LOG_TRACE << "BfcpClient received response with error " 
               << response_error_name(err);

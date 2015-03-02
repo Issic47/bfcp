@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <boost/make_shared.hpp>
 #include <muduo/base/Exception.h>
+#include <muduo/base/Logging.h>
 #include <bfcp/server/task_queue.h>
 
 namespace bfcp
@@ -26,13 +27,14 @@ ThreadPool::~ThreadPool()
 
 int ThreadPool::createQueue( uint32_t queueID, size_t maxQueueSize )
 {
+  static int nextID = 0;
   auto lb = queueMap_.lower_bound(queueID);
   if (lb == queueMap_.end() || (*lb).first != queueID) // not found
   { 
     auto it = queueMap_.emplace_hint(lb, 
       std::make_pair(
         queueID, 
-        boost::make_shared<TaskQueue>(this, maxQueueSize)));
+        boost::make_shared<TaskQueue>(nextID++, maxQueueSize)));
     // FIXME: check (*it).first == handle
     return 0;
   }
@@ -139,6 +141,7 @@ void ThreadPool::runInThread()
         {
           task();
         }
+        taskQueue->setProcessing(false);
         put(taskQueue);
       }
     }
@@ -175,6 +178,9 @@ TaskQueuePtr ThreadPool::take()
   if (!globalQueue_.empty())
   {
     taskQueue = globalQueue_.front();
+    taskQueue->setProcessing(true);
+
+    LOG_TRACE << "Take task queue[" << taskQueue->id() << "] from global queue";
     taskQueue->setInGlobal(false);
     globalQueue_.pop_front();
   }
@@ -185,11 +191,13 @@ void ThreadPool::put( const TaskQueuePtr &taskQueue )
 {
   muduo::MutexLockGuard lock(mutex_);
   if (taskQueue->isReleasing() || 
+      taskQueue->isProcessing() ||
       taskQueue->isInGlobal() || 
       taskQueue->empty())
   {
     return;
   }
+  LOG_TRACE << "Put task queue[" << taskQueue->id() << "] to global queue";
   taskQueue->setInGlobal(true);
   globalQueue_.push_back(taskQueue);
   notEmpty_.notify();

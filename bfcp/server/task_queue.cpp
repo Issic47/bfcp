@@ -5,13 +5,14 @@
 namespace bfcp
 {
 
-TaskQueue::TaskQueue( ThreadPool *runner, size_t maxQueueSize )
-  : runner_(CHECK_NOTNULL(runner)),
+TaskQueue::TaskQueue( int id, size_t maxQueueSize )
+  : id_(id),
     maxQueueSize_(maxQueueSize),
     mutex_(),
     notFull_(maxQueueSize > 0 ? new muduo::Condition(mutex_) : nullptr),
     isInGlobal_(false),
-    isReleasing_(false)
+    isReleasing_(false),
+    isProcessing_(false)
 {
 }
 

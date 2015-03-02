@@ -19,10 +19,15 @@ class TaskQueue : boost::noncopyable
 public:
   typedef ThreadPool::Task Task;
 
-  explicit TaskQueue(ThreadPool *runner, size_t maxQueueSize);
+  explicit TaskQueue(int id, size_t maxQueueSize);
+
+  int id() const { return id_; }
 
   void setInGlobal(bool inGlobal) { isInGlobal_ = inGlobal; }
   bool isInGlobal() const { return isInGlobal_; }
+
+  void setProcessing(bool isProcessing) { isProcessing_ = isProcessing; }
+  bool isProcessing() const { return isProcessing_; }
 
   bool isReleasing() const { return isReleasing_; }
   void markRelease() { isReleasing_ = true; }
@@ -37,7 +42,7 @@ public:
 private:
   bool isFull();
 
-  ThreadPool *runner_;
+  int id_;
   size_t maxQueueSize_;
   muduo::MutexLock mutex_;
   boost::scoped_ptr<muduo::Condition> notFull_;
@@ -45,6 +50,7 @@ private:
   std::deque<Task> normalPriorityTasks_;
   bool isInGlobal_;
   bool isReleasing_;
+  bool isProcessing_;
 };
 
 } // namespace bfcp

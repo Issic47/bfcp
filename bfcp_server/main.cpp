@@ -16,6 +16,7 @@ using namespace muduo::net;
 using namespace bfcp;
 
 void controlFunc(BaseServer *server);
+
 #define CHECK_CIN_RESULT(res) do {\
   if (!(res)) {\
     std::cin.clear(); \
@@ -252,6 +253,5 @@ void controlFunc(BaseServer *server)
       printf("Invalid menu choice - try again\n");
       break;
     }
-    printMenu();
   }
 }

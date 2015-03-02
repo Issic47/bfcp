@@ -9,6 +9,18 @@ using muduo::strerror_tl;
 namespace bfcp
 {
 
+namespace detail
+{
+
+int printToString(const char *p, size_t size, void *arg)
+{
+  string *str = static_cast<string*>(arg);
+  str->assign(p, p + size);
+  return 0;
+}
+
+} // namespace detail
+
 BfcpMsg::BfcpMsg(Buffer *buf, const InetAddress &src)
    : msg_(nullptr)
 {
@@ -79,6 +91,16 @@ bfcp_floor_id_list BfcpMsg::getFloorIDs() const
     floorIDs.push_back(attr.getFloorID());
   }
   return floorIDs;
+}
+
+string BfcpMsg::toStringInDetail() const
+{
+  string str;
+  struct re_printf printFunc;
+  printFunc.vph = &detail::printToString;
+  printFunc.arg = &str;
+  bfcp_msg_print(&printFunc, msg_);
+  return str;
 }
 
 } // namespace bfcp

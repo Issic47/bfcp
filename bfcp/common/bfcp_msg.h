@@ -73,6 +73,7 @@ public:
   }
 
   string toString() const;
+  string toStringInDetail() const;
 
 private:
   void setSrc(const muduo::net::InetAddress &src)

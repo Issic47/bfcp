@@ -50,7 +50,10 @@ public:
              uint32_t conferenceID,
              uint16_t userID);
 
+  muduo::net::EventLoop* getLoop() { return loop_; }
+
   void connect();
+  // will send Goodbye message and wait for GoodbyeAck
   void disconnect();
   void forceDisconnect();
 

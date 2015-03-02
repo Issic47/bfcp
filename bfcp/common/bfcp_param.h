@@ -140,7 +140,7 @@ public:
   void set(const bfcp_floor_request_info &info);
 
   uint16_t floorRequestID;
-  uint32_t valueType;
+  uint32_t valueType; // AttrValueType flags
   OverallRequestStatusParam oRS;
   FloorRequestStatusParamList fRS;
   UserInfoParam beneficiary;

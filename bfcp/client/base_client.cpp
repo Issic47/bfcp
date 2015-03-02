@@ -83,14 +83,18 @@ void BaseClient::disconnect()
 {
   if (state_ == kConnected)
   {
+    sendGoodBye();
     changeState(kDisconnecting);
   }
 }
 
 void BaseClient::forceDisconnect()
 {
-  client_.disconnect();
-  changeState(kDisconnected);
+  if (state_ != kDisconnected)
+  {
+    client_.disconnect();
+    changeState(kDisconnected);
+  }
 }
 
 void BaseClient::changeState( State state )

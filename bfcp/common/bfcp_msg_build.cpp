@@ -102,7 +102,7 @@ inline int build_attr_FLOOR_REQUEST_STATUS( mbuf_t *buf, const FloorRequestStatu
     fRS.statusInfo.empty() ? nullptr : fRS.statusInfo.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_FLOOR_REQ_STATUS | BFCP_MANDATORY, 2, &fRS.floorID,
-    BFCP_REQUEST_STATUS, 0, fRS.requestStatus,
+    BFCP_REQUEST_STATUS, 0, &fRS.requestStatus,
     BFCP_STATUS_INFO, 0, statusInfo);
 }
 
@@ -112,7 +112,7 @@ inline int build_attr_OVERALL_REQUEST_STATUS( mbuf_t *buf, const OverallRequestS
     oRS.statusInfo.empty() ? nullptr : oRS.statusInfo.c_str();
   return bfcp_attrs_encode(
     buf, 1, BFCP_OVERALL_REQ_STATUS | BFCP_MANDATORY, 2, &oRS.floorRequestID,
-    BFCP_REQUEST_STATUS, 0, oRS.requestStatus,
+    BFCP_REQUEST_STATUS, 0, &oRS.requestStatus,
     BFCP_STATUS_INFO, 0, statusInfo);
 }
 
@@ -230,7 +230,7 @@ int build_msg_FloorRelease( mbuf_t *buf, uint8_t version, const bfcp_entity &ent
   return bfcp_msg_encode(buf, version, 
     false, BFCP_FLOOR_RELEASE, 
     entity.conferenceID, entity.transactionID, entity.userID,
-    1, BFCP_FLOOR_REQUEST_ID | BFCP_MANDATORY, 0, frqID);
+    1, BFCP_FLOOR_REQUEST_ID | BFCP_MANDATORY, 0, &frqID);
 }
 
 int build_msg_FloorRequestQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity, uint16_t frqID )
@@ -239,7 +239,7 @@ int build_msg_FloorRequestQuery( mbuf_t *buf, uint8_t version, const bfcp_entity
   return bfcp_msg_encode(buf, version,
     false, BFCP_FLOOR_REQUEST_QUERY,
     entity.conferenceID, entity.transactionID, entity.userID,
-    1, BFCP_FLOOR_REQUEST_ID | BFCP_MANDATORY, 0, frqID);
+    1, BFCP_FLOOR_REQUEST_ID | BFCP_MANDATORY, 0, &frqID);
 }
 
 int build_msg_FloorRequestStatus(mbuf_t *buf, bool response,
@@ -278,7 +278,7 @@ int build_msg_UserQuery( mbuf_t *buf, uint8_t version, const bfcp_entity &entity
     false, BFCP_USER_QUERY,
     entity.conferenceID, entity.transactionID, entity.userID,
     (userQuery.hasBeneficiaryID ? 1 : 0), 
-    BFCP_BENEFICIARY_ID | BFCP_MANDATORY, 0, userQuery.beneficiaryID);
+    BFCP_BENEFICIARY_ID | BFCP_MANDATORY, 0, &userQuery.beneficiaryID);
 }
 
 int build_msg_UserStatus(mbuf_t *buf, uint8_t version, 

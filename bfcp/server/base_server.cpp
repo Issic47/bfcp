@@ -57,7 +57,7 @@ void BaseServer::onWriteComplete( const UdpSocketPtr& socket, int messageId )
 void BaseServer::enableConnectionThread()
 {
   // base loop for UdpServer receiving msg
-  // and the extract one for BfcpConnection to send msg and dipatch msg
+  // and the extract one for BfcpConnection to send msg and dispatch msg
   enableConnectionThread_ = true;
 }
 
@@ -81,15 +81,16 @@ void BaseServer::stop()
 {
   if (started_.getAndSet(0) == 1)
   {
+    threadPool_->stop();
     if (connection_)
     {
+      connection_->stopCacheTimer();
       connection_ = nullptr;
     }
     if (enableConnectionThread_)
     {
       connectionThread_.reset(nullptr);
     }
-    threadPool_->stop();
     server_.stop();
   }
 }
@@ -143,6 +144,10 @@ void BaseServer::addConferenceInLoop(uint32_t conferenceID,
         maxFloorRequest,
         policy,
         timeForChairAction);
+    newConference->setChairActionTimeoutCallback(
+      boost::bind(&BaseServer::onChairActionTimeout, this, _1, _2));
+    newConference->setClientReponseCallback(
+      boost::bind(&BaseServer::onResponse, this, _1, _2, _3, _4, _5));
     conferenceMap_.insert(lb, std::make_pair(conferenceID, newConference));
     int res = threadPool_->createQueue(conferenceID, 0);
     assert(res == 0);

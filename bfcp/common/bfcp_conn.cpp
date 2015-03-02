@@ -48,13 +48,23 @@ BfcpConnection::BfcpConnection(EventLoop *loop, const UdpSocketPtr &socket)
   // FIXME: unsafe
   replyMsgTimer_ = 
     loop_->runEvery(1.0, boost::bind(&BfcpConnection::onTimer, this));
+  timerNeedStop_ = true;
   cachedReplys_.resize(BFCP_T2_SEC);
 }
 
 BfcpConnection::~BfcpConnection()
 {
   LOG_TRACE << "BfcpConnection::~BfcpConnection destructing";
-  loop_->cancel(replyMsgTimer_);
+  stopCacheTimer();
+}
+
+void BfcpConnection::stopCacheTimer()
+{
+  if (timerNeedStop_)
+  {
+    loop_->cancel(replyMsgTimer_);
+    timerNeedStop_ = false;
+  }
 }
 
 void BfcpConnection::onTimer()
@@ -338,7 +348,7 @@ void BfcpConnection::replyWithErrorInLoop( const BfcpMsg &msg, const ErrorParam 
 
 void BfcpConnection::replyWithFloorRequestStatusAckInLoop( const BfcpMsg &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQ_STATUS);
+  assert(msg.primitive() == BFCP_FLOOR_REQUEST_STATUS);
   LOG_INFO << "Reply with FloorRequestStatusAck to " << msg.toString();
   sendReplyInLoop(&build_msg_FloorRequestStatusAck, msg);
 }
@@ -360,7 +370,8 @@ void BfcpConnection::replyWithGoodByeAckInLoop( const BfcpMsg &msg )
 void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsg &msg,
                                                        const FloorRequestInfoParam &frqInfo)
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQUEST_QUERY);
+  assert(msg.primitive() == BFCP_FLOOR_REQUEST_QUERY || 
+         msg.primitive() == BFCP_FLOOR_REQUEST);
   LOG_INFO << "Reply with FloorRequestStatus to " << msg.toString();
   sendReplyInLoop(
     boost::bind(&build_msg_FloorRequestStatus, _1, true, _2, _3, _4),

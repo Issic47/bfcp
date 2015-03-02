@@ -122,12 +122,14 @@ private:
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
 
   void onNewRequest(const BfcpMsg &msg);
+
   void onResponse(
     uint32_t conferenceID, 
     bfcp_prim expectedPrimitive, 
     uint16_t userID,
     ResponseError err, 
     const BfcpMsg &msg);
+
   void onChairActionTimeout(
     uint32_t conferenceID,
     uint16_t floorRequestID);

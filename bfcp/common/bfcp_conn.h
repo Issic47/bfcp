@@ -73,6 +73,10 @@ public:
 
   muduo::net::EventLoop* getEventLoop() { return loop_; }
 
+  // FIXME:
+  // this should be called once
+  void stopCacheTimer(); 
+
   void onMessage(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
 
   void setNewRequestCallback(const NewRequestCallback &cb)
@@ -230,6 +234,7 @@ private:
   muduo::net::TimerId replyMsgTimer_;
   
   AtomicUInt16 nextTid_;
+  bool timerNeedStop_;
 };
 
 // TODO: use variadic template

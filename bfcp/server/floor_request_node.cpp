@@ -143,11 +143,10 @@ FloorRequestNode::toFloorRequestInfoParam(const UserDict &users) const
 
   {
     param.valueType |= kHasOverallRequestStatus;
-    OverallRequestStatusParam overallParam;
-    overallParam.floorRequestID = floorRequestID_;
-    overallParam.hasRequestStatus = true;
-    overallParam.requestStatus = requestStatus_;
-    overallParam.statusInfo = statusInfo_;
+    param.oRS.floorRequestID = floorRequestID_;
+    param.oRS.hasRequestStatus = true;
+    param.oRS.requestStatus = requestStatus_;
+    param.oRS.statusInfo = statusInfo_;
   }
   return param;
 }

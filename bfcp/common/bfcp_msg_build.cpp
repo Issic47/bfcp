@@ -100,9 +100,11 @@ inline int build_attr_FLOOR_REQUEST_STATUS( mbuf_t *buf, const FloorRequestStatu
 {
   const char *statusInfo = 
     fRS.statusInfo.empty() ? nullptr : fRS.statusInfo.c_str();
+  const bfcp_reqstatus_t *requestStatus = 
+    fRS.hasRequestStatus ? &fRS.requestStatus : nullptr;
   return bfcp_attrs_encode(
     buf, 1, BFCP_FLOOR_REQ_STATUS | BFCP_MANDATORY, 2, &fRS.floorID,
-    BFCP_REQUEST_STATUS, 0, &fRS.requestStatus,
+    BFCP_REQUEST_STATUS, 0, requestStatus,
     BFCP_STATUS_INFO, 0, statusInfo);
 }
 
@@ -110,9 +112,11 @@ inline int build_attr_OVERALL_REQUEST_STATUS( mbuf_t *buf, const OverallRequestS
 {
   const char *statusInfo = 
     oRS.statusInfo.empty() ? nullptr : oRS.statusInfo.c_str();
+  const bfcp_reqstatus_t *requestStatus = 
+    oRS.hasRequestStatus ? &oRS.requestStatus : nullptr;
   return bfcp_attrs_encode(
     buf, 1, BFCP_OVERALL_REQ_STATUS | BFCP_MANDATORY, 2, &oRS.floorRequestID,
-    BFCP_REQUEST_STATUS, 0, &oRS.requestStatus,
+    BFCP_REQUEST_STATUS, 0, requestStatus,
     BFCP_STATUS_INFO, 0, statusInfo);
 }
 
@@ -392,7 +396,7 @@ int build_msg_ChairAction(mbuf_t *buf, uint8_t version, const bfcp_entity &entit
   {
     err = bfcp_msg_encode(
       buf, version, 
-      true, BFCP_CHAIR_ACTION, 
+      false, BFCP_CHAIR_ACTION, 
       entity.conferenceID, entity.transactionID, entity.userID, 
       0);
     if (err) break;

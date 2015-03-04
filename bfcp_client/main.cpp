@@ -276,7 +276,8 @@ void controlFunc(EventLoop *loop)
         if (client)
         {
           client->forceDisconnect();
-          client.reset();
+          loop->runInLoop(boost::bind(&boost::shared_ptr<BaseClient>::reset, client));
+          client = nullptr;
         }
         loop->quit();
         return;

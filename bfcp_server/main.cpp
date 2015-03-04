@@ -240,14 +240,27 @@ void controlFunc(BaseServer *server)
     case 'p':
       {
         printf("Preset Conference\n");
-        server->addConference(100, 3, AcceptPolicy::kAutoAccept, 5.0, &handleCallResult);
+        server->addConference(100, 3, AcceptPolicy::kAutoAccept, 120.0, &handleCallResult);
+        server->addFloor(100, 10, 1, &handleCallResult);
+        server->addFloor(100, 11, 2, &handleCallResult);
+        server->addFloor(100, 12, 1, &handleCallResult);
+        server->addFloor(100, 13, 1, &handleCallResult);
+
         UserInfoParam user;
         user.id = 1;
-        server->addUser(100, user, &handleCallResult);
-        server->addFloor(100, 10, 1, &handleCallResult);
+        server->addUser(100, user, &handleCallResult); 
+
+        // user 2 is chair of floor 10 and floor 11
         user.id = 2;
         server->addUser(100, user, &handleCallResult);
         server->addChair(100, 10, 2, &handleCallResult);
+        server->addChair(100, 11, 2, &handleCallResult);
+
+        // user 3 is chair of floor 13
+        user.id = 3;
+        server->addUser(100, user, &handleCallResult);
+        server->addChair(100, 13, 3, &handleCallResult);
+
       } break;
     default:
       printf("Invalid menu choice - try again\n");

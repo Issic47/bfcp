@@ -15,7 +15,7 @@ namespace detail
 int printToString(const char *p, size_t size, void *arg)
 {
   string *str = static_cast<string*>(arg);
-  str->assign(p, p + size);
+  str->append(p, p + size);
   return 0;
 }
 

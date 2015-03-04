@@ -68,7 +68,7 @@ bfcp_floor_request_info BfcpAttr::getFloorRequestInfo() const
   bfcp_attr_t *overallRequestStatus = findSubAttr(BFCP_OVERALL_REQ_STATUS);
   if (overallRequestStatus) 
   {
-    info.valueType &= kHasOverallRequestStatus;
+    info.valueType |= kHasOverallRequestStatus;
     info.oRS = BfcpAttr(*overallRequestStatus).getOverallRequestStatus();
   }
 
@@ -81,14 +81,14 @@ bfcp_floor_request_info BfcpAttr::getFloorRequestInfo() const
   bfcp_attr_t *beneficiaryInfo = findSubAttr(BFCP_BENEFICIARY_INFO);
   if (beneficiaryInfo)
   {
-    info.valueType &= kHasBeneficiaryInfo;
+    info.valueType |= kHasBeneficiaryInfo;
     info.beneficiary = BfcpAttr(*beneficiaryInfo).getBeneficiaryInfo();
   }
 
   bfcp_attr_t *requestedByInfo = findSubAttr(BFCP_REQUESTED_BY_INFO);
   if (requestedByInfo)
   {
-    info.valueType &= kHasRequestedByInfo;
+    info.valueType |= kHasRequestedByInfo;
     info.requestedBy = BfcpAttr(*requestedByInfo).getRequestedByInfo();
   }
 

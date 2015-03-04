@@ -130,7 +130,7 @@ void controlFunc(EventLoop *loop)
           CHECK_CIN_RESULT(std::cin >> param.hasBeneficiaryID);
           if (param.hasBeneficiaryID)
           {
-            printf("Enter the BeneficiaryID of the new request (0 if it's not needed):\n");
+            printf("Enter the BeneficiaryID of the new request:\n");
             CHECK_CIN_RESULT(std::cin >> param.beneficiaryID);
           }
           printf("Enter the priority for this request (0=lowest --> 4=highest):\n");
@@ -190,7 +190,7 @@ void controlFunc(EventLoop *loop)
             break;
           }
           UserQueryParam param;
-          printf("Query the beneficiary user?\n");
+          printf("Query the beneficiary user?: 0=false, 1=true\n");
           CHECK_CIN_RESULT(std::cin >> param.hasBeneficiaryID);
           if (param.hasBeneficiaryID)
           {
@@ -243,7 +243,9 @@ void controlFunc(EventLoop *loop)
           param.oRS.requestStatus.status = static_cast<bfcp_reqstat>(status);
 
           printf("Enter the desired position in queue for this request (0 if you are not interested in that):\n");
-          CHECK_CIN_RESULT(std::cin >> param.oRS.requestStatus.qpos);
+          int pos = 0;
+          CHECK_CIN_RESULT(std::cin >> pos);
+          param.oRS.requestStatus.qpos = static_cast<uint8_t>(pos);
 
           FloorRequestStatusParam floorStatus;
           printf("Enter the FloorID:\n");

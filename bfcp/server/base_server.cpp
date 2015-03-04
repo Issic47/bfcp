@@ -45,7 +45,12 @@ void BaseServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetA
 {
   LOG_TRACE << server_.name() << " recv " << buf->readableBytes() << " bytes at " << time.toString()
             << " from " << src.toIpPort();
-  assert(connection_);
+  if (!connection_)
+  {
+    connection_ = boost::make_shared<BfcpConnection>(connectionLoop_, socket);
+    connection_->setNewRequestCallback(
+      boost::bind(&BaseServer::onNewRequest, this, _1));
+  }
   connection_->onMessage(buf, src);
 }
 

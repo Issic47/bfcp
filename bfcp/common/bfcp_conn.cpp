@@ -78,7 +78,10 @@ void BfcpConnection::onMessage(Buffer *buf, const InetAddress &src)
   BfcpMsg msg(buf, src);
   LOG_INFO << "Received BFCP message" << msg.toString() 
            << " from " << src.toIpPort();
+  LOG_TRACE << "BFCP message in detail: \n"
+            << msg.toStringInDetail();
   runInLoop(&BfcpConnection::onMessageInLoop, msg);
+  
 }
 
 void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
@@ -371,7 +374,8 @@ void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsg &msg,
                                                        const FloorRequestInfoParam &frqInfo)
 {
   assert(msg.primitive() == BFCP_FLOOR_REQUEST_QUERY || 
-         msg.primitive() == BFCP_FLOOR_REQUEST);
+         msg.primitive() == BFCP_FLOOR_REQUEST ||
+         msg.primitive() == BFCP_FLOOR_RELEASE);
   LOG_INFO << "Reply with FloorRequestStatus to " << msg.toString();
   sendReplyInLoop(
     boost::bind(&build_msg_FloorRequestStatus, _1, true, _2, _3, _4),

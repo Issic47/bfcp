@@ -66,7 +66,7 @@ void printMenu()
 
 void controlFunc(EventLoop *loop)
 {
-  boost::scoped_ptr<BaseClient> client;
+  boost::shared_ptr<BaseClient> client;
   printMenu();
   char ch;
   while (std::cin >> ch)
@@ -104,7 +104,9 @@ void controlFunc(EventLoop *loop)
             break;
           }
           client->forceDisconnect();
-          client.reset();
+          // client must destruct in event loop
+          loop->runInLoop(boost::bind(&boost::shared_ptr<BaseClient>::reset, client));
+          client = nullptr;
           printf("BFCP participant destroyed.\n");
         } break;
       case 'f':

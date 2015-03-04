@@ -603,7 +603,7 @@ void Conference::insertFloorRequestToQueue(
     }
     if (pos == floorRequest->getQueuePosition())
     {
-      it = (++rit).base();
+      it = rit.base();
     }
     else
     {
@@ -613,23 +613,10 @@ void Conference::insertFloorRequestToQueue(
   }
   floorRequest->setQueuePosition(0);
 
-  if (it == queue.end())
-  {
-    queue.push_front(floorRequest);
-  }
-  else if (floorRequest->getPriority() <= (*it)->getPriority())
-  {
-    queue.insert(it, floorRequest);
-  }
-  else
-  {
+  while (it != queue.end() && (*it)->getPriority() < floorRequest->getPriority()) {
     ++it;
-    while (it != queue.end() && (*it)->getPriority() < floorRequest->getPriority()) {
-      ++it;
-    }
-    --it;
-    queue.insert(it, floorRequest);
   }
+  queue.insert(it, floorRequest);
 }
 
 void Conference::updateQueuePosition( FloorRequestQueue &queue )
@@ -722,6 +709,12 @@ void Conference::notifyWithFloorStatus( uint16_t floorID )
   BasicRequestParam basicParam;
   basicParam.conferenceID = conferenceID_;
   auto floorStatusParam = getFloorStatusParam(floorID);
+  // make the chair of the floor to be notified
+  if (floor->isAssigned())
+  {
+    floor->addQueryUser(floor->getChairID());
+  }
+  // notify all query users about the floor status
   for (auto userID : floor->getQueryUsers())
   {
     auto user = findUser(userID);
@@ -962,12 +955,10 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
       assert(findUser(chairID));
       // start timer for chair action
       assert(chairActionTimeoutCallback_);
+      uint16_t floorRequestID = newFloorRequest->getFloorRequestID();
       muduo::net::TimerId timerId = loop_->runAfter(
         timeForChairAction_, 
-        boost::bind(
-          chairActionTimeoutCallback_, 
-          conferenceID_,
-          newFloorRequest->getFloorRequestID()));
+        boost::bind(chairActionTimeoutCallback_, conferenceID_, floorRequestID));
       newFloorRequest->setTimerForChairAction(timerId);
     }
   }
@@ -1271,7 +1262,7 @@ void Conference::handleChairAction( const BfcpMsg &msg )
 bool Conference::checkFloorRequestInfo(
   const BfcpMsg &msg, const bfcp_floor_request_info &info)
 {
-  if (!info.fRS.empty())
+  if (info.fRS.empty())
   {
     replyWithError(msg, BFCP_PARSE_ERROR, 
       "Missing FLOOR-REQUEST-STATUS attribute");
@@ -1384,7 +1375,8 @@ void Conference::denyFloorRequest(
 
   loop_->cancel(floorRequest->getTimerForChairAction());
   pending_.remove(floorRequest);
-
+  revokeFloorsFromFloorRequest(floorRequest);
+  
   for (auto &floorReqStatus : info.fRS)
   {
     auto floorNode = floorRequest->findFloor(floorReqStatus.floorID);
@@ -1392,7 +1384,7 @@ void Conference::denyFloorRequest(
     floorNode->setStatus(BFCP_DENIED);
     floorNode->setStatusInfo(floorReqStatus.statusInfo);
   }
-
+  
   floorRequest->setStatusInfo(info.oRS.statusInfo);
   floorRequest->setOverallStatus(BFCP_DENIED);
   notifyFloorAndRequestInfo(floorRequest);
@@ -1519,7 +1511,7 @@ void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo,
-      "FloorRequest &hu does not exist in Conference %lu",
+      "FloorRequest %hu does not exist in Conference %lu",
       floorRequestID, conferenceID_);
     replyWithError(msg, BFCP_FLOOR_REQ_ID_NOT_EXIST, errorInfo);
     return;

@@ -2,6 +2,7 @@
 
 #include <boost/bind.hpp>
 #include <muduo/base/Logging.h>
+#include <tinyxml2.h>
 
 #include <bfcp/common/bfcp_conn.h>
 #include <bfcp/server/floor.h>
@@ -1722,7 +1723,140 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
   }
 }
 
+string Conference::getConferenceInfo() const
+{
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLElement *conferenceElement = doc.NewElement("conference");
+  doc.InsertEndChild(conferenceElement);
+  
+  // add conference info
+  conferenceElement->SetAttribute("id", conferenceID_);
+  conferenceElement->SetAttribute("maxFloorRequest", maxFloorRequest_);
+  conferenceElement->SetAttribute("timeForChairAction", timeForChairAction_);
+  conferenceElement->SetAttribute("acceptPolicy", toString(acceptPolicy_));
 
+  addUserInfoToXMLNode(&doc, conferenceElement);
+  addFloorInfoToXMLNode(&doc, conferenceElement);
+  addQueueInfoToXMLNode(&doc, conferenceElement, pending_, "pendingQueue");
+  addQueueInfoToXMLNode(&doc, conferenceElement, accepted_, "acceptedQueue");
+  addQueueInfoToXMLNode(&doc, conferenceElement, granted_, "grantedQueue");
 
+  tinyxml2::XMLPrinter printer;
+  doc.Print(&printer);
+  return printer.CStr();
+}
+
+void Conference::addUserInfoToXMLNode(tinyxml2::XMLDocument *doc, 
+                                      tinyxml2::XMLNode *node) const
+{
+  tinyxml2::XMLNode *userListNode = node->InsertEndChild(doc->NewElement("users"));
+  for (const auto &user : users_)
+  {
+    tinyxml2::XMLElement *userNode = doc->NewElement("user");
+    userNode->SetAttribute("id", user.second->getUserID());
+    if (!user.second->getDisplayName().empty())
+    {
+      userNode->SetAttribute("displayName", user.second->getDisplayName().c_str());
+    }
+    if (!user.second->getURI().empty())
+    {
+      userNode->SetAttribute("uri", user.second->getURI().c_str());
+    }
+    userNode->SetAttribute("isAvailable", user.second->isAvailable());
+    userListNode->InsertEndChild(userNode);
+  }
+}
+
+void Conference::addFloorInfoToXMLNode(tinyxml2::XMLDocument *doc, 
+                                       tinyxml2::XMLNode *node) const
+{
+  tinyxml2::XMLNode *floorsListNode = node->InsertEndChild(doc->NewElement("floors"));
+  for (const auto &floor : floors_)
+  {
+    tinyxml2::XMLElement *floorNode = doc->NewElement("floor");
+    floorNode->SetAttribute("id", floor.second->getFloorID());
+    floorNode->SetAttribute("isAssigned", floor.second->isAssigned());
+    if (floor.second->isAssigned())
+    {
+      floorNode->SetAttribute("chairID", floor.second->getChairID());
+    }
+    floorNode->SetAttribute("maxGrantedCount", floor.second->getMaxGrantedCount());
+    floorNode->SetAttribute("currentGrantedCount", floor.second->getGrantedCount());
+    // add query users
+    tinyxml2::XMLNode *queryUsersListNode = 
+      floorNode->InsertEndChild(doc->NewElement("queryUsers"));
+    for (auto userID : floor.second->getQueryUsers())
+    {
+      tinyxml2::XMLElement *queryUserNode = doc->NewElement("user");
+      queryUserNode->SetAttribute("id", userID);
+      queryUsersListNode->InsertEndChild(queryUserNode);
+    }
+    floorsListNode->InsertEndChild(floorNode);
+  }
+}
+
+void Conference::addQueueInfoToXMLNode(tinyxml2::XMLDocument *doc, 
+                                       tinyxml2::XMLNode *node, 
+                                       const FloorRequestQueue &queue, 
+                                       const string &queueName) const
+{
+  tinyxml2::XMLNode *queueNode = node->InsertEndChild(doc->NewElement(queueName.c_str()));
+  for (const auto &floorRequest : queue)
+  {
+    addFloorRequestInfoToXMLNode(doc, queueNode, floorRequest);
+  }
+}
+
+void Conference::addFloorRequestInfoToXMLNode(tinyxml2::XMLDocument *doc, 
+                                              tinyxml2::XMLNode *node,
+                                              const FloorRequestNodePtr &floorRequest) const
+{
+  tinyxml2::XMLElement *requestNode = doc->NewElement("floorRequest");
+  requestNode->SetAttribute("id", floorRequest->getFloorRequestID());
+  requestNode->SetAttribute("userID", floorRequest->getUserID());
+  requestNode->SetAttribute("hasBeneficiaryID", floorRequest->hasBeneficiary());
+  if (floorRequest->hasBeneficiary())
+  {
+    requestNode->SetAttribute("beneficiaryID", floorRequest->getBeneficiaryID());
+  }
+  requestNode->SetAttribute("priority", floorRequest->getPriority());
+  if (!floorRequest->getParticipantInfo().empty())
+  {
+    requestNode->SetAttribute("participantInfo", floorRequest->getParticipantInfo().c_str());
+  }
+  requestNode->SetAttribute(
+    "overallStatus", 
+    bfcp_reqstatus_name(floorRequest->getOverallStatus()));
+
+  requestNode->SetAttribute("queuePosition", floorRequest->getQueuePosition());
+  if (!floorRequest->getStatusInfo().empty())
+  {
+    requestNode->SetAttribute("statusInfo", floorRequest->getStatusInfo().c_str());
+  }
+  // add floors
+  tinyxml2::XMLNode *floorsListNode = 
+    requestNode->InsertEndChild(doc->NewElement("floors"));
+  for (const auto &floor : floorRequest->getFloorNodeList())
+  {
+    tinyxml2::XMLElement *floorNode = doc->NewElement("floor");
+    floorNode->SetAttribute("id", floor.getFloorID());
+    floorNode->SetAttribute("status", bfcp_reqstatus_name(floor.getStatus()));
+    if (!floor.getStatusInfo().empty())
+    {
+      floorNode->SetAttribute("statusInfo", floor.getStatusInfo().c_str());
+    }
+    floorsListNode->InsertEndChild(floorNode);
+  }
+  // add query user
+  tinyxml2::XMLNode *queryUsersListNode = 
+    requestNode->InsertEndChild(doc->NewElement("queryUsers"));
+  for (auto userID : floorRequest->getFloorRequestQueryUsers())
+  {
+    tinyxml2::XMLElement *queryUserNode = doc->NewElement("user");
+    queryUserNode->SetAttribute("id", userID);
+    queryUsersListNode->InsertEndChild(queryUserNode);
+  }
+  node->InsertEndChild(requestNode);
+}
 
 } // namespace bfcp

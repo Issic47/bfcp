@@ -47,6 +47,31 @@ void handleCallResult(ControlError err)
   printf("call result: %d\n", err);
 }
 
+void handleGetConferenceInfoResult(ControlError err, void *data)
+{
+  printf("call result: %d\n", err);
+  if (err == ControlError::kNoError)
+  {
+    bfcp::string *res = static_cast<bfcp::string*>(data);
+    printf("Conference Info: \n%s\n", res->c_str());
+  }
+}
+
+void handleGetConferenceIDsResult(ControlError err, void *data)
+{
+  printf("call result: %d\n", err);
+  if (err == ControlError::kNoError)
+  {
+    BaseServer::ConferenceIDList *res = static_cast<BaseServer::ConferenceIDList*>(data);
+    printf("Conference Info: ");
+    for (auto conferenceID : *res)
+    {
+      printf("%u ", conferenceID);
+    }
+    printf("\n");
+  }
+}
+
 void printMenu()
 {
   printf(
@@ -66,6 +91,7 @@ void printMenu()
     " b      - Change the chair policy\n"
     " u      - Change maximum number of requests a user can make for the same floor\n"
     " s      - Show the conferences in the BFCP server\n"
+    " e      - Get all conference IDs in FCS\n"
     " q      - Quit\n"
     " p      - Preset Conference\n"
     "--------------------------------------------------------------\n\n");
@@ -229,8 +255,14 @@ void controlFunc(BaseServer *server)
       } break;
     case 's':
       {
-        // TODO:
-        printf("TODO: \n");
+        printf("Enter the conference you want to get info from: \n");
+        uint32_t conferenceID = 0;
+        CHECK_CIN_RESULT(std::cin >> conferenceID);
+        server->getConferenceInfo(conferenceID, &handleGetConferenceInfoResult);
+      } break;
+    case 'e':
+      {
+        server->getConferenceIDs(&handleGetConferenceIDsResult);
       } break;
     case 'q':
       printf("Quit\n");
@@ -240,7 +272,7 @@ void controlFunc(BaseServer *server)
     case 'p':
       {
         printf("Preset Conference\n");
-        server->addConference(100, 3, AcceptPolicy::kAutoAccept, 120.0, &handleCallResult);
+        server->addConference(100, 3, AcceptPolicy::kAutoAccept, 60.0, &handleCallResult);
         server->addFloor(100, 10, 1, &handleCallResult);
         server->addFloor(100, 11, 2, &handleCallResult);
         server->addFloor(100, 12, 1, &handleCallResult);

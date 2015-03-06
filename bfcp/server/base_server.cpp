@@ -342,6 +342,75 @@ void BaseServer::removeChairInLoop( uint32_t conferenceID, uint16_t floorID, con
   runTask(&Conference::removeChair, conferenceID, floorID, cb);
 }
 
+void BaseServer::getConferenceIDs( const ResultWithDataCallback &cb )
+{
+  runInLoop(&BaseServer::getConferenceIDsInLoop, cb);
+}
+
+void BaseServer::getConferenceIDsInLoop(const ResultWithDataCallback &cb)
+{
+  LOG_TRACE << "Get conference IDs";
+  connectionLoop_->assertInLoopThread();
+  ConferenceIDList conferenceIDs;
+  conferenceIDs.reserve(conferenceMap_.size());
+  for (auto &conference : conferenceMap_)
+  {
+    conferenceIDs.push_back(conference.first);
+  }
+  cb(ControlError::kNoError, &conferenceIDs);
+}
+
+void BaseServer::getConferenceInfo(uint32_t conferenceID, 
+                                   const ResultWithDataCallback &cb)
+{
+  runInLoop(&BaseServer::getConferenceInfoInLoop, conferenceID, cb);
+}
+
+void BaseServer::getConferenceInfoInLoop(uint32_t conferenceID, 
+                                         const ResultWithDataCallback &cb)
+{
+  LOG_TRACE << "Get Information of Conference " << conferenceID;
+  connectionLoop_->assertInLoopThread();
+  auto it = conferenceMap_.find(conferenceID);
+  if (it == conferenceMap_.end())
+  {
+    if (cb)
+    {
+      LOG_TRACE << "Conference " << conferenceID << " not exist";
+      cb(ControlError::kConferenceNotExist, nullptr);
+    }
+  }
+  else
+  {
+    auto task = boost::bind(&Conference::getConferenceInfo, (*it).second);
+    // FIXME: use a wrap func instead
+    threadPool_->run(
+      conferenceID, 
+      [task, cb]() {
+        auto res = task();
+        if (cb) 
+        {
+          cb(ControlError::kNoError, &res);
+        }
+      },
+      ThreadPool::kHighPriority);
+  }
+}
+
+template <typename Func, typename Arg1>
+void BaseServer::runInLoop( Func func, const Arg1 &arg1 )
+{
+  if (connectionLoop_->isInLoopThread())
+  {
+    (this->*func)(arg1);
+  }
+  else
+  {
+    connectionLoop_->runInLoop(
+      boost::bind(func, this, arg1));
+  }
+}
+
 template <typename Func, typename Arg1, typename Arg2>
 void BaseServer::runInLoop(Func func, const Arg1 &arg1, const Arg2 &arg2)
 {
@@ -509,5 +578,6 @@ void BaseServer::onChairActionTimeout(uint32_t conferenceID,
     assert(res == 0);
   }
 }
+
 
 } // namespace bfcp

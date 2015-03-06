@@ -14,6 +14,12 @@
 #include <bfcp/common/bfcp_callbacks.h>
 #include <bfcp/server/conference_define.h>
 
+namespace tinyxml2
+{
+class XMLDocument;
+class XMLNode;
+}
+
 namespace bfcp
 {
 class BfcpMsg;
@@ -67,6 +73,8 @@ public:
 
   ControlError addChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);
+
+  string getConferenceInfo() const;
   
   // onTimeoutForChairAction should be called in cb.
   void setChairActionTimeoutCallback(const ChairActionTimeoutCallback &cb)
@@ -190,6 +198,25 @@ private:
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
   typedef std::unordered_map<bfcp_prim, Handler> HandlerDict;
+
+  void addUserInfoToXMLNode(
+    tinyxml2::XMLDocument *doc,
+    tinyxml2::XMLNode *node) const;
+
+  void addFloorInfoToXMLNode(
+    tinyxml2::XMLDocument *doc,
+    tinyxml2::XMLNode *node) const;
+
+  void addQueueInfoToXMLNode(
+    tinyxml2::XMLDocument *doc,
+    tinyxml2::XMLNode *node, 
+    const FloorRequestQueue &queue, 
+    const string &queueName) const;
+
+  void addFloorRequestInfoToXMLNode(
+    tinyxml2::XMLDocument *doc,
+    tinyxml2::XMLNode *node,
+    const FloorRequestNodePtr &floorRequest) const;
 
   muduo::net::EventLoop *loop_;
   BfcpConnectionPtr connection_;

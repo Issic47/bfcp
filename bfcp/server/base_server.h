@@ -32,6 +32,8 @@ class BaseServer
 public:
   typedef boost::function<void ()> WorkerThreadInitCallback;
   typedef boost::function<void (ControlError)> ResultCallback;
+  typedef boost::function<void (ControlError, void*)> ResultWithDataCallback;
+  typedef std::vector<uint32_t> ConferenceIDList;
 
   BaseServer(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& listenAddr);
@@ -110,6 +112,13 @@ public:
     uint32_t conferenceID,
     uint16_t floorID,
     const ResultCallback &cb);
+
+  void getConferenceIDs(
+    const ResultWithDataCallback &cb);
+
+  void getConferenceInfo(
+    uint32_t conferenceID,
+    const ResultWithDataCallback &cb);
  
 private:
   typedef boost::function<ControlError ()> ConferenceTask;
@@ -194,16 +203,26 @@ private:
     uint16_t floorID,
     const ResultCallback &cb);
 
+  void getConferenceIDsInLoop(
+    const ResultWithDataCallback &cb);
+
+  void getConferenceInfoInLoop(
+      uint32_t conferenceID, 
+      const ResultWithDataCallback &cb);
+
   void wrapTaskAndCallback(
     const ConferenceTask &task, 
     const ResultCallback &cb)
   {
-    ControlError err = task();
+    auto res = task();
     if (cb) 
     {
-      cb(err);
+      cb(res);
     }
   }
+
+  template <typename Func, typename Arg1>
+  void runInLoop(Func func, const Arg1 &arg1);
 
   template <typename Func, typename Arg1, typename Arg2>
   void runInLoop(
@@ -223,6 +242,12 @@ private:
     uint32_t conferenceID, 
     const Arg1 &arg1, 
     const ResultCallback &cb);
+
+  template <typename Func, typename Arg1>
+  void runTask(
+    Func func,
+    uint32_t conferenceID, 
+    const ResultWithDataCallback &cb);
 
   template <typename Func, typename Arg1, typename Arg2>
   void runTask(

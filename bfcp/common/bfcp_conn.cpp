@@ -42,7 +42,8 @@ namespace bfcp
 BfcpConnection::BfcpConnection(EventLoop *loop, const UdpSocketPtr &socket)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
-      cachedReplys_(BFCP_T2_SEC)
+      cachedReplys_(BFCP_T2_SEC),
+      nextTid_(1)
 {
   LOG_TRACE << "BfcpConnection::BfcpConnection constructing";
   // FIXME: unsafe
@@ -142,11 +143,11 @@ bool BfcpConnection::tryHandleRequest(const BfcpMsg &msg)
 
   for (auto bucket : cachedReplys_)
   {
-    auto &it = bucket.find(entry);
+    auto it = bucket.find(entry);
     if (it != bucket.end())
     {
       LOG_INFO << "Reply BFCP message" << msg.toString() << " with cached reply";
-      socket_->send(msg.getSrc(), (*it).second->buf, (*it).second->end);
+      socket_->send(msg.getSrc(), (*it).second->buf, static_cast<int>((*it).second->end));
       return true;
     }
   }
@@ -275,6 +276,7 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildMsgFunc buildFunc,
 
   int err = buildFunc(msgBuf, BFCP_VER2, entity);
   // FIXME: check error
+  (void)(err);
 
   startNewClientTransaction(basicParam.dst, entity, msgBuf, basicParam.cb);
 }
@@ -300,6 +302,7 @@ void bfcp::BfcpConnection::sendRequestInLoop(BuildMsgFunc buildFunc,
 
   int err = buildFunc(msgBuf, BFCP_VER2, entity, extParam);
   // FIXME: check error
+  (void)(err);
 
   startNewClientTransaction(basicParam.dst, entity, msgBuf, basicParam.cb);
 }
@@ -412,6 +415,7 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg
   bfcp_entity entity =  msg.getEntity();
   int err = buildFunc(msgBuf, msg.getVersion(), entity);
   // FIXME: check error
+  (void)(err);
 
   startNewServerTransaction(msg.getSrc(), entity, msg.primitive(), msgBuf);
 }
@@ -436,6 +440,7 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc,
   bfcp_entity entity =  msg.getEntity();
   int err = buildFunc(msgBuf, msg.getVersion(), entity, extParam);
   // FIXME: check error
+  (void)(err);
 
   startNewServerTransaction(msg.getSrc(), entity, msg.primitive(), msgBuf);
 }
@@ -450,7 +455,7 @@ void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &ds
   entry.entity = entity;
   entry.prim = primitive;
   cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
-  socket_->send(dst, msgBuf->buf, msgBuf->end);
+  socket_->send(dst, msgBuf->buf, static_cast<int>(msgBuf->end));
 }
 
 } // namespace bfcp

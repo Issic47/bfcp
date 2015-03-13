@@ -70,6 +70,7 @@ public:
       mem_ref(other.msg_);
     }
     err_ = other.err_;
+    return *this;
   }
 
   string toString() const;

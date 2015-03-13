@@ -40,6 +40,7 @@ public:
       buf_ = other.buf_;
       mem_ref(other.buf_);
     }
+    return *this;
   }
 
   MBufWrapper& operator=(MBufWrapper &&other)
@@ -50,6 +51,7 @@ public:
       buf_ = other.buf_;
       other.buf_ = nullptr;
     }
+    return *this;
   }
 
   mbuf_t* operator->() { return buf_; }

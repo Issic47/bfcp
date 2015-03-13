@@ -1,8 +1,23 @@
 #ifndef BFCP_EX_H
 #define BFCP_EX_H
 
+#include <cstdint>
 #include <vector>
-#include <re.h>
+
+extern "C" 
+{
+/* Basic types */
+#include <re_types.h>
+#include <re_fmt.h>
+#include <re_mbuf.h>
+#include <re_msg.h>
+#include <re_list.h>
+#include <re_sa.h>
+
+#include <re_bfcp.h>
+#include <re_mem.h>
+}
+
 #include <muduo/base/Types.h>
 
 typedef struct mbuf mbuf_t;

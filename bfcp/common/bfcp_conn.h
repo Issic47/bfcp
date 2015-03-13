@@ -11,7 +11,6 @@
 #include <boost/circular_buffer.hpp>
 
 #include <muduo/net/Callbacks.h>
-#include <muduo/base/Atomic.h>
 #include <muduo/net/TimerId.h>
 #include <muduo/net/EventLoop.h>
 #include <muduo/net/InetAddress.h>
@@ -154,7 +153,6 @@ private:
   static const int BFCP_T2_SEC = 10;
   static const int BFCP_MBUF_SIZE = 65536;
 
-  typedef muduo::detail::AtomicIntegerT<uint16_t> AtomicUInt16;
   typedef MBufWrapper MBufPtr;
   typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
 
@@ -233,7 +231,7 @@ private:
   boost::circular_buffer<ReplyBucket> cachedReplys_;
   muduo::net::TimerId replyMsgTimer_;
   
-  AtomicUInt16 nextTid_;
+  uint16_t nextTid_;
   bool timerNeedStop_;
 };
 
@@ -280,9 +278,11 @@ inline void BfcpConnection::initEntity(bfcp_entity &entity, uint32_t cid, uint16
 
 inline uint16_t BfcpConnection::getNextTransactionID()
 {
-  uint16_t tid = 0;
-  while ((tid = nextTid_.incrementAndGet()) == 0) {};
-  return tid;
+  if (nextTid_ == 0) 
+  {
+    nextTid_ = 1;
+  }
+  return nextTid_++;
 }
 
 } // namespace bfcp

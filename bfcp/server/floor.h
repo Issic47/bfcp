@@ -40,7 +40,7 @@ public:
     chairID_ = chairID;
   }
 
-  void setMaxGrantedCount(int32_t maxGrantedCount)
+  void setMaxGrantedCount(uint16_t maxGrantedCount)
   { maxGrantedCount_ = maxGrantedCount; }
   uint16_t getMaxGrantedCount() const { return maxGrantedCount_; }
 

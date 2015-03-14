@@ -37,11 +37,11 @@ ClientTransaction::ClientTransaction(EventLoop *loop,
                                      mbuf_t *msgBuf)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
-      dst_(dst), 
-      entity_(entity),
       msgBuf_(CHECK_NOTNULL(msgBuf)), 
-      txc_(1),
-      responseCallback_(defaultResponseCallback)
+      entity_(entity),
+      dst_(dst), 
+      responseCallback_(defaultResponseCallback),
+      txc_(1)
 {
   mem_ref(msgBuf);
 }
@@ -55,7 +55,7 @@ void ClientTransaction::start()
 {
   UdpSocketPtr socket = socket_.lock();
   assert(socket);
-  socket->send(dst_, msgBuf_->buf, msgBuf_->end);
+  socket->send(dst_, msgBuf_->buf, static_cast<int>(msgBuf_->end));
 
   txc_ = 1;
   timer1_ = loop_->runAfter(
@@ -85,7 +85,7 @@ void ClientTransaction::onSendTimeout()
   }
   else
   {
-    socket->send(dst_, msgBuf_->buf, msgBuf_->end);
+    socket->send(dst_, msgBuf_->buf, static_cast<int>(msgBuf_->end));
     timer1_ = loop_->runAfter(
       delay, boost::bind(&ClientTransaction::onSendTimeout, this));
   }

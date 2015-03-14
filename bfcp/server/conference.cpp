@@ -206,6 +206,7 @@ ControlError Conference::addUser(const UserInfoParam &user)
       user.id, 
       boost::make_shared<User>(user.id, user.username, user.useruri));
     // FIXME: check if insert success
+    (void)(res);
   }
   else // This user already exists
   {
@@ -337,6 +338,7 @@ ControlError Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
       floorID, 
       boost::make_shared<Floor>(floorID, maxGrantedCount));
     // FIXME: check if insert success
+    (void)(res);
   }
   else // This floor already exists
   {
@@ -682,6 +684,7 @@ bool Conference::tryToGrantFloor(FloorRequestNodePtr &floorRequest,
     if (floorNode && floorNode->getStatus() != BFCP_GRANTED)
     {
       bool res = floor->tryToGrant();
+      (void)(res);
       assert(res);
       floorNode->setStatus(BFCP_GRANTED);
       floorNode->setStatusInfo(nullptr);
@@ -814,7 +817,7 @@ bool Conference::checkUserID( const BfcpMsg &msg, uint16_t userID )
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo, 
-      "User %hu does not exist in Conference %lu",
+      "User %hu does not exist in Conference %u",
       userID, msg.getConferenceID());
     replyWithError(msg, BFCP_USER_NOT_EXIST, errorInfo);
     return false;
@@ -920,7 +923,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
       snprintf(errorInfo, sizeof errorInfo,
         "User %hu has already reached "
         "the maximum allowed number of requests (%hu)" 
-        "for the same floor in Conference %lu",
+        "for the same floor in Conference %u",
         beneficiaryUser->getUserID(), 
         requestCount, 
         conferenceID_);
@@ -954,6 +957,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
     {
       uint16_t chairID = floor->getChairID();
       assert(findUser(chairID));
+      (void)(chairID);
       // start timer for chair action
       assert(chairActionTimeoutCallback_);
       uint16_t floorRequestID = newFloorRequest->getFloorRequestID();
@@ -1040,7 +1044,7 @@ bool Conference::checkFloorID( const BfcpMsg &msg, uint16_t floorID )
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo, 
-      "Floor %hu does not exist in Conference %lu",
+      "Floor %hu does not exist in Conference %u",
       floorID, conferenceID_);
     replyWithError(msg, BFCP_INVALID_FLOOR_ID, errorInfo);
     return false;
@@ -1067,6 +1071,7 @@ bool Conference::tryToGrantFloorRequestWithAllFloors(
     if (floorNode.getStatus() != BFCP_GRANTED && floor->isFreeToGrant())
     {
       bool res = floor->tryToGrant();
+      (void)(res);
       assert(res);
       floorNode.setStatus(BFCP_GRANTED);
       floorNode.setStatusInfo(nullptr);
@@ -1130,7 +1135,7 @@ void Conference::handleFloorRelease( const BfcpMsg &msg )
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo, 
-      "FloorRequest %hu does not exist in Conference %lu",
+      "FloorRequest %hu does not exist in Conference %u",
       floorRequestID, conferenceID_);
     replyWithError(msg, BFCP_FLOOR_REQ_ID_NOT_EXIST, errorInfo);
     return;
@@ -1242,7 +1247,6 @@ void Conference::handleChairAction( const BfcpMsg &msg )
   auto info = floorReqInfoAttr.getFloorRequestInfo();
   if (!checkFloorRequestInfo(msg, info)) return;
   
-  uint16_t floorRequestID = info.floorRequestID;
   assert(info.oRS.requestStatus);
   bfcp_reqstat status = info.oRS.requestStatus->status;
   switch (status)
@@ -1316,7 +1320,7 @@ bool Conference::checkFloorChair(
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo,
-      "User %hu is not chair of Floor %hu in Conference %lu",
+      "User %hu is not chair of Floor %hu in Conference %u",
       userID, floorID, conferenceID_);
     replyWithError(msg, BFCP_UNAUTH_OPERATION, errorInfo);
     return false;
@@ -1399,7 +1403,7 @@ FloorRequestNodePtr Conference::checkFloorRequestInPendingQueue(
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo,
-      "Pending FloorRequest %hu does not exist in Conference %lu",
+      "Pending FloorRequest %hu does not exist in Conference %u",
       floorRequestID, conferenceID_);
     replyWithError(msg, BFCP_FLOOR_REQ_ID_NOT_EXIST, errorInfo);
     return nullptr;
@@ -1476,7 +1480,7 @@ FloorRequestNodePtr Conference::checkFloorRequestInGrantedQueue(
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo,
-      "Granted FloorRequest %hu does not exist in Conference %lu",
+      "Granted FloorRequest %hu does not exist in Conference %u",
       floorRequestID, conferenceID_);
     replyWithError(msg, BFCP_FLOOR_REQ_ID_NOT_EXIST, errorInfo);
     return nullptr;
@@ -1512,7 +1516,7 @@ void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo,
-      "FloorRequest %hu does not exist in Conference %lu",
+      "FloorRequest %hu does not exist in Conference %u",
       floorRequestID, conferenceID_);
     replyWithError(msg, BFCP_FLOOR_REQ_ID_NOT_EXIST, errorInfo);
     return;
@@ -1544,7 +1548,7 @@ void Conference::handleUserQuery( const BfcpMsg &msg )
     {
       char errorInfo[200];
       snprintf(errorInfo, sizeof errorInfo, 
-        "User %hu (beneficiary of the query) does not exist in Conference %lu",
+        "User %hu (beneficiary of the query) does not exist in Conference %u",
         beneficiaryIDAttr.getBeneficiaryID(),
         conferenceID_);
       replyWithError(msg, BFCP_USER_NOT_EXIST, errorInfo);
@@ -1614,7 +1618,7 @@ void Conference::handleFloorQuery( const BfcpMsg &msg )
   {
     char errorInfo[128]; 
     snprintf(errorInfo, sizeof errorInfo,
-      "Floor %hu does not exist in Conference %lu",
+      "Floor %hu does not exist in Conference %u",
       invalidFloorID, conferenceID_);
     replyWithError(msg, BFCP_INVALID_FLOOR_ID, errorInfo);
     return;

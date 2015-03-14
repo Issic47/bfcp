@@ -41,13 +41,31 @@ public:
     hasBeneficiaryID(false)
   {}
 
-  //FloorRequestParam(FloorRequestParam &&param)
-  //    : floorIDs(std::move(param.floorIDs)),
-  //      beneficiaryID(param.beneficiaryID),
-  //      pInfo(std::move(param.pInfo)),
-  //      priority(param.priority),
-  //      hasBeneficiaryID(param.hasBeneficiaryID)
-  //{}
+  FloorRequestParam(const FloorRequestParam &param)
+    : floorIDs(param.floorIDs),
+    beneficiaryID(param.beneficiaryID),
+    pInfo(param.pInfo),
+    priority(param.priority),
+    hasBeneficiaryID(param.hasBeneficiaryID)
+  {}
+
+  FloorRequestParam(FloorRequestParam &&param)
+      : floorIDs(std::move(param.floorIDs)),
+        beneficiaryID(param.beneficiaryID),
+        pInfo(std::move(param.pInfo)),
+        priority(param.priority),
+        hasBeneficiaryID(param.hasBeneficiaryID)
+  {}
+
+  FloorRequestParam& operator=(const FloorRequestParam &param)
+  {
+    floorIDs = param.floorIDs;
+    beneficiaryID = param.beneficiaryID;
+    pInfo = param.pInfo;
+    priority = param.priority;
+    hasBeneficiaryID = param.hasBeneficiaryID;
+    return *this;
+  }
 
   void setBeneficiaryID(uint16_t bID)
   {
@@ -66,11 +84,26 @@ class UserInfoParam
 {
 public:
   UserInfoParam() {}
-  //UserInfoParam(UserInfoParam &&param)
-  //  : id(param.id),
-  //  username(std::move(param.username)),
-  //  useruri(std::move(param.useruri))
-  //{}
+
+  UserInfoParam(const UserInfoParam &param)
+    : id(param.id),
+    username(param.username),
+    useruri(param.useruri)
+  {}
+
+  UserInfoParam(UserInfoParam &&param)
+    : id(param.id),
+    username(std::move(param.username)),
+    useruri(std::move(param.useruri))
+  {}
+  
+  UserInfoParam& operator=(const UserInfoParam &param)
+  {
+    id = param.id;
+    username = param.username;
+    useruri = param.useruri;
+    return *this;
+  }
 
   void set(const bfcp_user_info &info);
 
@@ -83,12 +116,29 @@ class OverallRequestStatusParam
 {
 public:
   OverallRequestStatusParam(): hasRequestStatus(false) {}
-  //OverallRequestStatusParam(OverallRequestStatusParam &&param)
-  //    : floorRequestID(param.floorRequestID),
-  //      requestStatus(param.requestStatus),
-  //      statusInfo(std::move(param.statusInfo)),
-  //      hasRequestStatus(param.hasRequestStatus)
-  //{}
+
+  OverallRequestStatusParam(const OverallRequestStatusParam &param)
+    : floorRequestID(param.floorRequestID),
+    requestStatus(param.requestStatus),
+    statusInfo(param.statusInfo),
+    hasRequestStatus(param.hasRequestStatus)
+  {}
+
+  OverallRequestStatusParam(OverallRequestStatusParam &&param)
+      : floorRequestID(param.floorRequestID),
+        requestStatus(param.requestStatus),
+        statusInfo(std::move(param.statusInfo)),
+        hasRequestStatus(param.hasRequestStatus)
+  {}
+
+  OverallRequestStatusParam& operator=(const OverallRequestStatusParam &param)
+  {
+    floorRequestID = param.floorRequestID;
+    requestStatus = param.requestStatus;
+    statusInfo = param.statusInfo;
+    hasRequestStatus = param.hasRequestStatus;
+    return *this;
+  }
 
   void set(const bfcp_overall_request_status &oRS);
 
@@ -102,13 +152,29 @@ class FloorRequestStatusParam
 {
 public:
   FloorRequestStatusParam(): hasRequestStatus(false) {}
-  //FloorRequestStatusParam(FloorRequestStatusParam &&param)
-  //    : floorID(param.floorID),
-  //      requestStatus(param.requestStatus),
-  //      statusInfo(std::move(param.statusInfo)),
-  //      hasRequestStatus(param.hasRequestStatus)
 
-  //{}
+  FloorRequestStatusParam(const FloorRequestStatusParam &param)
+    : floorID(param.floorID),
+    requestStatus(param.requestStatus),
+    statusInfo(param.statusInfo),
+    hasRequestStatus(param.hasRequestStatus)
+  {}
+
+  FloorRequestStatusParam(FloorRequestStatusParam &&param)
+      : floorID(param.floorID),
+        requestStatus(param.requestStatus),
+        statusInfo(std::move(param.statusInfo)),
+        hasRequestStatus(param.hasRequestStatus)
+  {}
+
+  FloorRequestStatusParam& operator=(const FloorRequestStatusParam &param)
+  {
+    floorID = param.floorID;
+    requestStatus = param.requestStatus;
+    statusInfo = param.statusInfo;
+    hasRequestStatus = param.hasRequestStatus;
+    return *this;
+  }
 
   void set(const bfcp_floor_request_status &frqStatus);
 
@@ -127,16 +193,40 @@ public:
       : valueType(kHasNone)
   {}
 
-  //FloorRequestInfoParam(FloorRequestInfoParam &&param)
-  //    : floorRequestID(param.floorRequestID),
-  //      valueType(param.valueType),
-  //      oRS(std::move(param.oRS)),
-  //      fRS(std::move(param.fRS)),
-  //      beneficiary(std::move(param.beneficiary)),
-  //      requestedBy(std::move(param.requestedBy)),
-  //      priority(param.priority),
-  //      partPriovidedInfo(std::move(param.partPriovidedInfo))
-  //{}
+  FloorRequestInfoParam(const FloorRequestInfoParam &param)
+    : floorRequestID(param.floorRequestID),
+    valueType(param.valueType),
+    oRS(param.oRS),
+    fRS(param.fRS),
+    beneficiary(param.beneficiary),
+    requestedBy(param.requestedBy),
+    priority(param.priority),
+    partPriovidedInfo(param.partPriovidedInfo)
+  {}
+
+  FloorRequestInfoParam(FloorRequestInfoParam &&param)
+      : floorRequestID(param.floorRequestID),
+        valueType(param.valueType),
+        oRS(std::move(param.oRS)),
+        fRS(std::move(param.fRS)),
+        beneficiary(std::move(param.beneficiary)),
+        requestedBy(std::move(param.requestedBy)),
+        priority(param.priority),
+        partPriovidedInfo(std::move(param.partPriovidedInfo))
+  {}
+
+  FloorRequestInfoParam& operator=(const FloorRequestInfoParam &param)
+  {
+    floorRequestID = param.floorRequestID;
+    valueType = param.valueType;
+    oRS = param.oRS;
+    fRS = param.fRS;
+    beneficiary = param.beneficiary;
+    requestedBy = param.requestedBy;
+    priority = param.priority;
+    partPriovidedInfo = param.partPriovidedInfo;
+    return *this;
+  }
 
   void set(const bfcp_floor_request_info &info);
 
@@ -156,11 +246,27 @@ class UserStatusParam
 {
 public:
   UserStatusParam() : hasBeneficiary(false) {}
-  //UserStatusParam(UserStatusParam &&param)
-  //    : beneficiary(std::move(param.beneficiary)),
-  //      frqInfoList(std::move(param.frqInfoList)),
-  //      hasBeneficiary(param.hasBeneficiary)
-  //{}
+
+  UserStatusParam(const UserStatusParam &param)
+      : beneficiary(param.beneficiary),
+        frqInfoList(param.frqInfoList),
+        hasBeneficiary(param.hasBeneficiary)
+  {}
+
+  UserStatusParam(UserStatusParam &&param)
+      : beneficiary(std::move(param.beneficiary)),
+        frqInfoList(std::move(param.frqInfoList)),
+        hasBeneficiary(param.hasBeneficiary)
+  {}
+
+  
+  UserStatusParam& operator=(const UserStatusParam &param)
+  {
+    beneficiary = param.beneficiary;
+    frqInfoList = param.frqInfoList;
+    hasBeneficiary = param.hasBeneficiary;
+    return *this;
+  }
 
   void setBeneficiary(const bfcp_user_info &info)
   {
@@ -184,11 +290,26 @@ class FloorStatusParam
 {
 public:
   FloorStatusParam() : hasFloorID(false) {}
-  //FloorStatusParam(FloorStatusParam &&param)
-  //    : floorID(param.floorID),
-  //      hasFloorID(param.hasFloorID),
-  //      frqInfoList(std::move(param.frqInfoList))
-  //{}
+
+  FloorStatusParam(const FloorStatusParam &param)
+    : floorID(param.floorID),
+    hasFloorID(param.hasFloorID),
+    frqInfoList(param.frqInfoList)
+  {}
+
+  FloorStatusParam(FloorStatusParam &&param)
+      : floorID(param.floorID),
+        hasFloorID(param.hasFloorID),
+        frqInfoList(std::move(param.frqInfoList))
+  {}
+
+  FloorStatusParam& operator=(const FloorStatusParam &param)
+  {
+    floorID = param.floorID;
+    hasFloorID = param.hasFloorID;
+    frqInfoList = param.frqInfoList;
+    return *this;
+  }
 
   void addFloorRequestInfo(const bfcp_floor_request_info &info)
   {
@@ -212,10 +333,23 @@ class HelloAckParam
 {
 public:
   HelloAckParam() {}
-  //HelloAckParam(HelloAckParam &&param)
-  //    : primitives(std::move(param.primitives)),
-  //      attributes(std::move(param.attributes))
-  //{}
+
+  HelloAckParam(const HelloAckParam &param)
+    : primitives(param.primitives),
+    attributes(param.attributes)
+  {}
+
+  HelloAckParam(HelloAckParam &&param)
+      : primitives(std::move(param.primitives)),
+        attributes(std::move(param.attributes))
+  {}
+
+  HelloAckParam& operator=(const HelloAckParam &param)
+  {
+    primitives = param.primitives;
+    attributes = param.attributes;
+    return *this;
+  }
 
   std::vector<bfcp_prim> primitives;
   std::vector<bfcp_attrib> attributes;
@@ -225,10 +359,23 @@ class ErrorCodeParam
 {
 public:
   ErrorCodeParam() {}
-  //ErrorCodeParam(ErrorCodeParam &&param)
-  //    : code(param.code),
-  //      details(std::move(param.details))
-  //{}
+
+  ErrorCodeParam(const ErrorCodeParam &param)
+      : code(param.code),
+        details(param.details)
+  {}
+
+  ErrorCodeParam(ErrorCodeParam &&param)
+      : code(param.code),
+        details(std::move(param.details))
+  {}
+
+  ErrorCodeParam& operator=(const ErrorCodeParam &param)
+  {
+    code = param.code;
+    details = param.details;
+    return *this;
+  }
 
   void set(const bfcp_errcode_t &errcode);
 
@@ -240,10 +387,23 @@ class ErrorParam
 {
 public:
   ErrorParam() {}
-  //ErrorParam(ErrorParam &&param)
-  //    : errorCode(std::move(param.errorCode)),
-  //      errorInfo(std::move(param.errorInfo))
-  //{}
+
+  ErrorParam(const ErrorParam &param)
+      : errorCode(param.errorCode),
+        errorInfo(param.errorInfo)
+  {}
+
+  ErrorParam(ErrorParam &&param)
+      : errorCode(std::move(param.errorCode)),
+        errorInfo(std::move(param.errorInfo))
+  {}
+
+  ErrorParam& operator=(const ErrorParam &param)
+  {
+    errorCode = param.errorCode;
+    errorInfo = param.errorInfo;
+    return *this;
+  }
   
   void setErrorCode(const bfcp_errcode_t &errcode)
   { errorCode.set(errcode); }

@@ -197,7 +197,7 @@ private:
 
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
-  typedef std::unordered_map<bfcp_prim, Handler> HandlerDict;
+  typedef std::unordered_map<int, Handler> HandlerDict;
 
   void addUserInfoToXMLNode(
     tinyxml2::XMLDocument *doc,

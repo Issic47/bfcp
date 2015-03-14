@@ -403,6 +403,7 @@ void BaseClient::handleHelloAck( const BfcpMsg &msg )
     BfcpAttr supportedPrimsAttr(*attr);
     auto &supPrims = supportedPrimsAttr.getSupportedPrims();
     // TODO: check supported primitives
+    (void)(supPrims);
   }
 
   attr = msg.findAttribute(BFCP_SUPPORTED_ATTRS);
@@ -418,6 +419,7 @@ void BaseClient::handleHelloAck( const BfcpMsg &msg )
     BfcpAttr supportedAttrsAttr(*attr);
     auto &supAttrs = supportedAttrsAttr.getSupportedAttrs();
     // TODO: check supported attributes
+    (void)(supAttrs);
   }
 
   if (responseReceivedCallback_)

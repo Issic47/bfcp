@@ -50,6 +50,14 @@ class BasicRequestParam
 {
 public:
   BasicRequestParam() {}
+
+  BasicRequestParam(const BasicRequestParam &param)
+    : cb(param.cb),
+    dst(param.dst),
+    conferenceID(param.conferenceID),
+    userID(param.userID)
+  {}
+
   BasicRequestParam(BasicRequestParam &&param)
       : cb(std::move(param.cb)),
         dst(param.dst),

@@ -22,7 +22,10 @@ void User::removeOneRequestOfFloor( uint16_t floorID )
   auto it = floorRequestCounter_.find(floorID);
   if (it != floorRequestCounter_.end())
   {
-    (*it).second = (std::max)(0, (*it).second - 1);
+    if ((*it).second > 0)
+    {
+      --(*it).second;
+    }
   }
 }
 

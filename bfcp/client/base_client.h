@@ -80,7 +80,7 @@ public:
 
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
-  typedef std::unordered_map<bfcp_prim, Handler> HandlerDict;
+  typedef std::unordered_map<int, Handler> HandlerDict;
 
   void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 

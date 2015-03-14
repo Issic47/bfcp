@@ -155,6 +155,7 @@ void BaseServer::addConferenceInLoop(uint32_t conferenceID,
       boost::bind(&BaseServer::onResponse, this, _1, _2, _3, _4, _5));
     conferenceMap_.insert(lb, std::make_pair(conferenceID, newConference));
     int res = threadPool_->createQueue(conferenceID, 0);
+    (void)(res);
     assert(res == 0);
     if (cb)
     {
@@ -520,7 +521,7 @@ void BaseServer::onNewRequest( const BfcpMsg &msg )
     param.errorCode.code = BFCP_CONF_NOT_EXIST;
     char errorInfo[64];
     snprintf(errorInfo, sizeof errorInfo, 
-      "Conference %lu does not exist", msg.getConferenceID());
+      "Conference %u does not exist", msg.getConferenceID());
     param.setErrorInfo(errorInfo);
     connection_->replyWithError(msg, param);
   }
@@ -530,6 +531,7 @@ void BaseServer::onNewRequest( const BfcpMsg &msg )
       msg.getConferenceID(), 
       boost::bind(&Conference::onNewRequest, (*it).second, msg),
       ThreadPool::kNormalPriority);
+    (void)(res);
     assert(res == 0);
   }
 }
@@ -554,6 +556,7 @@ void BaseServer::onResponse(uint32_t conferenceID,
       boost::bind(&Conference::onResponse, 
         (*it).second, expectedPrimitive, userID, err, msg),
       ThreadPool::kNormalPriority);
+    (void)(res);
     assert(res == 0);
   }
 }
@@ -575,6 +578,7 @@ void BaseServer::onChairActionTimeout(uint32_t conferenceID,
       boost::bind(&Conference::onTimeoutForChairAction, 
         (*it).second, floorRequestID),
       ThreadPool::kNormalPriority);
+    (void)(res);
     assert(res == 0);
   }
 }

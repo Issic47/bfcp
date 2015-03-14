@@ -36,6 +36,7 @@ int ThreadPool::createQueue( uint32_t queueID, size_t maxQueueSize )
         queueID, 
         boost::make_shared<TaskQueue>(nextID++, maxQueueSize)));
     // FIXME: check (*it).first == handle
+    (void)(it);
     return 0;
   }
   return -1;

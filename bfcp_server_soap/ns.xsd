@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <schema targetNamespace="urn:BFCPService"
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="urn:BFCPService"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="unqualified"
+  attributeFormDefault="unqualified">
+  <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+  <!-- operation request element -->
+  <element name="port" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="enbaleConnectionThread" type="xsd:boolean"/>
+  <!-- operation request element -->
+  <element name="workThreadNum" type="xsd:int"/>
+  <!-- operation request element -->
+  <element name="conferenceID" type="xsd:unsignedInt"/>
+  <!-- operation request element -->
+  <element name="maxFloorRequest" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="policy" type="xsd:string"/>
+  <!-- operation request element -->
+  <element name="timeForChairAction" type="xsd:double"/>
+  <!-- operation request element -->
+  <element name="timeForChairActoin" type="xsd:double"/>
+  <!-- operation request element -->
+  <element name="floorID" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="maxGrantedNum" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="userID" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="userName" type="xsd:string"/>
+  <!-- operation request element -->
+  <element name="userURI" type="xsd:string"/>
+  <!-- operation response element -->
+  <element name="conferenceIDs" type="xsd:unsignedInt"/>
+  <!-- operation response element -->
+  <element name="conferenceInfo" type="xsd:string"/>
+ </schema>
+

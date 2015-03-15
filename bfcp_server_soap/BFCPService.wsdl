@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="BFCPService"
+ targetNamespace="http://localhost:9000/BFCPService.wsdl"
+ xmlns:tns="http://localhost:9000/BFCPService.wsdl"
+ xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+ xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:ns="urn:BFCPService"
+ xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap/"
+ xmlns:HTTP="http://schemas.xmlsoap.org/wsdl/http/"
+ xmlns:MIME="http://schemas.xmlsoap.org/wsdl/mime/"
+ xmlns:DIME="http://schemas.xmlsoap.org/ws/2002/04/dime/wsdl/"
+ xmlns:WSDL="http://schemas.xmlsoap.org/wsdl/"
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+<types>
+
+ <schema targetNamespace="urn:BFCPService"
+  xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="urn:BFCPService"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="unqualified"
+  attributeFormDefault="unqualified">
+  <import namespace="http://schemas.xmlsoap.org/soap/encoding/"/>
+  <!-- operation request element -->
+  <element name="port" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="enbaleConnectionThread" type="xsd:boolean"/>
+  <!-- operation request element -->
+  <element name="workThreadNum" type="xsd:int"/>
+  <!-- operation request element -->
+  <element name="conferenceID" type="xsd:unsignedInt"/>
+  <!-- operation request element -->
+  <element name="maxFloorRequest" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="policy" type="xsd:string"/>
+  <!-- operation request element -->
+  <element name="timeForChairAction" type="xsd:double"/>
+  <!-- operation request element -->
+  <element name="timeForChairActoin" type="xsd:double"/>
+  <!-- operation request element -->
+  <element name="floorID" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="maxGrantedNum" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="userID" type="xsd:unsignedShort"/>
+  <!-- operation request element -->
+  <element name="userName" type="xsd:string"/>
+  <!-- operation request element -->
+  <element name="userURI" type="xsd:string"/>
+  <!-- operation response element -->
+  <element name="conferenceIDs" type="xsd:unsignedInt"/>
+  <!-- operation response element -->
+  <element name="conferenceInfo" type="xsd:string"/>
+ </schema>
+
+</types>
+
+<message name="start">
+ <part name="port" element="ns:port"/><!-- ns__start::port -->
+ <part name="enbaleConnectionThread" element="ns:enbaleConnectionThread"/><!-- ns__start::enbaleConnectionThread -->
+ <part name="workThreadNum" element="ns:workThreadNum"/><!-- ns__start::workThreadNum -->
+</message>
+
+<message name="stop">
+</message>
+
+<message name="addConference">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__addConference::conferenceID -->
+ <part name="maxFloorRequest" element="ns:maxFloorRequest"/><!-- ns__addConference::maxFloorRequest -->
+ <part name="policy" element="ns:policy"/><!-- ns__addConference::policy -->
+ <part name="timeForChairAction" element="ns:timeForChairAction"/><!-- ns__addConference::timeForChairAction -->
+</message>
+
+<message name="removeConference">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__removeConference::conferenceID -->
+</message>
+
+<message name="changeMaxFloorRequest">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__changeMaxFloorRequest::conferenceID -->
+ <part name="maxFloorRequest" element="ns:maxFloorRequest"/><!-- ns__changeMaxFloorRequest::maxFloorRequest -->
+</message>
+
+<message name="changeAcceptPolicy">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__changeAcceptPolicy::conferenceID -->
+ <part name="policy" element="ns:policy"/><!-- ns__changeAcceptPolicy::policy -->
+ <part name="timeForChairActoin" element="ns:timeForChairActoin"/><!-- ns__changeAcceptPolicy::timeForChairActoin -->
+</message>
+
+<message name="addFloor">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__addFloor::conferenceID -->
+ <part name="floorID" element="ns:floorID"/><!-- ns__addFloor::floorID -->
+ <part name="maxGrantedNum" element="ns:maxGrantedNum"/><!-- ns__addFloor::maxGrantedNum -->
+</message>
+
+<message name="removeFloor">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__removeFloor::conferenceID -->
+ <part name="floorID" element="ns:floorID"/><!-- ns__removeFloor::floorID -->
+</message>
+
+<message name="changeMaxGrantedNum">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__changeMaxGrantedNum::conferenceID -->
+ <part name="floorID" element="ns:floorID"/><!-- ns__changeMaxGrantedNum::floorID -->
+ <part name="maxGrantedNum" element="ns:maxGrantedNum"/><!-- ns__changeMaxGrantedNum::maxGrantedNum -->
+</message>
+
+<message name="addUser">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__addUser::conferenceID -->
+ <part name="userID" element="ns:userID"/><!-- ns__addUser::userID -->
+ <part name="userName" element="ns:userName"/><!-- ns__addUser::userName -->
+ <part name="userURI" element="ns:userURI"/><!-- ns__addUser::userURI -->
+</message>
+
+<message name="removeUser">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__removeUser::conferenceID -->
+ <part name="userID" element="ns:userID"/><!-- ns__removeUser::userID -->
+</message>
+
+<message name="addChair">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__addChair::conferenceID -->
+ <part name="floorID" element="ns:floorID"/><!-- ns__addChair::floorID -->
+ <part name="userID" element="ns:userID"/><!-- ns__addChair::userID -->
+</message>
+
+<message name="removeChair">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__removeChair::conferenceID -->
+ <part name="floorID" element="ns:floorID"/><!-- ns__removeChair::floorID -->
+</message>
+
+<message name="getConferenceIDs">
+</message>
+
+<message name="ConferenceList">
+ <part name="conferenceIDs" element="ns:conferenceIDs"/><!-- ns__getConferenceIDs::conferenceIDs -->
+</message>
+
+<message name="getConferenceInfoRequest">
+ <part name="conferenceID" element="ns:conferenceID"/><!-- ns__getConferenceInfo::conferenceID -->
+</message>
+
+<message name="getConferenceInfoResponse">
+ <part name="conferenceInfo" element="ns:conferenceInfo"/><!-- ns__getConferenceInfo::conferenceInfo -->
+</message>
+
+<portType name="BFCPServicePortType">
+ <operation name="start">
+  <documentation>the bfcp server</documentation>
+  <input message="tns:start"/>
+ </operation>
+ <operation name="stop">
+  <documentation>the bfcp server</documentation>
+  <input message="tns:stop"/>
+ </operation>
+ <operation name="addConference">
+  <documentation>Service definition of function ns__addConference</documentation>
+  <input message="tns:addConference"/>
+ </operation>
+ <operation name="removeConference">
+  <documentation>Service definition of function ns__removeConference</documentation>
+  <input message="tns:removeConference"/>
+ </operation>
+ <operation name="changeMaxFloorRequest">
+  <documentation>Service definition of function ns__changeMaxFloorRequest</documentation>
+  <input message="tns:changeMaxFloorRequest"/>
+ </operation>
+ <operation name="changeAcceptPolicy">
+  <documentation>Service definition of function ns__changeAcceptPolicy</documentation>
+  <input message="tns:changeAcceptPolicy"/>
+ </operation>
+ <operation name="addFloor">
+  <documentation>Service definition of function ns__addFloor</documentation>
+  <input message="tns:addFloor"/>
+ </operation>
+ <operation name="removeFloor">
+  <documentation>Service definition of function ns__removeFloor</documentation>
+  <input message="tns:removeFloor"/>
+ </operation>
+ <operation name="changeMaxGrantedNum">
+  <documentation>Service definition of function ns__changeMaxGrantedNum</documentation>
+  <input message="tns:changeMaxGrantedNum"/>
+ </operation>
+ <operation name="addUser">
+  <documentation>Service definition of function ns__addUser</documentation>
+  <input message="tns:addUser"/>
+ </operation>
+ <operation name="removeUser">
+  <documentation>Service definition of function ns__removeUser</documentation>
+  <input message="tns:removeUser"/>
+ </operation>
+ <operation name="addChair">
+  <documentation>Service definition of function ns__addChair</documentation>
+  <input message="tns:addChair"/>
+ </operation>
+ <operation name="removeChair">
+  <documentation>Service definition of function ns__removeChair</documentation>
+  <input message="tns:removeChair"/>
+ </operation>
+ <operation name="getConferenceIDs">
+  <documentation>Service definition of function ns__getConferenceIDs</documentation>
+  <input message="tns:getConferenceIDs"/>
+  <output message="tns:ConferenceList"/>
+ </operation>
+ <operation name="getConferenceInfo">
+  <documentation>Service definition of function ns__getConferenceInfo</documentation>
+  <input message="tns:getConferenceInfoRequest"/>
+  <output message="tns:getConferenceInfoResponse"/>
+ </operation>
+</portType>
+
+<binding name="BFCPService" type="tns:BFCPServicePortType">
+ <SOAP:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="start">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="stop">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="addConference">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="removeConference">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="changeMaxFloorRequest">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="changeAcceptPolicy">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="addFloor">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="removeFloor">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="changeMaxGrantedNum">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="addUser">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="removeUser">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="addChair">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="removeChair">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+ </operation>
+ <operation name="getConferenceIDs">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+  <output>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </output>
+ </operation>
+ <operation name="getConferenceInfo">
+  <SOAP:operation style="rpc" soapAction=""/>
+  <input>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </input>
+  <output>
+     <SOAP:body parts="Body" use="literal" namespace="urn:BFCPService"/>
+  </output>
+ </operation>
+</binding>
+
+<service name="BFCPService">
+ <documentation>gSOAP 2.8.21 generated service definition</documentation>
+ <port name="BFCPService" binding="tns:BFCPService">
+  <SOAP:address location="http://localhost:9000/BFCPService/"/>
+ </port>
+</service>
+
+</definitions>

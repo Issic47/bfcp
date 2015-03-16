@@ -10,7 +10,15 @@ compiling, linking, and/or using OpenSSL is allowed.
 
 #ifndef soapBFCPServiceService_H
 #define soapBFCPServiceService_H
+
+#include <boost/shared_ptr.hpp>
+#include <muduo/base/Mutex.h>
+#include <muduo/base/Condition.h>
+#include <muduo/net/EventLoopThread.h>
+#include <bfcp/server/base_server.h>
+
 #include "soapH.h"
+
 class SOAP_CMAC BFCPServiceService : public soap
 { public:
 	/// Variables globally declared in server.h (non-static)
@@ -78,62 +86,72 @@ class SOAP_CMAC BFCPServiceService : public soap
 	/// Note: compile with -DWITH_PURE_VIRTUAL for pure virtual methods
 	///
 
-	/// Web service one-way operation 'start' (return error code, SOAP_OK (no response), or send_start_empty_response())
-	virtual	int start(unsigned short port, bool enbaleConnectionThread, int workThreadNum) SOAP_PURE_VIRTUAL;
-	virtual	int send_start_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'start' (returns error code or SOAP_OK)
+	virtual	int start(unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'stop' (return error code, SOAP_OK (no response), or send_stop_empty_response())
-	virtual	int stop() SOAP_PURE_VIRTUAL;
-	virtual	int send_stop_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'stop' (returns error code or SOAP_OK)
+	virtual	int stop(enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'addConference' (return error code, SOAP_OK (no response), or send_addConference_empty_response())
-	virtual	int addConference(unsigned int conferenceID, unsigned short maxFloorRequest, char *policy, double timeForChairAction) SOAP_PURE_VIRTUAL;
-	virtual	int send_addConference_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service one-way operation 'quit' (return error code, SOAP_OK (no response), or send_quit_empty_response())
+	virtual	int quit() SOAP_PURE_VIRTUAL;
+	virtual	int send_quit_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
 
-	/// Web service one-way operation 'removeConference' (return error code, SOAP_OK (no response), or send_removeConference_empty_response())
-	virtual	int removeConference(unsigned int conferenceID) SOAP_PURE_VIRTUAL;
-	virtual	int send_removeConference_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'addConference' (returns error code or SOAP_OK)
+	virtual	int addConference(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'changeMaxFloorRequest' (return error code, SOAP_OK (no response), or send_changeMaxFloorRequest_empty_response())
-	virtual	int changeMaxFloorRequest(unsigned int conferenceID, unsigned short maxFloorRequest) SOAP_PURE_VIRTUAL;
-	virtual	int send_changeMaxFloorRequest_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'removeConference' (returns error code or SOAP_OK)
+	virtual	int removeConference(unsigned int conferenceID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'changeAcceptPolicy' (return error code, SOAP_OK (no response), or send_changeAcceptPolicy_empty_response())
-	virtual	int changeAcceptPolicy(unsigned int conferenceID, char *policy, double timeForChairActoin) SOAP_PURE_VIRTUAL;
-	virtual	int send_changeAcceptPolicy_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'changeMaxFloorRequest' (returns error code or SOAP_OK)
+	virtual	int changeMaxFloorRequest(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'addFloor' (return error code, SOAP_OK (no response), or send_addFloor_empty_response())
-	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) SOAP_PURE_VIRTUAL;
-	virtual	int send_addFloor_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'changeAcceptPolicy' (returns error code or SOAP_OK)
+	virtual	int changeAcceptPolicy(unsigned int conferenceID, enum ns__Policy policy, double timeForChairActoin, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'removeFloor' (return error code, SOAP_OK (no response), or send_removeFloor_empty_response())
-	virtual	int removeFloor(unsigned int conferenceID, unsigned short floorID) SOAP_PURE_VIRTUAL;
-	virtual	int send_removeFloor_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'addFloor' (returns error code or SOAP_OK)
+	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'changeMaxGrantedNum' (return error code, SOAP_OK (no response), or send_changeMaxGrantedNum_empty_response())
-	virtual	int changeMaxGrantedNum(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) SOAP_PURE_VIRTUAL;
-	virtual	int send_changeMaxGrantedNum_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'removeFloor' (returns error code or SOAP_OK)
+	virtual	int removeFloor(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'addUser' (return error code, SOAP_OK (no response), or send_addUser_empty_response())
-	virtual	int addUser(unsigned int conferenceID, unsigned short userID, char *userName, char *userURI) SOAP_PURE_VIRTUAL;
-	virtual	int send_addUser_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'changeMaxGrantedNum' (returns error code or SOAP_OK)
+	virtual	int changeMaxGrantedNum(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'removeUser' (return error code, SOAP_OK (no response), or send_removeUser_empty_response())
-	virtual	int removeUser(unsigned int conferenceID, unsigned short userID) SOAP_PURE_VIRTUAL;
-	virtual	int send_removeUser_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'addUser' (returns error code or SOAP_OK)
+	virtual	int addUser(unsigned int conferenceID, unsigned short userID, char *userName, char *userURI, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'addChair' (return error code, SOAP_OK (no response), or send_addChair_empty_response())
-	virtual	int addChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID) SOAP_PURE_VIRTUAL;
-	virtual	int send_addChair_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'removeUser' (returns error code or SOAP_OK)
+	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service one-way operation 'removeChair' (return error code, SOAP_OK (no response), or send_removeChair_empty_response())
-	virtual	int removeChair(unsigned int conferenceID, unsigned short floorID) SOAP_PURE_VIRTUAL;
-	virtual	int send_removeChair_empty_response(int httpcode) { return soap_send_empty_response(this, httpcode); }
+	/// Web service operation 'addChair' (returns error code or SOAP_OK)
+	virtual	int addChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+
+	/// Web service operation 'removeChair' (returns error code or SOAP_OK)
+	virtual	int removeChair(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'getConferenceIDs' (returns error code or SOAP_OK)
-	virtual	int getConferenceIDs(ns__ConferenceList *result) SOAP_PURE_VIRTUAL;
+	virtual	int getConferenceIDs(ns__ConferenceListResult *result) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'getConferenceInfo' (returns error code or SOAP_OK)
-	virtual	int getConferenceInfo(unsigned int conferenceID, char *&conferenceInfo) SOAP_PURE_VIRTUAL;
+	virtual	int getConferenceInfo(unsigned int conferenceID, ns__ConferenceInfoResult *result) SOAP_PURE_VIRTUAL;
+
+private:
+    typedef boost::shared_ptr<bfcp::BaseServer> BaseServerPtr;
+    typedef std::vector<unsigned int> ConferenceIDList;
+    static void resetServer(BaseServerPtr server);
+    void handleCallResult(bfcp::ControlError error);
+    void handleGetCoferenceIDsResult(
+      ConferenceIDList *ids, bfcp::ControlError error, void *data);
+    void handleGetConferenceInfoResult(
+      char *&info, bfcp::ControlError error, void *data);
+
+    BaseServerPtr server_;
+    muduo::MutexLock mutex_;
+    muduo::Condition cond_;
+    muduo::net::EventLoop *loop_;
+    muduo::net::EventLoopThread thread_;
+    bool callFinished_;
+    bfcp::ControlError error_;
+    bool isRunning_;
 };
 #endif

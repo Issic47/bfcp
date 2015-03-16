@@ -1,56 +1,67 @@
 #include <utility>
 #include <stdio.h>
-//#include <unistd.h>
 #include <iostream>
 
 #include <muduo/base/Logging.h>
-#include <muduo/base/Thread.h>
-#include <muduo/net/EventLoop.h>
-#include <muduo/net/InetAddress.h>
-#include <muduo/net/EventLoopThread.h>
-
-#include <bfcp/server/base_server.h>
-
+#include <muduo/base/AsyncLogging.h>
 #include "soapBFCPServiceService.h"
 #include "BFCPService.nsmap"
+
+extern char *basename( char *path );
 
 using namespace muduo;
 using namespace muduo::net;
 using namespace bfcp;
 
-void controlFunc(BaseServer *server);
-int http_get(struct soap *soap);
+int kRollSize = 500 * 1000 * 1000;
 
-#define CHECK_CIN_RESULT(res) do {\
-  if (!(res)) {\
-  std::cin.clear(); \
-  std::cin.ignore(); \
-  break; \
-  }\
-} while (false)
+muduo::AsyncLogging* g_asyncLog = NULL;
+void asyncOutput(const char* msg, int len)
+{
+  g_asyncLog->append(msg, len);
+}
+
+int http_get(struct soap *soap);
 
 int main(int argc, char* argv[])
 {
   Logger::setLogLevel(Logger::kTRACE);
+  
+  char name[256];
+  strncpy(name, argv[0], 256);
+  muduo::AsyncLogging log(::basename(name), kRollSize);
+  log.start();
+  g_asyncLog = &log;
+  muduo::Logger::setOutput(asyncOutput);
+  
   LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::tid();
 
-  BFCPServiceService service(SOAP_C_UTFSTRING);
+  BFCPServiceService service(SOAP_C_UTFSTRING | SOAP_IO_KEEPALIVE);
+  service.send_timeout = 20;
+  service.recv_timeout = 20;
+  service.connect_timeout = 5;
+  service.accept_timeout = 5;
   if (argc < 2)
-    service.serve();	/* serve as CGI application */
+  {
+    fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
+    return 0;
+  }
   else
   { 
     int port = atoi(argv[1]);
     if (!port)
     { 
       fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
-      exit(0);
+      return 0;
     }
     /* run iterative server on port until fatal error */
     service.fget = http_get;
     if (service.run(port))
     { 
-      service.soap_stream_fault(std::cerr);
-      exit(-1);
+      char buf[1024];
+      service.soap_sprint_fault(buf, sizeof buf);
+      buf[sizeof(buf)-1] = '\0';
+      LOG_ERROR << buf;
     }
   }
   getchar();
@@ -58,15 +69,14 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-
 int http_get(struct soap * soap)
 { 
   FILE *fd = NULL;
   char *s = strchr(soap->path, '?'); 
   if (!s || strcmp(s, "?wsdl")) 
     return SOAP_GET_METHOD; 
-  fd = fopen("calc.wsdl", "rb"); // open WSDL file to copy 
-  if (!fd) 
+  fd = fopen("BFCPService.wsdl", "rb"); // open WSDL file to copy 
+  if (!fd)
     return 404; // return HTTP not found error 
   soap->http_content = "text/xml"; // HTTP header with text/xml content 
   soap_response(soap, SOAP_FILE); 
@@ -81,99 +91,4 @@ int http_get(struct soap * soap)
   fclose(fd); 
   soap_end_send(soap); 
   return SOAP_OK; 
-}
-
-int BFCPServiceService::start(unsigned short port,
-                              bool enbaleConnectionThread, 
-                              int workThreadNum)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::stop()
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addConference(unsigned int conferenceID, 
-                                      unsigned short maxFloorRequest, 
-                                      char *policy, 
-                                      double timeForChairAction)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeConference(unsigned int conferenceID)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::changeMaxFloorRequest(unsigned int conferenceID, 
-                                              unsigned short maxFloorRequest)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::changeAcceptPolicy(unsigned int conferenceID, 
-                                           char *policy,
-                                           double timeForChairActoin)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addFloor(unsigned int conferenceID, 
-                                 unsigned short floorID, 
-                                 unsigned short maxGrantedNum)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeFloor(unsigned int conferenceID,
-                                    unsigned short floorID)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::changeMaxGrantedNum(unsigned int conferenceID, 
-                                            unsigned short floorID, 
-                                            unsigned short maxGrantedNum)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addUser(unsigned int conferenceID, 
-                                unsigned short userID, 
-                                char *userName, 
-                                char *userURI)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeUser(unsigned int conferenceID, 
-                                   unsigned short userID)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addChair(unsigned int conferenceID, 
-                                 unsigned short floorID, 
-                                 unsigned short userID)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeChair(unsigned int conferenceID, 
-                                    unsigned short floorID)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::getConferenceIDs(ns__ConferenceList *result)
-{
-  return SOAP_OK;
-}
-
-int BFCPServiceService::getConferenceInfo( unsigned int conferenceID, char *&conferenceInfo )
-{
-  return SOAP_OK;
 }

@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{9AE0F3B2-26E3-4F0A-99A9-5CCDDF9AC1E4}</ProjectGuid>
-    <RootNamespace>bfcp_server_soap</RootNamespace>
+    <ProjectGuid>{7DA4A806-036F-464E-84C5-3000D2D2E2F2}</ProjectGuid>
+    <RootNamespace>server_soap_test</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -43,14 +43,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(LIBRE_HOME)include;$(MUDUOX_HOME);$(LIBUV_HOME)include;$(BOOST_HOME);$(ZLIB_HOME)include;$(TINYXML2_HOME);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;DEBUG;_DEBUG;MUDUO_STD_STRING;_SCL_SECURE_NO_WARNINGS;HAVE_INET_PTON;HAVE_INET_NTOP;HAVE_INET6;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(BOOST_HOME)stage\lib;$(LIBUV_HOME)Debug\lib;$(ZLIB_HOME)lib;$(MUDUOX_HOME)Debug\lib;$(LIBRE_HOME)Win32\Debug;$(TINYXML2_HOME)tinyxml2\bin\Win32-Debug-Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>muduox.lib;libuv.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;ws2_32.lib;Dbghelp.lib;zdll.lib;re-win32.lib;tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -59,42 +54,28 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir);$(LIBRE_HOME)include;$(MUDUOX_HOME);$(LIBUV_HOME)include;$(BOOST_HOME);$(ZLIB_HOME)include;$(TINYXML2_HOME);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE;_WIN32_WINNT=0x0600;_GNU_SOURCE;NDEBUG;_NDEBUG;MUDUO_STD_STRING;_SCL_SECURE_NO_WARNINGS;HAVE_INET_PTON;HAVE_INET_NTOP;HAVE_INET6;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(BOOST_HOME)stage\lib;$(LIBUV_HOME)Release\lib;$(ZLIB_HOME)lib;$(MUDUOX_HOME)Release\lib;$(LIBRE_HOME)Win32\Release;$(TINYXML2_HOME)tinyxml2\bin\Win32-Release-Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>muduox.lib;libuv.lib;advapi32.lib;iphlpapi.lib;psapi.lib;shell32.lib;ws2_32.lib;Dbghelp.lib;zdll.lib;re-win32.lib;tinyxml2.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="basename.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="soapBFCPServiceService.cpp" />
-    <ClCompile Include="soapC.cpp" />
-    <ClCompile Include="stdsoap2.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\bfcp\bfcp.vcxproj">
-      <Project>{b24c9eb9-7162-4f12-9d46-a41cb886b2f0}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup>
     <ClInclude Include="server.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="soapBFCPServiceService.h" />
+    <ClInclude Include="soapBFCPServiceProxy.h" />
     <ClInclude Include="soapH.h" />
     <ClInclude Include="soapStub.h" />
     <ClInclude Include="stdsoap2.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="BFCPService.nsmap" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="soapBFCPServiceProxy.cpp" />
+    <ClCompile Include="soapC.cpp" />
+    <ClCompile Include="stdsoap2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

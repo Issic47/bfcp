@@ -25,6 +25,22 @@ int http_get(struct soap *soap);
 
 int main(int argc, char* argv[])
 {
+  int port = 0;
+  if (argc < 2)
+  {
+    fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
+    return 0;
+  }
+  else
+  {
+    port = atoi(argv[1]);
+    if (!port)
+    {
+      fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
+      return 0;
+    }
+  }
+
   Logger::setLogLevel(Logger::kTRACE);
   
   char name[256];
@@ -33,6 +49,9 @@ int main(int argc, char* argv[])
   log.start();
   g_asyncLog = &log;
   muduo::Logger::setOutput(asyncOutput);
+
+  sys_coredump_set(true);
+  sys_daemon();
   
   LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::tid();
 
@@ -41,30 +60,16 @@ int main(int argc, char* argv[])
   service.recv_timeout = 20;
   service.connect_timeout = 5;
   service.accept_timeout = 5;
-  if (argc < 2)
-  {
-    fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
-    return 0;
-  }
-  else
+  
+  /* run iterative server on port until fatal error */
+  service.fget = http_get;
+  if (service.run(port))
   { 
-    int port = atoi(argv[1]);
-    if (!port)
-    { 
-      fprintf(stderr, "Usage: bfcp_service_soap <port>\n");
-      return 0;
-    }
-    /* run iterative server on port until fatal error */
-    service.fget = http_get;
-    if (service.run(port))
-    { 
-      char buf[1024];
-      service.soap_sprint_fault(buf, sizeof buf);
-      buf[sizeof(buf)-1] = '\0';
-      LOG_ERROR << buf;
-    }
+    char buf[1024];
+    service.soap_sprint_fault(buf, sizeof buf);
+    buf[sizeof(buf)-1] = '\0';
+    LOG_ERROR << buf;
   }
-  getchar();
 
   return 0;
 }

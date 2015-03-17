@@ -13,6 +13,7 @@ extern "C"
 #include <re_msg.h>
 #include <re_list.h>
 #include <re_sa.h>
+#include <re_sys.h>
 
 #include <re_bfcp.h>
 #include <re_mem.h>

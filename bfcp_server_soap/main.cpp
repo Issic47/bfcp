@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <muduo/base/Logging.h>
+#include <muduo/base/TimeZone.h>
 #include <muduo/base/AsyncLogging.h>
 #include "soapBFCPServiceService.h"
 #include "BFCPService.nsmap"
@@ -44,6 +45,7 @@ int main(int argc, char* argv[])
   sys_coredump_set(true);
 
   Logger::setLogLevel(Logger::kTRACE);
+  Logger::setTimeZone(muduo::TimeZone(8*3600, "CST"));
   
   char name[256];
   strncpy(name, argv[0], 256);

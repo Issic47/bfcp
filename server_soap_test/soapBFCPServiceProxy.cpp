@@ -675,7 +675,7 @@ int BFCPServiceProxy::changeMaxGrantedNum(const char *endpoint, const char *soap
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, char *userName, char *userURI, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
 	struct ns__addUser soap_tmp_ns__addUser;
 	struct ns__addUserResponse *soap_tmp_ns__addUserResponse;
@@ -687,8 +687,8 @@ int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, uns
 	soap->encodingStyle = NULL;
 	soap_tmp_ns__addUser.conferenceID = conferenceID;
 	soap_tmp_ns__addUser.userID = userID;
-	soap_tmp_ns__addUser.userName = userName;
-	soap_tmp_ns__addUser.userURI = userURI;
+	soap_tmp_ns__addUser.userName = const_cast<char*>(userName);
+	soap_tmp_ns__addUser.userURI = const_cast<char*>(userURI);
 	soap_serializeheader(soap);
 	soap_serialize_ns__addUser(soap, &soap_tmp_ns__addUser);
 	if (soap_begin_count(soap))

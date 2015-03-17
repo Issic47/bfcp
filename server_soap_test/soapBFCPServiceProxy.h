@@ -111,8 +111,8 @@ class SOAP_CMAC BFCPServiceProxy : public soap
 	virtual	int changeMaxGrantedNum(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'addUser' (returns error code or SOAP_OK)
-	virtual	int addUser(unsigned int conferenceID, unsigned short userID, char *userName, char *userURI, enum ns__ErrorCode *errorCode) { return this->addUser(NULL, NULL, conferenceID, userID, userName, userURI, errorCode); }
-	virtual	int addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, char *userName, char *userURI, enum ns__ErrorCode *errorCode);
+	virtual	int addUser(unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode) { return this->addUser(NULL, NULL, conferenceID, userID, userName, userURI, errorCode); }
+	virtual	int addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'removeUser' (returns error code or SOAP_OK)
 	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) { return this->removeUser(NULL, NULL, conferenceID, userID, errorCode); }

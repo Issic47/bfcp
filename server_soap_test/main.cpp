@@ -59,7 +59,7 @@ int main(int argc, char **argv)
       calc.stop(&errorCode);
       break;
     case 'i':
-      calc.addConference(100, 3, ns__Policy::kAutoDeny, 120, &errorCode);
+      calc.addConference(100, 3, ns__Policy::kAutoAccept, 120, &errorCode);
       break;
     case 'd':
       calc.removeConference(100, &errorCode);
@@ -71,10 +71,10 @@ int main(int argc, char **argv)
       calc.removeFloor(100, 11, &errorCode);
       break;
     case 'j':
-      calc.addUser(100, 12, "user1", "", &errorCode);
+      calc.addUser(100, 1, "user1", "", &errorCode);
       break;
     case 'k':
-      calc.removeUser(100, 12, &errorCode);
+      calc.removeUser(100, 1, &errorCode);
       break;
     case 'q':
       calc.quit();

@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   switch (ch)
   {
     case 'c':
-      calc.start(1000, true, 2, &errorCode);
+      calc.start(7890, true, 2, &errorCode);
       break;
     case 'y':
       calc.stop(&errorCode);

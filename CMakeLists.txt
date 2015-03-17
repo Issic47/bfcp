@@ -17,7 +17,7 @@ set(CXX_FLAGS
  -Wall
  -Wextra
  -Werror
- -Wconversion
+ #-Wconversion
  -Wno-unused-parameter
  #-Wold-style-cast
  -Woverloaded-virtual
@@ -111,7 +111,10 @@ message(STATUS "CXX_FLAGS = " ${CMAKE_CXX_FLAGS} " " ${CMAKE_CXX_FLAGS_${BUILD_T
 add_subdirectory(bfcp)
 add_subdirectory(bfcp_client)
 add_subdirectory(bfcp_server)
-
+if (NOT CMAKE_BUILD_NO_SOAP_SERVER)
+  add_subdirectory(bfcp_server_soap)
+  add_subdirectory(server_soap_test)
+endif()
 #if(NOT CMAKE_BUILD_NO_EXAMPLES)
 #  add_subdirectory(examples)
 #else()

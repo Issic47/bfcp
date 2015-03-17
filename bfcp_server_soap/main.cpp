@@ -41,6 +41,8 @@ int main(int argc, char* argv[])
     }
   }
 
+  sys_coredump_set(true);
+
   Logger::setLogLevel(Logger::kTRACE);
   
   char name[256];
@@ -50,9 +52,6 @@ int main(int argc, char* argv[])
   g_asyncLog = &log;
   muduo::Logger::setOutput(asyncOutput);
 
-  sys_coredump_set(true);
-  sys_daemon();
-  
   LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::tid();
 
   BFCPServiceService service(SOAP_C_UTFSTRING | SOAP_IO_KEEPALIVE);
@@ -97,3 +96,4 @@ int http_get(struct soap * soap)
   soap_end_send(soap); 
   return SOAP_OK; 
 }
+

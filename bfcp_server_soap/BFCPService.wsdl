@@ -62,6 +62,17 @@
     <!-- = 1 -->
    </restriction>
   </simpleType>
+  <simpleType name="AddrFamily"><!-- ns__AddrFamily -->
+
+   <restriction base="xsd:string">
+    <enumeration value="kIPv4"/><!-- ns__AddrFamily::kIPv4 -->
+    <!-- = 0 -->
+    <enumeration value="kIPv6"/><!-- ns__AddrFamily::kIPv6 -->
+    <!-- = 1 -->
+   </restriction>
+  </simpleType>
+  <!-- operation request element -->
+  <element name="af" type="ns:AddrFamily"/>
   <!-- operation request element -->
   <element name="port" type="xsd:unsignedShort"/>
   <!-- operation request element -->
@@ -99,6 +110,7 @@
 </types>
 
 <message name="startRequest">
+ <part name="af" element="ns:af"/><!-- ns__start::af -->
  <part name="port" element="ns:port"/><!-- ns__start::port -->
  <part name="enbaleConnectionThread" element="ns:enbaleConnectionThread"/><!-- ns__start::enbaleConnectionThread -->
  <part name="workThreadNum" element="ns:workThreadNum"/><!-- ns__start::workThreadNum -->

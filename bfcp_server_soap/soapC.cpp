@@ -15,7 +15,7 @@ compiling, linking, and/or using OpenSSL is allowed.
 
 #include "soapH.h"
 
-SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-03-16 11:19:00 GMT")
+SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-03-18 09:20:33 GMT")
 
 
 #ifndef WITH_NOGLOBAL
@@ -204,6 +204,8 @@ SOAP_FMAC3 void * SOAP_FMAC4 soap_getelement(struct soap *soap, int *type)
 		return soap_in_unsignedInt(soap, NULL, NULL, "xsd:unsignedInt");
 	case SOAP_TYPE_bool:
 		return soap_in_bool(soap, NULL, NULL, "xsd:boolean");
+	case SOAP_TYPE_ns__AddrFamily:
+		return soap_in_ns__AddrFamily(soap, NULL, NULL, "ns:AddrFamily");
 	case SOAP_TYPE_ns__Policy:
 		return soap_in_ns__Policy(soap, NULL, NULL, "ns:Policy");
 	case SOAP_TYPE_ns__ErrorCode:
@@ -332,6 +334,10 @@ SOAP_FMAC3 void * SOAP_FMAC4 soap_getelement(struct soap *soap, int *type)
 		if (!soap_match_tag(soap, t, "xsd:boolean"))
 		{	*type = SOAP_TYPE_bool;
 			return soap_in_bool(soap, NULL, NULL, NULL);
+		}
+		if (!soap_match_tag(soap, t, "ns:AddrFamily"))
+		{	*type = SOAP_TYPE_ns__AddrFamily;
+			return soap_in_ns__AddrFamily(soap, NULL, NULL, NULL);
 		}
 		if (!soap_match_tag(soap, t, "ns:Policy"))
 		{	*type = SOAP_TYPE_ns__Policy;
@@ -550,6 +556,8 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_putelement(struct soap *soap, const void *ptr, co
 		return soap_out_unsignedInt(soap, tag, id, (const unsigned int *)ptr, "xsd:unsignedInt");
 	case SOAP_TYPE_bool:
 		return soap_out_bool(soap, tag, id, (const bool *)ptr, "xsd:boolean");
+	case SOAP_TYPE_ns__AddrFamily:
+		return soap_out_ns__AddrFamily(soap, tag, id, (const enum ns__AddrFamily *)ptr, "ns:AddrFamily");
 	case SOAP_TYPE_ns__Policy:
 		return soap_out_ns__Policy(soap, tag, id, (const enum ns__Policy *)ptr, "ns:Policy");
 	case SOAP_TYPE_ns__ErrorCode:
@@ -1449,6 +1457,87 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_put_bool(struct soap *soap, const bool *a, const 
 SOAP_FMAC3 bool * SOAP_FMAC4 soap_get_bool(struct soap *soap, bool *p, const char *tag, const char *type)
 {
 	if ((p = soap_in_bool(soap, tag, p, type)))
+		if (soap_getindependent(soap))
+			return NULL;
+	return p;
+}
+
+SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__AddrFamily(struct soap *soap, enum ns__AddrFamily *a)
+{
+	(void)soap; /* appease -Wall -Werror */
+#ifdef SOAP_DEFAULT_ns__AddrFamily
+	*a = SOAP_DEFAULT_ns__AddrFamily;
+#else
+	*a = (enum ns__AddrFamily)0;
+#endif
+}
+
+static const struct soap_code_map soap_codes_ns__AddrFamily[] =
+{	{ (long)kIPv4, "kIPv4" },
+	{ (long)kIPv6, "kIPv6" },
+	{ 0, NULL }
+};
+
+SOAP_FMAC3S const char* SOAP_FMAC4S soap_ns__AddrFamily2s(struct soap *soap, enum ns__AddrFamily n)
+{	const char *s = soap_code_str(soap_codes_ns__AddrFamily, (long)n);
+	if (s)
+		return s;
+	return soap_long2s(soap, (long)n);
+}
+
+SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__AddrFamily(struct soap *soap, const char *tag, int id, const enum ns__AddrFamily *a, const char *type)
+{	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__AddrFamily), type) || soap_send(soap, soap_ns__AddrFamily2s(soap, *a)))
+		return soap->error;
+	return soap_element_end_out(soap, tag);
+}
+
+SOAP_FMAC3S int SOAP_FMAC4S soap_s2ns__AddrFamily(struct soap *soap, const char *s, enum ns__AddrFamily *a)
+{
+	const struct soap_code_map *map;
+	if (!s)
+		return soap->error;
+	map = soap_code(soap_codes_ns__AddrFamily, s);
+	if (map)
+		*a = (enum ns__AddrFamily)map->code;
+	else
+	{	long n;
+		if (soap_s2long(soap, s, &n) || ((soap->mode & SOAP_XML_STRICT) && (n < 0 || n > 1)))
+			return soap->error = SOAP_TYPE;
+		*a = (enum ns__AddrFamily)n;
+	}
+	return SOAP_OK;
+}
+
+SOAP_FMAC3 enum ns__AddrFamily * SOAP_FMAC4 soap_in_ns__AddrFamily(struct soap *soap, const char *tag, enum ns__AddrFamily *a, const char *type)
+{
+	if (soap_element_begin_in(soap, tag, 0, type))
+		return NULL;
+	a = (enum ns__AddrFamily *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__AddrFamily, sizeof(enum ns__AddrFamily), 0, NULL, NULL, NULL);
+	if (!a)
+		return NULL;
+	if (soap->body && !*soap->href)
+	{	if (!a || soap_s2ns__AddrFamily(soap, soap_value(soap), a) || soap_element_end_in(soap, tag))
+			return NULL;
+	}
+	else
+	{	a = (enum ns__AddrFamily *)soap_id_forward(soap, soap->href, (void*)a, 0, SOAP_TYPE_ns__AddrFamily, 0, sizeof(enum ns__AddrFamily), 0, NULL);
+		if (soap->body && soap_element_end_in(soap, tag))
+			return NULL;
+	}
+	return a;
+}
+
+SOAP_FMAC3 int SOAP_FMAC4 soap_put_ns__AddrFamily(struct soap *soap, const enum ns__AddrFamily *a, const char *tag, const char *type)
+{
+	register int id = soap_embed(soap, (void*)a, NULL, 0, SOAP_TYPE_ns__AddrFamily);
+	if (soap_out_ns__AddrFamily(soap, tag?tag:"ns:AddrFamily", id, a, type))
+		return soap->error;
+	return soap_putindependent(soap);
+}
+
+SOAP_FMAC3 enum ns__AddrFamily * SOAP_FMAC4 soap_get_ns__AddrFamily(struct soap *soap, enum ns__AddrFamily *p, const char *tag, const char *type)
+{
+	if ((p = soap_in_ns__AddrFamily(soap, tag, p, type)))
 		if (soap_getindependent(soap))
 			return NULL;
 	return p;
@@ -5584,6 +5673,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__stopResponse(struct soap *soap, int st,
 SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__start(struct soap *soap, struct ns__start *a)
 {
 	(void)soap; (void)a; /* appease -Wall -Werror */
+	soap_default_ns__AddrFamily(soap, &a->af);
 	soap_default_unsignedShort(soap, &a->port);
 	soap_default_bool(soap, &a->enbaleConnectionThread);
 	soap_default_int(soap, &a->workThreadNum);
@@ -5601,6 +5691,8 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__start(struct soap *soap, const char *tag,
 	(void)soap; (void)tag; (void)id; (void)a; (void)type; /* appease -Wall -Werror */
 	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__start), type))
 		return soap->error;
+	if (soap_out_ns__AddrFamily(soap, "af", -1, &a->af, ""))
+		return soap->error;
 	if (soap_out_unsignedShort(soap, "port", -1, &a->port, ""))
 		return soap->error;
 	if (soap_out_bool(soap, "enbaleConnectionThread", -1, &a->enbaleConnectionThread, ""))
@@ -5612,6 +5704,7 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__start(struct soap *soap, const char *tag,
 
 SOAP_FMAC3 struct ns__start * SOAP_FMAC4 soap_in_ns__start(struct soap *soap, const char *tag, struct ns__start *a, const char *type)
 {
+	size_t soap_flag_af = 1;
 	size_t soap_flag_port = 1;
 	size_t soap_flag_enbaleConnectionThread = 1;
 	size_t soap_flag_workThreadNum = 1;
@@ -5625,6 +5718,11 @@ SOAP_FMAC3 struct ns__start * SOAP_FMAC4 soap_in_ns__start(struct soap *soap, co
 	{
 		for (;;)
 		{	soap->error = SOAP_TAG_MISMATCH;
+			if (soap_flag_af && soap->error == SOAP_TAG_MISMATCH)
+				if (soap_in_ns__AddrFamily(soap, "af", &a->af, "ns:AddrFamily"))
+				{	soap_flag_af--;
+					continue;
+				}
 			if (soap_flag_port && soap->error == SOAP_TAG_MISMATCH)
 				if (soap_in_unsignedShort(soap, "port", &a->port, "xsd:unsignedShort"))
 				{	soap_flag_port--;
@@ -5655,7 +5753,7 @@ SOAP_FMAC3 struct ns__start * SOAP_FMAC4 soap_in_ns__start(struct soap *soap, co
 		if (soap->body && soap_element_end_in(soap, tag))
 			return NULL;
 	}
-	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_port > 0 || soap_flag_enbaleConnectionThread > 0 || soap_flag_workThreadNum > 0))
+	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_af > 0 || soap_flag_port > 0 || soap_flag_enbaleConnectionThread > 0 || soap_flag_workThreadNum > 0))
 	{	soap->error = SOAP_OCCURS;
 		return NULL;
 	}

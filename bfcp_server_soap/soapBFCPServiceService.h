@@ -87,7 +87,7 @@ class SOAP_CMAC BFCPServiceService : public soap
 	///
 
 	/// Web service operation 'start' (returns error code or SOAP_OK)
-	virtual	int start(unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	virtual	int start(enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'stop' (returns error code or SOAP_OK)
 	virtual	int stop(enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;

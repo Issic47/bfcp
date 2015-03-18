@@ -327,7 +327,7 @@ static int serve_ns__start(BFCPServiceService *soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->start(soap_tmp_ns__start.port, soap_tmp_ns__start.enbaleConnectionThread, soap_tmp_ns__start.workThreadNum, soap_tmp_ns__startResponse.errorCode);
+	soap->error = soap->start(soap_tmp_ns__start.af, soap_tmp_ns__start.port, soap_tmp_ns__start.enbaleConnectionThread, soap_tmp_ns__start.workThreadNum, soap_tmp_ns__startResponse.errorCode);
 	if (soap->error)
 		return soap->error;
 	soap->encodingStyle = NULL;
@@ -983,12 +983,14 @@ static int serve_ns__getConferenceInfo(BFCPServiceService *soap)
 }
 /* End of server object code */
 
-int BFCPServiceService::start(unsigned short port, 
+int BFCPServiceService::start(enum ns__AddrFamily af,
+                              unsigned short port, 
                               bool enbaleConnectionThread, 
                               int workThreadNum, 
                               enum ns__ErrorCode *errorCode)
 {
-  LOG_INFO << "start (port: " << port 
+  LOG_INFO << "start (af:" << (af == kIPv4 ? "IPv4" : "IPv6")
+           << "port: " << port 
            << ", enableConnectionThread: " << (enbaleConnectionThread ? "true" : "false")
            << ", workThreadNum: " << workThreadNum << ")";
 
@@ -1004,7 +1006,7 @@ int BFCPServiceService::start(unsigned short port,
     loop_ = thread_.startLoop();
   }
 
-  muduo::net::InetAddress listenAddr(AF_INET, port);
+  muduo::net::InetAddress listenAddr((af == kIPv4 ? AF_INET : AF_INET6), port);
   server_ = boost::make_shared<bfcp::BaseServer>(loop_, listenAddr);
   if (enbaleConnectionThread)
     server_->enableConnectionThread();

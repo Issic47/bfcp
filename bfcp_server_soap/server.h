@@ -97,7 +97,8 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 
 typedef unsigned int xsd__unsignedInt;
 
-enum ns__ErrorCode {
+enum ns__ErrorCode 
+{
   kNoError,
   kUserNotExist,
   kUserAlreadyExist,
@@ -111,9 +112,16 @@ enum ns__ErrorCode {
   kServerAlreadyStart,
 };
 
-enum ns__Policy {
+enum ns__Policy 
+{
   kAutoAccept,
   kAutoDeny,
+};
+
+enum ns__AddrFamily 
+{
+  kIPv4,
+  kIPv6
 };
 
 class ns__ConferenceListResult
@@ -131,7 +139,8 @@ public:
 };
 
 //gsoap ns service method-documentation: start the bfcp server
-int ns__start(unsigned short port,
+int ns__start(enum ns__AddrFamily af,
+              unsigned short port,
               bool enbaleConnectionThread,
               int workThreadNum,
               enum ns__ErrorCode *errorCode);

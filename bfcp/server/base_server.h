@@ -66,9 +66,7 @@ public:
 
   void modifyConference(
     uint32_t conferenceID,
-    uint16_t maxFloorRequest,
-    AcceptPolicy policy,
-    double timeForChairAction,
+    const ConferenceConfig &config,
     const ResultCallback &cb);
 
   void changeMaxFloorRequest(
@@ -163,9 +161,7 @@ private:
 
   void modifyConferenceInLoop(
     uint32_t conferenceID,
-    uint16_t maxFloorRequest,
-    AcceptPolicy policy,
-    double timeForChairAction,
+    const ConferenceConfig &config,
     const ResultCallback &cb);
 
   void changeMaxFloorRequestInLoop(
@@ -250,10 +246,6 @@ private:
   void runInLoop(
     Func func, const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3, const Arg4 &arg4);
 
-  template <typename Func, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5>
-  void runInLoop(
-    Func func, const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3, const Arg4 &arg4, const Arg5 &arg5);
-
   template <typename Func, typename Arg1>
   void runTask(
     Func func,
@@ -273,15 +265,6 @@ private:
     uint32_t conferenceID, 
     const Arg1 &arg1,
     const Arg2 &arg2, 
-    const ResultCallback &cb);
-
-  template <typename Func, typename Arg1, typename Arg2, typename Arg3>
-  void runTask(
-    Func func, 
-    uint32_t conferenceID, 
-    const Arg1 &arg1,
-    const Arg2 &arg2, 
-    const Arg3 &arg3,
     const ResultCallback &cb);
 
 private:

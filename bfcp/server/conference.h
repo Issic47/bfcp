@@ -52,18 +52,15 @@ public:
     muduo::net::EventLoop *loop,
     const BfcpConnectionPtr &connection,
     uint32_t conferenceID,
-    uint16_t maxFloorRequest,
-    AcceptPolicy acceptPolicy,
-    double timeForChairAction);
+    const ConferenceConfig &config);
 
   ~Conference();
 
   uint32_t getConferenceID() const { return conferenceID_; }
 
   // methods for control
-  ControlError set(uint16_t maxFloorRequest, AcceptPolicy policy, double timeForChairAction);
+  ControlError set(const ConferenceConfig &config);
   ControlError setMaxFloorRequest(uint16_t maxFloorRequest);
-  ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
   ControlError setAcceptPolicy(AcceptPolicy policy, double timeForChairAction);
 
   ControlError addUser(const UserInfoParam &user);
@@ -71,6 +68,7 @@ public:
   
   ControlError addFloor(uint16_t floorID, uint16_t maxGrantedCount);
   ControlError removeFloor(uint16_t floorID);
+  ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
 
   ControlError addChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);

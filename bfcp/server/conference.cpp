@@ -92,19 +92,17 @@ const char * toString( AcceptPolicy policy )
 
 const double Conference::kDefaultTimeForChairAction = 5.0;
 
-Conference::Conference(muduo::net::EventLoop *loop,
+Conference::Conference(muduo::net::EventLoop *loop, 
                        const BfcpConnectionPtr &connection, 
                        uint32_t conferenceID, 
-                       uint16_t maxFloorRequest, 
-                       AcceptPolicy acceptPolicy, 
-                       double timeForChairAction)
+                       const ConferenceConfig &config)
     : loop_(CHECK_NOTNULL(loop)),
       connection_(connection),
       conferenceID_(conferenceID),
       nextFloorRequestID_(0),
-      maxFloorRequest_(maxFloorRequest),
-      timeForChairAction_(timeForChairAction),
-      acceptPolicy_(acceptPolicy)
+      maxFloorRequest_(config.maxFloorRequest),
+      timeForChairAction_(config.timeForChairAction),
+      acceptPolicy_(config.acceptPolicy)
 {
   LOG_TRACE << "Conference::Conference [" << conferenceID << "] constructing";
   assert(connection_);
@@ -153,14 +151,23 @@ Conference::~Conference()
   LOG_TRACE << "Conference::~Conference [" << conferenceID_ << "] destructing";
 }
 
-bfcp::ControlError Conference::set(uint16_t maxFloorRequest, AcceptPolicy policy, double timeForChairAction)
+bfcp::ControlError Conference::set(const ConferenceConfig &config)
 {
-  ControlError err = setMaxFloorRequest(maxFloorRequest);
-  if (err == ControlError::kNoError)
+  LOG_TRACE << "{config: {maxFloorRequest: " << config.maxFloorRequest
+            << ", acceptPolicy: " << toString(config.acceptPolicy)
+            << ", timeForChairAction: " << config.timeForChairAction << "}}";
+  maxFloorRequest_ = config.maxFloorRequest;
+  acceptPolicy_ = config.acceptPolicy;
+  if (config.timeForChairAction < 0.0)
   {
-    err = setAcceptPolicy(policy, timeForChairAction);
+    LOG_ERROR << "Invalid timeout for chair action: " << config.timeForChairAction;
+    timeForChairAction_ = kDefaultTimeForChairAction;
   }
-  return err;
+  else
+  {
+    timeForChairAction_ = config.timeForChairAction;
+  }
+  return ControlError::kNoError;
 }
 
 ControlError Conference::setMaxFloorRequest( uint16_t maxFloorRequest )

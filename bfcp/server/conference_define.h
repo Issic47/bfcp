@@ -23,6 +23,13 @@ enum class AcceptPolicy
   kAutoDeny = 1,
 };
 
+struct ConferenceConfig
+{
+  uint16_t maxFloorRequest;
+  AcceptPolicy acceptPolicy;
+  double timeForChairAction;
+};
+
 const char* toString(AcceptPolicy policy);
 
 } // namespace bfcp

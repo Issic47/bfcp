@@ -18,6 +18,7 @@ class TaskQueue : boost::noncopyable
 {
 public:
   typedef ThreadPool::Task Task;
+  typedef std::vector<Task> Tasks;
 
   explicit TaskQueue(int id, size_t maxQueueSize);
 
@@ -34,7 +35,8 @@ public:
 
   void put(Task &&task, ThreadPool::Priority priority);
   void put(const Task &task, ThreadPool::Priority priority);
-  Task take();
+
+  Tasks take();
 
   size_t size();
   bool empty();
@@ -46,7 +48,7 @@ private:
   size_t maxQueueSize_;
   muduo::MutexLock mutex_;
   boost::scoped_ptr<muduo::Condition> notFull_;
-  std::deque<Task> highPriorityTasks_;
+  std::vector<Task> highPriorityTasks_;
   std::deque<Task> normalPriorityTasks_;
   bool isInGlobal_;
   bool isReleasing_;

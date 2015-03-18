@@ -84,6 +84,7 @@ void ThreadPool::stop()
   {
     thread.join();
   }
+  threads_.clear();
 }
 
 int ThreadPool::run( uint32_t queueID, const Task &task, Priority priority )
@@ -137,8 +138,8 @@ void ThreadPool::runInThread()
       auto taskQueue = take();
       if (taskQueue)
       {
-        Task task(taskQueue->take());
-        if (task)
+        auto tasks = taskQueue->take();
+        for (auto &task : tasks)
         {
           task();
         }
@@ -191,8 +192,7 @@ TaskQueuePtr ThreadPool::take()
 void ThreadPool::put( const TaskQueuePtr &taskQueue )
 {
   muduo::MutexLockGuard lock(mutex_);
-  if (taskQueue->isReleasing() || 
-      taskQueue->isProcessing() ||
+  if (taskQueue->isProcessing() ||
       taskQueue->isInGlobal() || 
       taskQueue->empty())
   {

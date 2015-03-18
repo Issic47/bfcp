@@ -52,23 +52,22 @@ void TaskQueue::put( const Task &action, ThreadPool::Priority priority )
   }
 }
 
-TaskQueue::Task TaskQueue::take()
+TaskQueue::Tasks TaskQueue::take()
 {
-  Task task;
+  Tasks tasks;
 
   muduo::MutexLockGuard lock(mutex_);
   if (!highPriorityTasks_.empty())
   {
-    task.swap(highPriorityTasks_.front());
-    highPriorityTasks_.pop_front();
+    tasks.swap(highPriorityTasks_);
     if (maxQueueSize_ > 0)
-    {
+    { 
       notFull_->notify();
     }
   }
   else if (!normalPriorityTasks_.empty())
   {
-    task.swap(normalPriorityTasks_.front());
+    tasks.emplace_back(std::move(normalPriorityTasks_.front()));
     normalPriorityTasks_.pop_front();
     if (maxQueueSize_ > 0)
     {
@@ -76,7 +75,7 @@ TaskQueue::Task TaskQueue::take()
     }
   }
 
-  return task;
+  return tasks;
 }
 
 size_t TaskQueue::size()

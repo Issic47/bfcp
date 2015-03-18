@@ -1082,12 +1082,10 @@ int BFCPServiceService::addConference(unsigned int conferenceID,
 
 void BFCPServiceService::handleCallResult( bfcp::ControlError error )
 {
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    error_ = error;
-    callFinished_ = true;
-    cond_.notify();
-  }
+  muduo::MutexLockGuard lock(mutex_);
+  error_ = error;
+  callFinished_ = true;
+  cond_.notify();
 }
 
 int BFCPServiceService::removeConference(unsigned int conferenceID,
@@ -1463,18 +1461,16 @@ void BFCPServiceService::handleGetCoferenceIDsResult(ConferenceIDList *ids,
                                                      bfcp::ControlError error, 
                                                      void *data)
 {
+  muduo::MutexLockGuard lock(mutex_);
+  error_ = error;
+  callFinished_ = true;
+  if (data)
   {
-    muduo::MutexLockGuard lock(mutex_);
-    error_ = error;
-    callFinished_ = true;
-    if (data)
-    {
-      bfcp::BaseServer::ConferenceIDList *res = 
-        static_cast<bfcp::BaseServer::ConferenceIDList*>(data);
-      ids->swap(*res);
-    }
-    cond_.notify();
+    bfcp::BaseServer::ConferenceIDList *res = 
+      static_cast<bfcp::BaseServer::ConferenceIDList*>(data);
+    ids->swap(*res);
   }
+  cond_.notify();
 }
 
 int BFCPServiceService::getConferenceInfo(unsigned int conferenceID, 
@@ -1503,8 +1499,6 @@ int BFCPServiceService::getConferenceInfo(unsigned int conferenceID,
     }
   }
   result->errorCode = details::convertTo(error_);
-
-  result->conferenceInfo = soap_strdup(this, "<Conference/>");
   return SOAP_OK;
 }
 
@@ -1512,17 +1506,15 @@ void BFCPServiceService::handleGetConferenceInfoResult(char *&info,
                                                        bfcp::ControlError error, 
                                                        void *data)
 {
+  muduo::MutexLockGuard lock(mutex_);
+  error_ = error;
+  callFinished_ = true;
+  if (data)
   {
-    muduo::MutexLockGuard lock(mutex_);
-    error_ = error;
-    callFinished_ = true;
-    if (data)
-    {
-      bfcp::string *res = static_cast<bfcp::string*>(data);
-      info = soap_strdup(this, res->c_str());
-    }
-    cond_.notify();
+    bfcp::string *res = static_cast<bfcp::string*>(data);
+    info = soap_strdup(this, res->c_str());
   }
+  cond_.notify();
 }
 
 int BFCPServiceService::quit() 

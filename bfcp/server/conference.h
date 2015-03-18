@@ -61,6 +61,7 @@ public:
   uint32_t getConferenceID() const { return conferenceID_; }
 
   // methods for control
+  ControlError set(uint16_t maxFloorRequest, AcceptPolicy policy, double timeForChairAction);
   ControlError setMaxFloorRequest(uint16_t maxFloorRequest);
   ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
   ControlError setAcceptPolicy(AcceptPolicy policy, double timeForChairAction);

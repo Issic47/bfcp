@@ -194,6 +194,31 @@ void BaseServer::removeConferenceInLoop(uint32_t conferenceID,
   }
 }
 
+void BaseServer::modifyConference(uint32_t conferenceID, 
+                                  uint16_t maxFloorRequest, 
+                                  AcceptPolicy policy, 
+                                  double timeForChairAction, 
+                                  const ResultCallback &cb)
+{
+  runInLoop(&BaseServer::modifyConference, 
+    conferenceID, maxFloorRequest, policy, timeForChairAction, cb);
+}
+
+void BaseServer::modifyConferenceInLoop(uint32_t conferenceID, 
+                                        uint16_t maxFloorRequest, 
+                                        AcceptPolicy policy, 
+                                        double timeForChairAction, 
+                                        const ResultCallback &cb)
+{
+  LOG_TRACE << "Modify Conference " << conferenceID 
+            << "(maxFloorRequest=" << maxFloorRequest
+            << ", policy=" << toString(policy)
+            << ", timeForChairAction=" << timeForChairAction 
+            << ")";
+  runTask(&Conference::set, 
+    conferenceID, maxFloorRequest, policy, timeForChairAction, cb);
+}
+
 void BaseServer::changeMaxFloorRequest(uint32_t conferenceID, 
                                        uint16_t maxFloorRequest, 
                                        const ResultCallback &cb)
@@ -454,6 +479,20 @@ void BaseServer::runInLoop(Func func, const Arg1 &arg1, const Arg2 &arg2, const 
   }
 }
 
+template <typename Func, typename Arg1, typename Arg2, typename Arg3, typename Arg4, typename Arg5>
+void BaseServer::runInLoop( Func func, const Arg1 &arg1, const Arg2 &arg2, const Arg3 &arg3, const Arg4 &arg4, const Arg5 &arg5 )
+{
+  if (connectionLoop_->isInLoopThread())
+  {
+    (this->*func)(arg1, arg2, arg3, arg4, arg5);
+  }
+  else
+  {
+    connectionLoop_->runInLoop(
+      boost::bind(func, this, arg1, arg2, arg3, arg4, arg5));
+  }
+}
+
 template <typename Func, typename Arg1>
 void BaseServer::runTask(Func func, 
                          uint32_t conferenceID, 
@@ -506,6 +545,35 @@ void BaseServer::runTask(Func func,
       ThreadPool::kHighPriority);
   }
 }
+
+template <typename Func, typename Arg1, typename Arg2, typename Arg3>
+void BaseServer::runTask(Func func, 
+                         uint32_t conferenceID, 
+                         const Arg1 &arg1,
+                         const Arg2 &arg2, 
+                         const Arg3 &arg3, 
+                         const ResultCallback &cb)
+{
+  connectionLoop_->assertInLoopThread();
+  auto it = conferenceMap_.find(conferenceID);
+  if (it == conferenceMap_.end())
+  {
+    if (cb)
+    {
+      cb(ControlError::kConferenceNotExist);
+    }
+  }
+  else
+  {
+    ConferenceTask task = 
+      boost::bind(func, (*it).second, arg1, arg2, arg3);
+    threadPool_->run(
+      conferenceID, 
+      boost::bind(&BaseServer::wrapTaskAndCallback, this, task, cb),
+      ThreadPool::kHighPriority);
+  }
+}
+
 
 void BaseServer::onNewRequest( const BfcpMsg &msg )
 {

@@ -153,6 +153,16 @@ Conference::~Conference()
   LOG_TRACE << "Conference::~Conference [" << conferenceID_ << "] destructing";
 }
 
+bfcp::ControlError Conference::set(uint16_t maxFloorRequest, AcceptPolicy policy, double timeForChairAction)
+{
+  ControlError err = setMaxFloorRequest(maxFloorRequest);
+  if (err == ControlError::kNoError)
+  {
+    err = setAcceptPolicy(policy, timeForChairAction);
+  }
+  return err;
+}
+
 ControlError Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
 {
   LOG_TRACE << "Set max floor request " << maxFloorRequest 

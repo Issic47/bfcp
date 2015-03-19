@@ -21,9 +21,6 @@ typedef boost::shared_ptr<BfcpConnection> BfcpConnectionPtr;
 
 class BasicRequestParam;
 
-namespace client
-{
-
 class BaseClient : boost::noncopyable
 {
 public:
@@ -31,7 +28,7 @@ public:
   {
     kDisconnecting = 0,
     kDisconnected = 1,
-    kConnecting = 2,
+    kConnecting = 2, 
     kConnected = 3,
   };
 
@@ -120,8 +117,6 @@ private:
   StateChangedCallback stateChangedCallback_;
   ResponseReceivedCallback responseReceivedCallback_;
 };
-
-}
 
 } // namespace bfcp
 

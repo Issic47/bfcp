@@ -11,9 +11,6 @@ using namespace muduo::net;
 namespace bfcp
 {
 
-namespace client
-{
-
 BaseClient::BaseClient(muduo::net::EventLoop* loop, 
                        const muduo::net::InetAddress& serverAddr, 
                        uint32_t conferenceID, 
@@ -503,5 +500,4 @@ bool BaseClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) con
   return true;
 }
 
-} // namespace client
 } // namespace bfcp

@@ -17,7 +17,6 @@
 using namespace muduo;
 using namespace muduo::net;
 using namespace bfcp;
-using namespace bfcp::client;
 
 void controlFunc(EventLoop *loop);
 void onClientStateChanged(BaseClient::State state);

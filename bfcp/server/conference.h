@@ -106,7 +106,7 @@ private:
   void handleFloorQuery(const BfcpMsg &msg);
   void handleChairAction(const BfcpMsg &msg);
   void handleHello(const BfcpMsg &msg); 
-  void handleGoodBye(const BfcpMsg &msg);
+  void handleGoodbye(const BfcpMsg &msg);
 
   UserPtr findUser(uint16_t userID);
   FloorPtr findFloor(uint16_t floorID);

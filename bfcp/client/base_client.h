@@ -49,6 +49,8 @@ public:
 
   muduo::net::EventLoop* getLoop() { return loop_; }
 
+  State getState() const { return state_; }
+
   void connect();
   // will send Goodbye message and wait for GoodbyeAck
   void disconnect();
@@ -73,7 +75,7 @@ public:
   void sendFloorQuery(const bfcp_floor_id_list &floorIDs);
   void sendChairAction(const FloorRequestInfoParam &frqInfo);  
   void sendHello();
-  void sendGoodBye();
+  void sendGoodbye();
 
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;

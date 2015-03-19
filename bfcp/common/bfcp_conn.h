@@ -113,8 +113,8 @@ public:
   void sendHello(const BasicRequestParam &basicParam)
   { runInLoop(&BfcpConnection::sendHelloInLoop, basicParam); }
 
-  void sendGoodBye(const BasicRequestParam &basicParam)
-  { runInLoop(&BfcpConnection::sendGoodByeInLoop, basicParam); }
+  void sendGoodbye(const BasicRequestParam &basicParam)
+  { runInLoop(&BfcpConnection::sendGoodbyeInLoop, basicParam); }
 
   void replyWithFloorRequestStatus(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo)
   { runInLoop(&BfcpConnection::replyWithFloorRequestStatusInLoop, msg, frqInfo); }
@@ -140,8 +140,8 @@ public:
   void replyWithFloorStatusAck(const BfcpMsg &msg)
   { runInLoop(&BfcpConnection::replyWithFloorStatusAckInLoop, msg); }
 
-  void replyWithGoodByeAck(const BfcpMsg &msg)
-  { runInLoop(&BfcpConnection::replyWithGoodByeAckInLoop, msg); }
+  void replyWithGoodbyeAck(const BfcpMsg &msg)
+  { runInLoop(&BfcpConnection::replyWithGoodbyeAckInLoop, msg); }
 
   // FIXME: make frqInfo to smart pointer
   void notifyFloorRequestStatus(const BasicRequestParam &basicParam, 
@@ -199,7 +199,7 @@ private:
   void sendFloorQueryInLoop(const BasicRequestParam &basicParam, const bfcp_floor_id_list &floorIDs);
   void sendChairActionInLoop(const BasicRequestParam &basicParam, const FloorRequestInfoParam &frqInfo);
   void sendHelloInLoop(const BasicRequestParam &basicParam);
-  void sendGoodByeInLoop(const BasicRequestParam &basicParam);
+  void sendGoodbyeInLoop(const BasicRequestParam &basicParam);
 
   void replyWithUserStatusInLoop(const BfcpMsg &msg, const UserStatusParam &userStatus);
   void replyWithChairActionAckInLoop(const BfcpMsg &msg);
@@ -207,7 +207,7 @@ private:
   void replyWithErrorInLoop(const BfcpMsg &msg, const ErrorParam &error);
   void replyWithFloorRequestStatusAckInLoop(const BfcpMsg &msg);
   void replyWithFloorStatusAckInLoop(const BfcpMsg &msg);
-  void replyWithGoodByeAckInLoop(const BfcpMsg &msg);
+  void replyWithGoodbyeAckInLoop(const BfcpMsg &msg);
   void replyWithFloorRequestStatusInLoop(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo);
   void replyWithFloorStatusInLoop(const BfcpMsg &msg, const FloorStatusParam &floorStatus);
 

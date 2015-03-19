@@ -80,7 +80,7 @@ void BaseClient::disconnect()
 {
   if (state_ == kConnected)
   {
-    sendGoodBye();
+    sendGoodbye();
     changeState(kDisconnecting);
   }
 }
@@ -202,12 +202,12 @@ void BaseClient::sendHello()
   connection_->sendHello(generateBasicParam(BFCP_HELLO));
 }
 
-void BaseClient::sendGoodBye()
+void BaseClient::sendGoodbye()
 {
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendGoodBye(generateBasicParam(BFCP_GOODBYE));
+  connection_->sendGoodbye(generateBasicParam(BFCP_GOODBYE));
 }
 
 BasicRequestParam BaseClient::generateBasicParam( bfcp_prim primitive )

@@ -143,7 +143,7 @@ void Conference::initRequestHandlers()
 
   requestHandler_.insert(std::make_pair(
     BFCP_GOODBYE,
-    boost::bind(&Conference::handleGoodBye, this, _1)));
+    boost::bind(&Conference::handleGoodbye, this, _1)));
 }
 
 Conference::~Conference()
@@ -873,11 +873,11 @@ void Conference::handleHello( const BfcpMsg &msg )
   connection_->replyWithHelloAck(msg, param);
 }
 
-void Conference::handleGoodBye( const BfcpMsg &msg )
+void Conference::handleGoodbye( const BfcpMsg &msg )
 {
   assert(msg.primitive() == BFCP_GOODBYE);
   
-  connection_->replyWithGoodByeAck(msg);
+  connection_->replyWithGoodbyeAck(msg);
 
   auto user = findUser(msg.getUserID());
   assert(user);

@@ -48,8 +48,8 @@ int build_msg_Error(mbuf_t *buf, uint8_t version, const bfcp_entity &entity,
 
 int build_msg_FloorRequestStatusAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
 int build_msg_FloorStatusAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_GoodBye(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
-int build_msg_GoodByeAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
+int build_msg_Goodbye(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
+int build_msg_GoodbyeAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
 
 } // namespace bfcp
 

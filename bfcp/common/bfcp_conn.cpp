@@ -225,11 +225,11 @@ void BfcpConnection::sendHelloInLoop( const BasicRequestParam &basicParam )
   sendRequestInLoop(&build_msg_Hello, basicParam);
 }
 
-void BfcpConnection::sendGoodByeInLoop( const BasicRequestParam &basicParam )
+void BfcpConnection::sendGoodbyeInLoop( const BasicRequestParam &basicParam )
 {
-  LOG_INFO << "Send GoodBye {cid=" << basicParam.conferenceID
+  LOG_INFO << "Send Goodbye {cid=" << basicParam.conferenceID
            << ",uid=" << basicParam.userID << "}";
-  sendRequestInLoop(&build_msg_GoodBye, basicParam);
+  sendRequestInLoop(&build_msg_Goodbye, basicParam);
 }
 
 void BfcpConnection::notifyFloorStatusInLoop(const BasicRequestParam &basicParam, 
@@ -366,11 +366,11 @@ void BfcpConnection::replyWithFloorStatusAckInLoop( const BfcpMsg &msg )
   sendReplyInLoop(&build_msg_FloorStatusAck, msg);
 }
 
-void BfcpConnection::replyWithGoodByeAckInLoop( const BfcpMsg &msg )
+void BfcpConnection::replyWithGoodbyeAckInLoop( const BfcpMsg &msg )
 {
   assert(msg.primitive() == BFCP_GOODBYE);
-  LOG_INFO << "Reply with GoodByeAck to " << msg.toString();
-  sendReplyInLoop(&build_msg_GoodByeAck, msg);
+  LOG_INFO << "Reply with GoodbyeAck to " << msg.toString();
+  sendReplyInLoop(&build_msg_GoodbyeAck, msg);
 }
 
 void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsg &msg,

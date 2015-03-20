@@ -6,6 +6,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
+#include <muduo/base/Timestamp.h>
 #include <muduo/net/InetAddress.h>
 #include <bfcp/common/bfcp_param.h>
 
@@ -31,6 +32,11 @@ public:
   
   void setURI(const string &uri) { uri_ = uri; }
   const string& getURI() const { return uri_; }
+
+  void setActiveTime(const muduo::Timestamp &timestamp)
+  { activeTime_ = timestamp; }
+  const muduo::Timestamp& getActiveTime() const 
+  { return activeTime_; }
 
   void setAvailable(bool available) { isAvailable_ = available; }
   bool isAvailable() const { return isAvailable_; }
@@ -76,10 +82,12 @@ public:
 
   void runNextSendMessageTask()
   {
-    assert(!tasks_.empty());
-    tasks_.pop_front();
-    if (tasks_.empty()) return;
-    tasks_.front()();
+    if (!tasks_.empty())
+    {
+      tasks_.pop_front();
+      if (tasks_.empty()) return;
+      tasks_.front()();
+    }
   }
 
 private:
@@ -93,6 +101,7 @@ private:
   FloorRequestMap floorRequestCounter_;
   std::list<SendMessageTask> tasks_;
   bool isAvailable_;
+  muduo::Timestamp activeTime_;
 };
 
 typedef boost::shared_ptr<User> UserPtr;

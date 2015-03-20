@@ -4,6 +4,7 @@ set(bfcp_server_soap_SRCS
   soapBFCPServiceService.cpp
   soapC.cpp
   stdsoap2.cpp
+  BfcpService.cpp
   )
 
 add_executable(bfcp_server_soap ${bfcp_server_soap_SRCS})

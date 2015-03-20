@@ -815,8 +815,8 @@ void Conference::onNewRequest( const BfcpMsg &msg )
 bool Conference::isUserAvailable( const UserPtr &user ) const
 {
   if (!user->isAvailable()) return false;
-  double livingTime = muduo::timeDifference(
-    muduo::Timestamp::now(), user->getActiveTime());
+  muduo::Timestamp now = muduo::Timestamp::now();
+  double livingTime = muduo::timeDifference(now, user->getActiveTime());
   return livingTime < userObsoletedTime_;
 }
 
@@ -1770,6 +1770,7 @@ string Conference::getConferenceInfo() const
   conferenceElement->SetAttribute("maxFloorRequest", maxFloorRequest_);
   conferenceElement->SetAttribute("timeForChairAction", timeForChairAction_);
   conferenceElement->SetAttribute("acceptPolicy", toString(acceptPolicy_));
+  conferenceElement->SetAttribute("userObsoletedTime", userObsoletedTime_);
 
   addUserInfoToXMLNode(&doc, conferenceElement);
   addFloorInfoToXMLNode(&doc, conferenceElement);

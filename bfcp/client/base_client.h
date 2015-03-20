@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 
+#include <muduo/net/TimerId.h>
 #include <muduo/net/UdpSocket.h>
 #include <muduo/net/Buffer.h>
 #include <muduo/net/EventLoop.h>
@@ -45,7 +46,9 @@ public:
   BaseClient(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& serverAddr,
              uint32_t conferenceID,
-             uint16_t userID);
+             uint16_t userID,
+             double heartBeatInterval);
+  ~BaseClient();
 
   muduo::net::EventLoop* getLoop() { return loop_; }
 
@@ -80,6 +83,8 @@ public:
 private:
   typedef boost::function<void (const BfcpMsg&)> Handler;
   typedef std::unordered_map<int, Handler> HandlerDict;
+  typedef boost::function<void ()> SendMessageTask;
+  typedef std::list<SendMessageTask> TaskList;
 
   void onStartedRecv(const muduo::net::UdpSocketPtr& socket);
   void onMessage(const muduo::net::UdpSocketPtr& socket, 
@@ -90,6 +95,8 @@ private:
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
   void onNewRequest(const BfcpMsg &msg);
   void onResponse(bfcp_prim requestPrimitive, ResponseError err, const BfcpMsg &msg);
+
+  void onHeartBeatTimeout();
 
   void initResponseHandlers();
   void handleFloorRequestStatus(const BfcpMsg &msg);
@@ -106,6 +113,39 @@ private:
   void changeState(State state);
   const char* toString(State state) const;
 
+  void runSendMessageTask(const SendMessageTask &task)
+  {
+    if (tasks_.empty())
+    {
+      task();
+    }
+    tasks_.emplace_back(task);
+  }
+
+  void runSendMessageTask(SendMessageTask &&task)
+  {
+    if (tasks_.empty())
+    {
+      task();
+    }
+    tasks_.emplace_back(std::move(task));
+  }
+
+  void runNextSendMesssageTask()
+  {
+    if (!tasks_.empty())
+    {
+      tasks_.pop_front();
+      if (tasks_.empty()) return;
+      tasks_.front()();
+    }
+  }
+
+  void clearAllSendMessageTasks()
+  {
+    tasks_.clear();
+  }
+
   muduo::net::EventLoop* loop_;
   muduo::net::UdpClient client_;
   muduo::net::InetAddress serverAddr_;
@@ -118,6 +158,10 @@ private:
   State state_;
   StateChangedCallback stateChangedCallback_;
   ResponseReceivedCallback responseReceivedCallback_;
+
+  double heartBeatInterval_;
+  muduo::net::TimerId heartBeatTimer_;
+  TaskList tasks_;
 };
 
 } // namespace bfcp

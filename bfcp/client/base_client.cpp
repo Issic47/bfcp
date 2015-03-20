@@ -14,13 +14,15 @@ namespace bfcp
 BaseClient::BaseClient(muduo::net::EventLoop* loop, 
                        const muduo::net::InetAddress& serverAddr, 
                        uint32_t conferenceID, 
-                       uint16_t userID)
+                       uint16_t userID, 
+                       double heartBeatInterval)
     : loop_(loop),
       client_(loop, serverAddr, "BfcpClient"),
       serverAddr_(serverAddr),
       conferenceID_(conferenceID),
       userID_(userID),
-      state_(kDisconnected)
+      state_(kDisconnected),
+      heartBeatInterval_(heartBeatInterval)
 {
   client_.setMessageCallback(
     boost::bind(&BaseClient::onMessage, this, _1, _2, _3, _4));
@@ -30,6 +32,11 @@ BaseClient::BaseClient(muduo::net::EventLoop* loop,
     boost::bind(&BaseClient::onWriteComplete, this, _1, _2));
 
   initResponseHandlers();
+}
+
+BaseClient::~BaseClient()
+{
+  loop_->cancel(heartBeatTimer_);
 }
 
 void BaseClient::initResponseHandlers()
@@ -100,6 +107,16 @@ void BaseClient::changeState( State state )
   {
     LOG_TRACE << "BfcpClient change state to " << toString(state);
     state_ = state;
+    if (state == kConnected && heartBeatInterval_ > 0.0)
+    {
+      heartBeatTimer_ = loop_->runEvery(heartBeatInterval_, 
+        boost::bind(&BaseClient::onHeartBeatTimeout, this));
+    }
+    else if (state == kDisconnected)
+    {
+      loop_->cancel(heartBeatTimer_);
+      tasks_.clear();
+    }
     if (stateChangedCallback_)
       stateChangedCallback_(state);
   }
@@ -114,6 +131,14 @@ const char* BaseClient::toString( State state ) const
     case kConnecting: return "connecting";
     case kConnected: return "connected";
     default: return "???";
+  }
+}
+
+void BaseClient::onHeartBeatTimeout()
+{
+  if (tasks_.empty())
+  {
+    sendHello();
   }
 }
 
@@ -140,18 +165,23 @@ void BaseClient::sendFloorRequest( const FloorRequestParam &floorRequest )
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendFloorRequest(
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendFloorRequest, 
+    connection_, 
     generateBasicParam(BFCP_FLOOR_REQUEST),
-    floorRequest);
+    floorRequest));
 }
 
 void BaseClient::sendFloorRelease( uint16_t floorRequestID )
 {
   assert(client_.isConnected());
   assert(connection_);
-  connection_->sendFloorRelease(
-    generateBasicParam(BFCP_FLOOR_RELEASE), 
-    floorRequestID);
+
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendFloorRelease, 
+    connection_, 
+    generateBasicParam(BFCP_FLOOR_RELEASE),
+    floorRequestID));
 }
 
 void BaseClient::sendFloorRequestQuery( uint16_t floorRequestID )
@@ -159,9 +189,11 @@ void BaseClient::sendFloorRequestQuery( uint16_t floorRequestID )
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendFloorRequestQuery(
-    generateBasicParam(BFCP_FLOOR_REQUEST_QUERY), 
-    floorRequestID);
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendFloorRequestQuery, 
+    connection_, 
+    generateBasicParam(BFCP_FLOOR_REQUEST_QUERY),
+    floorRequestID));
 }
 
 void BaseClient::sendUserQuery( const UserQueryParam userQuery )
@@ -169,9 +201,11 @@ void BaseClient::sendUserQuery( const UserQueryParam userQuery )
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendUserQuery(
-    generateBasicParam(BFCP_USER_QUERY), 
-    userQuery);
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendUserQuery, 
+    connection_, 
+    generateBasicParam(BFCP_USER_QUERY),
+    userQuery));
 }
 
 void BaseClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
@@ -179,9 +213,11 @@ void BaseClient::sendFloorQuery( const bfcp_floor_id_list &floorIDs )
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendFloorQuery(
-    generateBasicParam(BFCP_FLOOR_QUERY), 
-    floorIDs);
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendFloorQuery, 
+    connection_, 
+    generateBasicParam(BFCP_FLOOR_QUERY),
+    floorIDs));
 }
 
 void BaseClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
@@ -189,9 +225,11 @@ void BaseClient::sendChairAction( const FloorRequestInfoParam &frqInfo )
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendChairAction(
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendChairAction, 
+    connection_, 
     generateBasicParam(BFCP_CHAIR_ACTION),
-    frqInfo);
+    frqInfo));
 }
 
 void BaseClient::sendHello()
@@ -199,7 +237,10 @@ void BaseClient::sendHello()
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendHello(generateBasicParam(BFCP_HELLO));
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendHello, 
+    connection_, 
+    generateBasicParam(BFCP_HELLO)));
 }
 
 void BaseClient::sendGoodbye()
@@ -207,7 +248,10 @@ void BaseClient::sendGoodbye()
   assert(client_.isConnected());
   assert(connection_);
 
-  connection_->sendGoodbye(generateBasicParam(BFCP_GOODBYE));
+  runSendMessageTask(boost::bind(
+    &BfcpConnection::sendGoodbye, 
+    connection_, 
+    generateBasicParam(BFCP_GOODBYE)));
 }
 
 BasicRequestParam BaseClient::generateBasicParam( bfcp_prim primitive )
@@ -230,7 +274,7 @@ void BaseClient::onMessage(const UdpSocketPtr& socket,
             << " from " << src.toIpPort();
 
   assert(connection_);
-  connection_->onMessage(buf, src);
+  connection_->onMessage(buf, src, time);
 }
 
 void BaseClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
@@ -272,6 +316,7 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
   {
     LOG_TRACE << "BfcpClient received response " 
               << bfcp_prim_name(msg.primitive());
+    runNextSendMesssageTask();
     if (msg.primitive() == BFCP_ERROR) 
     {
       handleError(msg);

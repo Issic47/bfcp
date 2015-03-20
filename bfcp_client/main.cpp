@@ -94,7 +94,7 @@ void controlFunc(EventLoop *loop)
           CHECK_CIN_RESULT(std::cin >> userID);
           InetAddress serverAddr(AF_INET, "127.0.0.1", 7890);
           printf("connect to hostport:%s\n", serverAddr.toIpPort().c_str());
-          client.reset(new BaseClient(loop, serverAddr, conferenceID, userID));
+          client.reset(new BaseClient(loop, serverAddr, conferenceID, userID, 10.0));
           client->setStateChangedCallback(&onClientStateChanged);
           client->setResponseReceivedCallback(&onReceivedResponse);
           client->connect();

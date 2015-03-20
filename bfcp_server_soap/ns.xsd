@@ -54,39 +54,5 @@
     <!-- = 1 -->
    </restriction>
   </simpleType>
-  <!-- operation request element -->
-  <element name="af" type="ns:AddrFamily"/>
-  <!-- operation request element -->
-  <element name="port" type="xsd:unsignedShort"/>
-  <!-- operation request element -->
-  <element name="enbaleConnectionThread" type="xsd:boolean"/>
-  <!-- operation request element -->
-  <element name="workThreadNum" type="xsd:int"/>
-  <!-- operation response element -->
-  <element name="errorCode" type="ns:ErrorCode"/>
-  <!-- operation request element -->
-  <element name="conferenceID" type="xsd:unsignedInt"/>
-  <!-- operation request element -->
-  <element name="maxFloorRequest" type="xsd:unsignedShort"/>
-  <!-- operation request element -->
-  <element name="policy" type="ns:Policy"/>
-  <!-- operation request element -->
-  <element name="timeForChairAction" type="xsd:double"/>
-  <!-- operation request element -->
-  <element name="timeForChairActoin" type="xsd:double"/>
-  <!-- operation request element -->
-  <element name="floorID" type="xsd:unsignedShort"/>
-  <!-- operation request element -->
-  <element name="maxGrantedNum" type="xsd:unsignedShort"/>
-  <!-- operation request element -->
-  <element name="userID" type="xsd:unsignedShort"/>
-  <!-- operation request element -->
-  <element name="userName" type="xsd:string"/>
-  <!-- operation request element -->
-  <element name="userURI" type="xsd:string"/>
-  <!-- operation response element -->
-  <element name="conferenceIDs" type="xsd:unsignedInt"/>
-  <!-- operation response element -->
-  <element name="conferenceInfo" type="xsd:string"/>
  </schema>
 

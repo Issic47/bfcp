@@ -87,7 +87,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 //gsoap ns service name:  BFCPService
 //gsoap ns service protocol:  SOAP
 //gsoap ns service style: rpc
-//gsoap ns service encoding:  literal
+//gsoap ns service encoding:  encoded
 //gsoap ns service namespace: http://localhost:8011/BFCPService.wsdl
 //gsoap ns service location:  http://localhost:8011
 
@@ -95,7 +95,7 @@ A commercial use license is available from Genivia, Inc., contact@genivia.com
 
 #import "stlvector.h"
 
-typedef unsigned int xsd__unsignedInt;
+typedef std::string xsd__string;
 
 enum ns__ErrorCode 
 {
@@ -135,7 +135,7 @@ class ns__ConferenceInfoResult
 {
 public:
   enum ns__ErrorCode errorCode;
-  char *conferenceInfo;
+  xsd__string conferenceInfo;
 };
 
 //gsoap ns service method-documentation: start the bfcp server
@@ -143,6 +143,7 @@ int ns__start(enum ns__AddrFamily af,
               unsigned short port,
               bool enbaleConnectionThread,
               int workThreadNum,
+              double userObsoletedTime,
               enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: stop the bfcp server
@@ -161,16 +162,12 @@ int ns__addConference(unsigned int conferenceID,
 //gsoap ns service method-documentation: remove conference by ID
 int ns__removeConference(unsigned int conferenceID, enum ns__ErrorCode *errorCode);
 
-//gsoap ns service method-documentation: change max floor request
-int ns__changeMaxFloorRequest(unsigned int conferenceID, 
-                              unsigned short maxFloorRequest,
-                              enum ns__ErrorCode *errorCode);
-
-//gsoap ns service method-documentation: change accept policy
-int ns__changeAcceptPolicy(unsigned int conferenceID, 
-                           enum ns__Policy policy,
-                           double timeForChairActoin,
-                           enum ns__ErrorCode *errorCode);
+//gsoap ns service method-documentation: modify conference by ID
+int ns__modifyConference(unsigned int conferenceID,
+                         unsigned short maxFloorRequest,
+                         enum ns__Policy policy,
+                         double timeForChairAction,
+                         enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: add a floor to the conference
 int ns__addFloor(unsigned int conferenceID, 
@@ -184,16 +181,16 @@ int ns__removeFloor(unsigned int conferenceID,
                     enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: change the max granted num of a floor
-int ns__changeMaxGrantedNum(unsigned int conferenceID, 
-                            unsigned short floorID,
-                            unsigned short maxGrantedNum,
-                            enum ns__ErrorCode *errorCode);
+int ns__modifyFloor(unsigned int conferenceID, 
+                    unsigned short floorID,
+                    unsigned short maxGrantedNum,
+                    enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: add a user to the conference
 int ns__addUser(unsigned int conferenceID, 
                 unsigned short userID,
-                char *userName,
-                char *userURI,
+                xsd__string userName,
+                xsd__string userURI,
                 enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: remove a user from the conference

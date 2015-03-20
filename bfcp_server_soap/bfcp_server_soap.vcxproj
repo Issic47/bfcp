@@ -73,6 +73,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="basename.cpp" />
+    <ClCompile Include="BfcpService.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="soapBFCPServiceService.cpp" />
     <ClCompile Include="soapC.cpp" />
@@ -84,6 +85,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BfcpService.h" />
     <ClInclude Include="server.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

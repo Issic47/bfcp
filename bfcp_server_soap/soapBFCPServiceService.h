@@ -11,14 +11,11 @@ compiling, linking, and/or using OpenSSL is allowed.
 #ifndef soapBFCPServiceService_H
 #define soapBFCPServiceService_H
 
-#include <boost/shared_ptr.hpp>
-#include <muduo/base/Mutex.h>
-#include <muduo/base/Condition.h>
-#include <muduo/net/EventLoopThread.h>
-#include <bfcp/server/base_server.h>
+#ifndef WITH_PURE_VIRTUAL
+#define WITH_PURE_VIRTUAL
+#endif
 
 #include "soapH.h"
-
 class SOAP_CMAC BFCPServiceService : public soap
 { public:
 	/// Variables globally declared in server.h (non-static)
@@ -87,7 +84,7 @@ class SOAP_CMAC BFCPServiceService : public soap
 	///
 
 	/// Web service operation 'start' (returns error code or SOAP_OK)
-	virtual	int start(enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	virtual	int start(enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, double userObsoletedTime, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'stop' (returns error code or SOAP_OK)
 	virtual	int stop(enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
@@ -102,11 +99,8 @@ class SOAP_CMAC BFCPServiceService : public soap
 	/// Web service operation 'removeConference' (returns error code or SOAP_OK)
 	virtual	int removeConference(unsigned int conferenceID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service operation 'changeMaxFloorRequest' (returns error code or SOAP_OK)
-	virtual	int changeMaxFloorRequest(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
-
-	/// Web service operation 'changeAcceptPolicy' (returns error code or SOAP_OK)
-	virtual	int changeAcceptPolicy(unsigned int conferenceID, enum ns__Policy policy, double timeForChairActoin, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	/// Web service operation 'modifyConference' (returns error code or SOAP_OK)
+	virtual	int modifyConference(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'addFloor' (returns error code or SOAP_OK)
 	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
@@ -114,11 +108,11 @@ class SOAP_CMAC BFCPServiceService : public soap
 	/// Web service operation 'removeFloor' (returns error code or SOAP_OK)
 	virtual	int removeFloor(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service operation 'changeMaxGrantedNum' (returns error code or SOAP_OK)
-	virtual	int changeMaxGrantedNum(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	/// Web service operation 'modifyFloor' (returns error code or SOAP_OK)
+	virtual	int modifyFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'addUser' (returns error code or SOAP_OK)
-	virtual	int addUser(unsigned int conferenceID, unsigned short userID, char *userName, char *userURI, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	virtual	int addUser(unsigned int conferenceID, unsigned short userID, std::string userName, std::string userURI, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'removeUser' (returns error code or SOAP_OK)
 	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
@@ -134,24 +128,5 @@ class SOAP_CMAC BFCPServiceService : public soap
 
 	/// Web service operation 'getConferenceInfo' (returns error code or SOAP_OK)
 	virtual	int getConferenceInfo(unsigned int conferenceID, ns__ConferenceInfoResult *result) SOAP_PURE_VIRTUAL;
-
-private:
-    typedef boost::shared_ptr<bfcp::BaseServer> BaseServerPtr;
-    typedef std::vector<unsigned int> ConferenceIDList;
-    static void resetServer(BaseServerPtr server);
-    void handleCallResult(bfcp::ControlError error);
-    void handleGetCoferenceIDsResult(
-      ConferenceIDList *ids, bfcp::ControlError error, void *data);
-    void handleGetConferenceInfoResult(
-      char *&info, bfcp::ControlError error, void *data);
-
-    BaseServerPtr server_;
-    muduo::MutexLock mutex_;
-    muduo::Condition cond_;
-    muduo::net::EventLoop *loop_;
-    muduo::net::EventLoopThread thread_;
-    bool callFinished_;
-    bfcp::ControlError error_;
-    bool isRunning_;
 };
 #endif

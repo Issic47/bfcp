@@ -5,14 +5,13 @@
 #include <muduo/base/Logging.h>
 #include <muduo/base/TimeZone.h>
 #include <muduo/base/AsyncLogging.h>
-#include "soapBFCPServiceService.h"
+//#include "soapBFCPServiceService.h"
+#include "BfcpService.h"
 #include "BFCPService.nsmap"
 
 extern char *basename( char *path );
 
 using namespace muduo;
-using namespace muduo::net;
-using namespace bfcp;
 
 int kRollSize = 500 * 1000 * 1000;
 
@@ -42,7 +41,7 @@ int main(int argc, char* argv[])
     }
   }
 
-  sys_coredump_set(true);
+  //sys_coredump_set(true);
 
   Logger::setLogLevel(Logger::kTRACE);
   Logger::setTimeZone(muduo::TimeZone(8*3600, "CST"));
@@ -56,7 +55,7 @@ int main(int argc, char* argv[])
 
   LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::tid();
 
-  BFCPServiceService service(SOAP_C_UTFSTRING | SOAP_IO_KEEPALIVE);
+  BfcpService service(SOAP_C_UTFSTRING | SOAP_IO_KEEPALIVE);
   service.send_timeout = 20;
   service.recv_timeout = 20;
   service.connect_timeout = 5;

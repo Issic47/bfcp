@@ -60,6 +60,10 @@ enum ns__AddrFamily { kIPv4 = 0, kIPv6 = 1 };
 
 #endif
 
+#if 0 /* volatile type: do not declare here, declared elsewhere */
+
+#endif
+
 #ifndef SOAP_TYPE_ns__ConferenceListResult
 #define SOAP_TYPE_ns__ConferenceListResult (13)
 /* ns:ConferenceListResult */
@@ -82,15 +86,15 @@ public:
 #endif
 
 #ifndef SOAP_TYPE_ns__ConferenceInfoResult
-#define SOAP_TYPE_ns__ConferenceInfoResult (15)
+#define SOAP_TYPE_ns__ConferenceInfoResult (16)
 /* ns:ConferenceInfoResult */
 class SOAP_CMAC ns__ConferenceInfoResult
 {
 public:
 	enum ns__ErrorCode errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* required element of type ns:ErrorCode */
-	char *conferenceInfo;	/* optional element of type xsd:string */
+	std::string conferenceInfo;	/* required element of type xsd:string */
 public:
-	virtual int soap_type() const { return 15; } /* = unique type id SOAP_TYPE_ns__ConferenceInfoResult */
+	virtual int soap_type() const { return 16; } /* = unique type id SOAP_TYPE_ns__ConferenceInfoResult */
 	virtual void soap_default(struct soap*);
 	virtual void soap_serialize(struct soap*) const;
 	virtual int soap_put(struct soap*, const char*, const char*) const;
@@ -103,19 +107,19 @@ public:
 #endif
 
 #ifndef SOAP_TYPE_ns__startResponse
-#define SOAP_TYPE_ns__startResponse (21)
+#define SOAP_TYPE_ns__startResponse (23)
 /* ns:startResponse */
 struct ns__startResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 21; } /* = unique type id SOAP_TYPE_ns__startResponse */
+	int soap_type() const { return 23; } /* = unique type id SOAP_TYPE_ns__startResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__start
-#define SOAP_TYPE_ns__start (22)
+#define SOAP_TYPE_ns__start (24)
 /* ns:start */
 struct ns__start
 {
@@ -124,57 +128,58 @@ public:
 	unsigned short port;	/* required element of type xsd:unsignedShort */
 	bool enbaleConnectionThread;	/* required element of type xsd:boolean */
 	int workThreadNum;	/* required element of type xsd:int */
+	double userObsoletedTime;	/* required element of type xsd:double */
 public:
-	int soap_type() const { return 22; } /* = unique type id SOAP_TYPE_ns__start */
+	int soap_type() const { return 24; } /* = unique type id SOAP_TYPE_ns__start */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__stopResponse
-#define SOAP_TYPE_ns__stopResponse (24)
+#define SOAP_TYPE_ns__stopResponse (26)
 /* ns:stopResponse */
 struct ns__stopResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 24; } /* = unique type id SOAP_TYPE_ns__stopResponse */
+	int soap_type() const { return 26; } /* = unique type id SOAP_TYPE_ns__stopResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__stop
-#define SOAP_TYPE_ns__stop (25)
+#define SOAP_TYPE_ns__stop (27)
 /* ns:stop */
 struct ns__stop
 {
 public:
-	int soap_type() const { return 25; } /* = unique type id SOAP_TYPE_ns__stop */
+	int soap_type() const { return 27; } /* = unique type id SOAP_TYPE_ns__stop */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__quit
-#define SOAP_TYPE_ns__quit (28)
+#define SOAP_TYPE_ns__quit (30)
 /* ns:quit */
 struct ns__quit
 {
 public:
-	int soap_type() const { return 28; } /* = unique type id SOAP_TYPE_ns__quit */
+	int soap_type() const { return 30; } /* = unique type id SOAP_TYPE_ns__quit */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addConferenceResponse
-#define SOAP_TYPE_ns__addConferenceResponse (31)
+#define SOAP_TYPE_ns__addConferenceResponse (32)
 /* ns:addConferenceResponse */
 struct ns__addConferenceResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 31; } /* = unique type id SOAP_TYPE_ns__addConferenceResponse */
+	int soap_type() const { return 32; } /* = unique type id SOAP_TYPE_ns__addConferenceResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addConference
-#define SOAP_TYPE_ns__addConference (32)
+#define SOAP_TYPE_ns__addConference (33)
 /* ns:addConference */
 struct ns__addConference
 {
@@ -184,99 +189,75 @@ public:
 	enum ns__Policy policy;	/* required element of type ns:Policy */
 	double timeForChairAction;	/* required element of type xsd:double */
 public:
-	int soap_type() const { return 32; } /* = unique type id SOAP_TYPE_ns__addConference */
+	int soap_type() const { return 33; } /* = unique type id SOAP_TYPE_ns__addConference */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeConferenceResponse
-#define SOAP_TYPE_ns__removeConferenceResponse (34)
+#define SOAP_TYPE_ns__removeConferenceResponse (35)
 /* ns:removeConferenceResponse */
 struct ns__removeConferenceResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 34; } /* = unique type id SOAP_TYPE_ns__removeConferenceResponse */
+	int soap_type() const { return 35; } /* = unique type id SOAP_TYPE_ns__removeConferenceResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeConference
-#define SOAP_TYPE_ns__removeConference (35)
+#define SOAP_TYPE_ns__removeConference (36)
 /* ns:removeConference */
 struct ns__removeConference
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 public:
-	int soap_type() const { return 35; } /* = unique type id SOAP_TYPE_ns__removeConference */
+	int soap_type() const { return 36; } /* = unique type id SOAP_TYPE_ns__removeConference */
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__changeMaxFloorRequestResponse
-#define SOAP_TYPE_ns__changeMaxFloorRequestResponse (37)
-/* ns:changeMaxFloorRequestResponse */
-struct ns__changeMaxFloorRequestResponse
+#ifndef SOAP_TYPE_ns__modifyConferenceResponse
+#define SOAP_TYPE_ns__modifyConferenceResponse (38)
+/* ns:modifyConferenceResponse */
+struct ns__modifyConferenceResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 37; } /* = unique type id SOAP_TYPE_ns__changeMaxFloorRequestResponse */
+	int soap_type() const { return 38; } /* = unique type id SOAP_TYPE_ns__modifyConferenceResponse */
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__changeMaxFloorRequest
-#define SOAP_TYPE_ns__changeMaxFloorRequest (38)
-/* ns:changeMaxFloorRequest */
-struct ns__changeMaxFloorRequest
+#ifndef SOAP_TYPE_ns__modifyConference
+#define SOAP_TYPE_ns__modifyConference (39)
+/* ns:modifyConference */
+struct ns__modifyConference
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short maxFloorRequest;	/* required element of type xsd:unsignedShort */
-public:
-	int soap_type() const { return 38; } /* = unique type id SOAP_TYPE_ns__changeMaxFloorRequest */
-};
-#endif
-
-#ifndef SOAP_TYPE_ns__changeAcceptPolicyResponse
-#define SOAP_TYPE_ns__changeAcceptPolicyResponse (40)
-/* ns:changeAcceptPolicyResponse */
-struct ns__changeAcceptPolicyResponse
-{
-public:
-	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
-public:
-	int soap_type() const { return 40; } /* = unique type id SOAP_TYPE_ns__changeAcceptPolicyResponse */
-};
-#endif
-
-#ifndef SOAP_TYPE_ns__changeAcceptPolicy
-#define SOAP_TYPE_ns__changeAcceptPolicy (41)
-/* ns:changeAcceptPolicy */
-struct ns__changeAcceptPolicy
-{
-public:
-	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	enum ns__Policy policy;	/* required element of type ns:Policy */
-	double timeForChairActoin;	/* required element of type xsd:double */
+	double timeForChairAction;	/* required element of type xsd:double */
 public:
-	int soap_type() const { return 41; } /* = unique type id SOAP_TYPE_ns__changeAcceptPolicy */
+	int soap_type() const { return 39; } /* = unique type id SOAP_TYPE_ns__modifyConference */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addFloorResponse
-#define SOAP_TYPE_ns__addFloorResponse (43)
+#define SOAP_TYPE_ns__addFloorResponse (41)
 /* ns:addFloorResponse */
 struct ns__addFloorResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 43; } /* = unique type id SOAP_TYPE_ns__addFloorResponse */
+	int soap_type() const { return 41; } /* = unique type id SOAP_TYPE_ns__addFloorResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addFloor
-#define SOAP_TYPE_ns__addFloor (44)
+#define SOAP_TYPE_ns__addFloor (42)
 /* ns:addFloor */
 struct ns__addFloor
 {
@@ -285,24 +266,24 @@ public:
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short maxGrantedNum;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 44; } /* = unique type id SOAP_TYPE_ns__addFloor */
+	int soap_type() const { return 42; } /* = unique type id SOAP_TYPE_ns__addFloor */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeFloorResponse
-#define SOAP_TYPE_ns__removeFloorResponse (46)
+#define SOAP_TYPE_ns__removeFloorResponse (44)
 /* ns:removeFloorResponse */
 struct ns__removeFloorResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 46; } /* = unique type id SOAP_TYPE_ns__removeFloorResponse */
+	int soap_type() const { return 44; } /* = unique type id SOAP_TYPE_ns__removeFloorResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeFloor
-#define SOAP_TYPE_ns__removeFloor (47)
+#define SOAP_TYPE_ns__removeFloor (45)
 /* ns:removeFloor */
 struct ns__removeFloor
 {
@@ -310,77 +291,77 @@ public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 47; } /* = unique type id SOAP_TYPE_ns__removeFloor */
+	int soap_type() const { return 45; } /* = unique type id SOAP_TYPE_ns__removeFloor */
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__changeMaxGrantedNumResponse
-#define SOAP_TYPE_ns__changeMaxGrantedNumResponse (49)
-/* ns:changeMaxGrantedNumResponse */
-struct ns__changeMaxGrantedNumResponse
+#ifndef SOAP_TYPE_ns__modifyFloorResponse
+#define SOAP_TYPE_ns__modifyFloorResponse (47)
+/* ns:modifyFloorResponse */
+struct ns__modifyFloorResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 49; } /* = unique type id SOAP_TYPE_ns__changeMaxGrantedNumResponse */
+	int soap_type() const { return 47; } /* = unique type id SOAP_TYPE_ns__modifyFloorResponse */
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__changeMaxGrantedNum
-#define SOAP_TYPE_ns__changeMaxGrantedNum (50)
-/* ns:changeMaxGrantedNum */
-struct ns__changeMaxGrantedNum
+#ifndef SOAP_TYPE_ns__modifyFloor
+#define SOAP_TYPE_ns__modifyFloor (48)
+/* ns:modifyFloor */
+struct ns__modifyFloor
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short maxGrantedNum;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 50; } /* = unique type id SOAP_TYPE_ns__changeMaxGrantedNum */
+	int soap_type() const { return 48; } /* = unique type id SOAP_TYPE_ns__modifyFloor */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addUserResponse
-#define SOAP_TYPE_ns__addUserResponse (52)
+#define SOAP_TYPE_ns__addUserResponse (50)
 /* ns:addUserResponse */
 struct ns__addUserResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 52; } /* = unique type id SOAP_TYPE_ns__addUserResponse */
+	int soap_type() const { return 50; } /* = unique type id SOAP_TYPE_ns__addUserResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addUser
-#define SOAP_TYPE_ns__addUser (53)
+#define SOAP_TYPE_ns__addUser (51)
 /* ns:addUser */
 struct ns__addUser
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short userID;	/* required element of type xsd:unsignedShort */
-	char *userName;	/* optional element of type xsd:string */
-	char *userURI;	/* optional element of type xsd:string */
+	std::string userName;	/* required element of type xsd:string */
+	std::string userURI;	/* required element of type xsd:string */
 public:
-	int soap_type() const { return 53; } /* = unique type id SOAP_TYPE_ns__addUser */
+	int soap_type() const { return 51; } /* = unique type id SOAP_TYPE_ns__addUser */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeUserResponse
-#define SOAP_TYPE_ns__removeUserResponse (55)
+#define SOAP_TYPE_ns__removeUserResponse (53)
 /* ns:removeUserResponse */
 struct ns__removeUserResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 55; } /* = unique type id SOAP_TYPE_ns__removeUserResponse */
+	int soap_type() const { return 53; } /* = unique type id SOAP_TYPE_ns__removeUserResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeUser
-#define SOAP_TYPE_ns__removeUser (56)
+#define SOAP_TYPE_ns__removeUser (54)
 /* ns:removeUser */
 struct ns__removeUser
 {
@@ -388,24 +369,24 @@ public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short userID;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 56; } /* = unique type id SOAP_TYPE_ns__removeUser */
+	int soap_type() const { return 54; } /* = unique type id SOAP_TYPE_ns__removeUser */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addChairResponse
-#define SOAP_TYPE_ns__addChairResponse (58)
+#define SOAP_TYPE_ns__addChairResponse (56)
 /* ns:addChairResponse */
 struct ns__addChairResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 58; } /* = unique type id SOAP_TYPE_ns__addChairResponse */
+	int soap_type() const { return 56; } /* = unique type id SOAP_TYPE_ns__addChairResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__addChair
-#define SOAP_TYPE_ns__addChair (59)
+#define SOAP_TYPE_ns__addChair (57)
 /* ns:addChair */
 struct ns__addChair
 {
@@ -414,24 +395,24 @@ public:
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short userID;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 59; } /* = unique type id SOAP_TYPE_ns__addChair */
+	int soap_type() const { return 57; } /* = unique type id SOAP_TYPE_ns__addChair */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeChairResponse
-#define SOAP_TYPE_ns__removeChairResponse (61)
+#define SOAP_TYPE_ns__removeChairResponse (59)
 /* ns:removeChairResponse */
 struct ns__removeChairResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 61; } /* = unique type id SOAP_TYPE_ns__removeChairResponse */
+	int soap_type() const { return 59; } /* = unique type id SOAP_TYPE_ns__removeChairResponse */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__removeChair
-#define SOAP_TYPE_ns__removeChair (62)
+#define SOAP_TYPE_ns__removeChair (60)
 /* ns:removeChair */
 struct ns__removeChair
 {
@@ -439,41 +420,41 @@ public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 62; } /* = unique type id SOAP_TYPE_ns__removeChair */
+	int soap_type() const { return 60; } /* = unique type id SOAP_TYPE_ns__removeChair */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__getConferenceIDs
-#define SOAP_TYPE_ns__getConferenceIDs (65)
+#define SOAP_TYPE_ns__getConferenceIDs (63)
 /* ns:getConferenceIDs */
 struct ns__getConferenceIDs
 {
 public:
-	int soap_type() const { return 65; } /* = unique type id SOAP_TYPE_ns__getConferenceIDs */
+	int soap_type() const { return 63; } /* = unique type id SOAP_TYPE_ns__getConferenceIDs */
 };
 #endif
 
 #ifndef SOAP_TYPE_ns__getConferenceInfo
-#define SOAP_TYPE_ns__getConferenceInfo (68)
+#define SOAP_TYPE_ns__getConferenceInfo (66)
 /* ns:getConferenceInfo */
 struct ns__getConferenceInfo
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 public:
-	int soap_type() const { return 68; } /* = unique type id SOAP_TYPE_ns__getConferenceInfo */
+	int soap_type() const { return 66; } /* = unique type id SOAP_TYPE_ns__getConferenceInfo */
 };
 #endif
 
 #ifndef WITH_NOGLOBAL
 
 #ifndef SOAP_TYPE_SOAP_ENV__Header
-#define SOAP_TYPE_SOAP_ENV__Header (69)
+#define SOAP_TYPE_SOAP_ENV__Header (67)
 /* SOAP Header: */
 struct SOAP_ENV__Header
 {
 public:
-	int soap_type() const { return 69; } /* = unique type id SOAP_TYPE_SOAP_ENV__Header */
+	int soap_type() const { return 67; } /* = unique type id SOAP_TYPE_SOAP_ENV__Header */
 };
 #endif
 
@@ -482,7 +463,7 @@ public:
 #ifndef WITH_NOGLOBAL
 
 #ifndef SOAP_TYPE_SOAP_ENV__Code
-#define SOAP_TYPE_SOAP_ENV__Code (70)
+#define SOAP_TYPE_SOAP_ENV__Code (68)
 /* SOAP Fault Code: */
 struct SOAP_ENV__Code
 {
@@ -490,7 +471,7 @@ public:
 	char *SOAP_ENV__Value;	/* optional element of type xsd:QName */
 	struct SOAP_ENV__Code *SOAP_ENV__Subcode;	/* optional element of type SOAP-ENV:Code */
 public:
-	int soap_type() const { return 70; } /* = unique type id SOAP_TYPE_SOAP_ENV__Code */
+	int soap_type() const { return 68; } /* = unique type id SOAP_TYPE_SOAP_ENV__Code */
 };
 #endif
 
@@ -499,7 +480,7 @@ public:
 #ifndef WITH_NOGLOBAL
 
 #ifndef SOAP_TYPE_SOAP_ENV__Detail
-#define SOAP_TYPE_SOAP_ENV__Detail (72)
+#define SOAP_TYPE_SOAP_ENV__Detail (70)
 /* SOAP-ENV:Detail */
 struct SOAP_ENV__Detail
 {
@@ -508,7 +489,7 @@ public:
 	int __type;	/* any type of element <fault> (defined below) */
 	void *fault;	/* transient */
 public:
-	int soap_type() const { return 72; } /* = unique type id SOAP_TYPE_SOAP_ENV__Detail */
+	int soap_type() const { return 70; } /* = unique type id SOAP_TYPE_SOAP_ENV__Detail */
 };
 #endif
 
@@ -517,14 +498,14 @@ public:
 #ifndef WITH_NOGLOBAL
 
 #ifndef SOAP_TYPE_SOAP_ENV__Reason
-#define SOAP_TYPE_SOAP_ENV__Reason (74)
+#define SOAP_TYPE_SOAP_ENV__Reason (72)
 /* SOAP-ENV:Reason */
 struct SOAP_ENV__Reason
 {
 public:
 	char *SOAP_ENV__Text;	/* optional element of type xsd:string */
 public:
-	int soap_type() const { return 74; } /* = unique type id SOAP_TYPE_SOAP_ENV__Reason */
+	int soap_type() const { return 72; } /* = unique type id SOAP_TYPE_SOAP_ENV__Reason */
 };
 #endif
 
@@ -533,7 +514,7 @@ public:
 #ifndef WITH_NOGLOBAL
 
 #ifndef SOAP_TYPE_SOAP_ENV__Fault
-#define SOAP_TYPE_SOAP_ENV__Fault (75)
+#define SOAP_TYPE_SOAP_ENV__Fault (73)
 /* SOAP Fault: */
 struct SOAP_ENV__Fault
 {
@@ -548,7 +529,7 @@ public:
 	char *SOAP_ENV__Role;	/* optional element of type xsd:string */
 	struct SOAP_ENV__Detail *SOAP_ENV__Detail;	/* optional element of type SOAP-ENV:Detail */
 public:
-	int soap_type() const { return 75; } /* = unique type id SOAP_TYPE_SOAP_ENV__Fault */
+	int soap_type() const { return 73; } /* = unique type id SOAP_TYPE_SOAP_ENV__Fault */
 };
 #endif
 
@@ -570,9 +551,9 @@ typedef char *_QName;
 typedef char *_XML;
 #endif
 
-#ifndef SOAP_TYPE_xsd__unsignedInt
-#define SOAP_TYPE_xsd__unsignedInt (9)
-typedef unsigned int xsd__unsignedInt;
+#ifndef SOAP_TYPE_xsd__string
+#define SOAP_TYPE_xsd__string (9)
+typedef std::string xsd__string;
 #endif
 
 

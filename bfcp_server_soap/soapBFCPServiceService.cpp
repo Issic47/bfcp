@@ -10,98 +10,23 @@ compiling, linking, and/or using OpenSSL is allowed.
 
 #include "soapBFCPServiceService.h"
 
-#include <muduo/base/Logging.h>
-#include <muduo/net/EventLoop.h>
-#include <bfcp/server/base_server.h>
-
-namespace details
-{
-
-bfcp::AcceptPolicy convertTo(ns__Policy policy)
-{
-  switch (policy)
-  {
-    case kAutoAccept:
-      return bfcp::AcceptPolicy::kAutoAccept; break;
-    case kAutoDeny:
-      return bfcp::AcceptPolicy::kAutoDeny; break;
-    default:
-      LOG_ERROR << "Unknown policy: " << static_cast<int>(policy)
-                << " set as auto deny policy";
-      return bfcp::AcceptPolicy::kAutoDeny; break;
-  }
-}
-
-ns__ErrorCode convertTo(bfcp::ControlError error)
-{
-  switch (error)
-  {
-  case bfcp::ControlError::kNoError:
-    return ns__ErrorCode::kNoError;
-    break;
-  case bfcp::ControlError::kUserNotExist:
-    return ns__ErrorCode::kUserNotExist;
-    break;
-  case bfcp::ControlError::kUserAlreadyExist:
-    return ns__ErrorCode::kUserAlreadyExist;
-    break;
-  case bfcp::ControlError::kFloorNotExist:
-    return ns__ErrorCode::kFloorNotExist;
-    break;
-  case bfcp::ControlError::kFloorAlreadyExist:
-    return ns__ErrorCode::kFloorAlreadyExist;
-    break;
-  case bfcp::ControlError::kChairNotExist:
-    return ns__ErrorCode::kChairNotExost;
-    break;
-  case bfcp::ControlError::kChairAlreadyExist:
-    return ns__ErrorCode::kChairAlreadyExist;
-    break;
-  case bfcp::ControlError::kConferenceNotExist:
-    return ns__ErrorCode::kConferenceNotExist;
-    break;
-  case bfcp::ControlError::kConferenceAlreadyExist:
-    return ns__ErrorCode::kConferenceAlreadyExist;
-    break;
-  default:
-    // FIXME: unknow error
-    assert(false);
-    return ns__ErrorCode::kNoError;
-    break;
-  }
-}
-
-} // namespace details
-
 BFCPServiceService::BFCPServiceService()
-  : cond_(mutex_), loop_(nullptr), isRunning_(false)
 {	BFCPServiceService_init(SOAP_IO_DEFAULT, SOAP_IO_DEFAULT);
 }
 
-BFCPServiceService::BFCPServiceService(const struct soap &_soap) 
-  : soap(_soap), cond_(mutex_), loop_(nullptr), isRunning_(false)
+BFCPServiceService::BFCPServiceService(const struct soap &_soap) : soap(_soap)
 { }
 
 BFCPServiceService::BFCPServiceService(soap_mode iomode)
-  : cond_(mutex_), loop_(nullptr), isRunning_(false)
 {	BFCPServiceService_init(iomode, iomode);
 }
 
 BFCPServiceService::BFCPServiceService(soap_mode imode, soap_mode omode)
-  : cond_(mutex_), loop_(nullptr), isRunning_(false)
 {	BFCPServiceService_init(imode, omode);
 }
 
 BFCPServiceService::~BFCPServiceService()
-{
-  if (server_)
-  {
-    server_->stop();
-    // NOTE: server_ should destructor in the loop thread
-    loop_->runInLoop(boost::bind(&BFCPServiceService::resetServer, std::move(server_)));
-    server_ = nullptr;
-  }
-}
+{ }
 
 void BFCPServiceService::BFCPServiceService_init(soap_mode imode, soap_mode omode)
 {	soap_imode(this, imode);
@@ -186,26 +111,15 @@ const SOAP_ENV__Header *BFCPServiceService::soap_header()
 }
 
 int BFCPServiceService::run(int port)
-{
-  isRunning_ = true;
-  char buf[1024];
-  if (soap_valid_socket(this->master) || soap_valid_socket(bind(NULL, port, 100)))
-  {	
-    while (isRunning_)
-    {
-      if (!soap_valid_socket(accept()))
-      {
-        soap_sprint_fault(buf, sizeof buf);
-        buf[sizeof(buf)-1] = '\0';
-        LOG_WARN << buf;
-        continue;
-      }
-      serve();
-      soap_destroy(this);
-      soap_end(this);
-    }
-  }
-  return this->error;
+{	if (soap_valid_socket(this->master) || soap_valid_socket(bind(NULL, port, 100)))
+	{	for (;;)
+		{	if (!soap_valid_socket(accept()) || serve())
+				break;
+			soap_destroy(this);
+			soap_end(this);
+		}
+	}
+	return this->error;
 }
 
 SOAP_SOCKET BFCPServiceService::bind(const char *host, int port, int backlog)
@@ -264,11 +178,10 @@ static int serve_ns__stop(BFCPServiceService*);
 static int serve_ns__quit(BFCPServiceService*);
 static int serve_ns__addConference(BFCPServiceService*);
 static int serve_ns__removeConference(BFCPServiceService*);
-static int serve_ns__changeMaxFloorRequest(BFCPServiceService*);
-static int serve_ns__changeAcceptPolicy(BFCPServiceService*);
+static int serve_ns__modifyConference(BFCPServiceService*);
 static int serve_ns__addFloor(BFCPServiceService*);
 static int serve_ns__removeFloor(BFCPServiceService*);
-static int serve_ns__changeMaxGrantedNum(BFCPServiceService*);
+static int serve_ns__modifyFloor(BFCPServiceService*);
 static int serve_ns__addUser(BFCPServiceService*);
 static int serve_ns__removeUser(BFCPServiceService*);
 static int serve_ns__addChair(BFCPServiceService*);
@@ -288,16 +201,14 @@ int BFCPServiceService::dispatch()
 		return serve_ns__addConference(this);
 	if (!soap_match_tag(this, this->tag, "ns:removeConference"))
 		return serve_ns__removeConference(this);
-	if (!soap_match_tag(this, this->tag, "ns:changeMaxFloorRequest"))
-		return serve_ns__changeMaxFloorRequest(this);
-	if (!soap_match_tag(this, this->tag, "ns:changeAcceptPolicy"))
-		return serve_ns__changeAcceptPolicy(this);
+	if (!soap_match_tag(this, this->tag, "ns:modifyConference"))
+		return serve_ns__modifyConference(this);
 	if (!soap_match_tag(this, this->tag, "ns:addFloor"))
 		return serve_ns__addFloor(this);
 	if (!soap_match_tag(this, this->tag, "ns:removeFloor"))
 		return serve_ns__removeFloor(this);
-	if (!soap_match_tag(this, this->tag, "ns:changeMaxGrantedNum"))
-		return serve_ns__changeMaxGrantedNum(this);
+	if (!soap_match_tag(this, this->tag, "ns:modifyFloor"))
+		return serve_ns__modifyFloor(this);
 	if (!soap_match_tag(this, this->tag, "ns:addUser"))
 		return serve_ns__addUser(this);
 	if (!soap_match_tag(this, this->tag, "ns:removeUser"))
@@ -327,10 +238,10 @@ static int serve_ns__start(BFCPServiceService *soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->start(soap_tmp_ns__start.af, soap_tmp_ns__start.port, soap_tmp_ns__start.enbaleConnectionThread, soap_tmp_ns__start.workThreadNum, soap_tmp_ns__startResponse.errorCode);
+	soap->error = soap->start(soap_tmp_ns__start.af, soap_tmp_ns__start.port, soap_tmp_ns__start.enbaleConnectionThread, soap_tmp_ns__start.workThreadNum, soap_tmp_ns__start.userObsoletedTime, soap_tmp_ns__startResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__startResponse(soap, &soap_tmp_ns__startResponse);
 	if (soap_begin_count(soap))
@@ -374,7 +285,7 @@ static int serve_ns__stop(BFCPServiceService *soap)
 	soap->error = soap->stop(soap_tmp_ns__stopResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__stopResponse(soap, &soap_tmp_ns__stopResponse);
 	if (soap_begin_count(soap))
@@ -433,7 +344,7 @@ static int serve_ns__addConference(BFCPServiceService *soap)
 	soap->error = soap->addConference(soap_tmp_ns__addConference.conferenceID, soap_tmp_ns__addConference.maxFloorRequest, soap_tmp_ns__addConference.policy, soap_tmp_ns__addConference.timeForChairAction, soap_tmp_ns__addConferenceResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__addConferenceResponse(soap, &soap_tmp_ns__addConferenceResponse);
 	if (soap_begin_count(soap))
@@ -477,7 +388,7 @@ static int serve_ns__removeConference(BFCPServiceService *soap)
 	soap->error = soap->removeConference(soap_tmp_ns__removeConference.conferenceID, soap_tmp_ns__removeConferenceResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__removeConferenceResponse(soap, &soap_tmp_ns__removeConferenceResponse);
 	if (soap_begin_count(soap))
@@ -504,33 +415,33 @@ static int serve_ns__removeConference(BFCPServiceService *soap)
 	return soap_closesock(soap);
 }
 
-static int serve_ns__changeMaxFloorRequest(BFCPServiceService *soap)
-{	struct ns__changeMaxFloorRequest soap_tmp_ns__changeMaxFloorRequest;
-	struct ns__changeMaxFloorRequestResponse soap_tmp_ns__changeMaxFloorRequestResponse;
+static int serve_ns__modifyConference(BFCPServiceService *soap)
+{	struct ns__modifyConference soap_tmp_ns__modifyConference;
+	struct ns__modifyConferenceResponse soap_tmp_ns__modifyConferenceResponse;
 	enum ns__ErrorCode soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeMaxFloorRequestResponse(soap, &soap_tmp_ns__changeMaxFloorRequestResponse);
+	soap_default_ns__modifyConferenceResponse(soap, &soap_tmp_ns__modifyConferenceResponse);
 	soap_default_ns__ErrorCode(soap, &soap_tmp_ns__ErrorCode);
-	soap_tmp_ns__changeMaxFloorRequestResponse.errorCode = &soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeMaxFloorRequest(soap, &soap_tmp_ns__changeMaxFloorRequest);
-	if (!soap_get_ns__changeMaxFloorRequest(soap, &soap_tmp_ns__changeMaxFloorRequest, "ns:changeMaxFloorRequest", NULL))
+	soap_tmp_ns__modifyConferenceResponse.errorCode = &soap_tmp_ns__ErrorCode;
+	soap_default_ns__modifyConference(soap, &soap_tmp_ns__modifyConference);
+	if (!soap_get_ns__modifyConference(soap, &soap_tmp_ns__modifyConference, "ns:modifyConference", NULL))
 		return soap->error;
 	if (soap_body_end_in(soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->changeMaxFloorRequest(soap_tmp_ns__changeMaxFloorRequest.conferenceID, soap_tmp_ns__changeMaxFloorRequest.maxFloorRequest, soap_tmp_ns__changeMaxFloorRequestResponse.errorCode);
+	soap->error = soap->modifyConference(soap_tmp_ns__modifyConference.conferenceID, soap_tmp_ns__modifyConference.maxFloorRequest, soap_tmp_ns__modifyConference.policy, soap_tmp_ns__modifyConference.timeForChairAction, soap_tmp_ns__modifyConferenceResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
-	soap_serialize_ns__changeMaxFloorRequestResponse(soap, &soap_tmp_ns__changeMaxFloorRequestResponse);
+	soap_serialize_ns__modifyConferenceResponse(soap, &soap_tmp_ns__modifyConferenceResponse);
 	if (soap_begin_count(soap))
 		return soap->error;
 	if (soap->mode & SOAP_IO_LENGTH)
 	{	if (soap_envelope_begin_out(soap)
 		 || soap_putheader(soap)
 		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeMaxFloorRequestResponse(soap, &soap_tmp_ns__changeMaxFloorRequestResponse, "ns:changeMaxFloorRequestResponse", NULL)
+		 || soap_put_ns__modifyConferenceResponse(soap, &soap_tmp_ns__modifyConferenceResponse, "ns:modifyConferenceResponse", NULL)
 		 || soap_body_end_out(soap)
 		 || soap_envelope_end_out(soap))
 			 return soap->error;
@@ -540,51 +451,7 @@ static int serve_ns__changeMaxFloorRequest(BFCPServiceService *soap)
 	 || soap_envelope_begin_out(soap)
 	 || soap_putheader(soap)
 	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeMaxFloorRequestResponse(soap, &soap_tmp_ns__changeMaxFloorRequestResponse, "ns:changeMaxFloorRequestResponse", NULL)
-	 || soap_body_end_out(soap)
-	 || soap_envelope_end_out(soap)
-	 || soap_end_send(soap))
-		return soap->error;
-	return soap_closesock(soap);
-}
-
-static int serve_ns__changeAcceptPolicy(BFCPServiceService *soap)
-{	struct ns__changeAcceptPolicy soap_tmp_ns__changeAcceptPolicy;
-	struct ns__changeAcceptPolicyResponse soap_tmp_ns__changeAcceptPolicyResponse;
-	enum ns__ErrorCode soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeAcceptPolicyResponse(soap, &soap_tmp_ns__changeAcceptPolicyResponse);
-	soap_default_ns__ErrorCode(soap, &soap_tmp_ns__ErrorCode);
-	soap_tmp_ns__changeAcceptPolicyResponse.errorCode = &soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeAcceptPolicy(soap, &soap_tmp_ns__changeAcceptPolicy);
-	if (!soap_get_ns__changeAcceptPolicy(soap, &soap_tmp_ns__changeAcceptPolicy, "ns:changeAcceptPolicy", NULL))
-		return soap->error;
-	if (soap_body_end_in(soap)
-	 || soap_envelope_end_in(soap)
-	 || soap_end_recv(soap))
-		return soap->error;
-	soap->error = soap->changeAcceptPolicy(soap_tmp_ns__changeAcceptPolicy.conferenceID, soap_tmp_ns__changeAcceptPolicy.policy, soap_tmp_ns__changeAcceptPolicy.timeForChairActoin, soap_tmp_ns__changeAcceptPolicyResponse.errorCode);
-	if (soap->error)
-		return soap->error;
-	soap->encodingStyle = NULL;
-	soap_serializeheader(soap);
-	soap_serialize_ns__changeAcceptPolicyResponse(soap, &soap_tmp_ns__changeAcceptPolicyResponse);
-	if (soap_begin_count(soap))
-		return soap->error;
-	if (soap->mode & SOAP_IO_LENGTH)
-	{	if (soap_envelope_begin_out(soap)
-		 || soap_putheader(soap)
-		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeAcceptPolicyResponse(soap, &soap_tmp_ns__changeAcceptPolicyResponse, "ns:changeAcceptPolicyResponse", NULL)
-		 || soap_body_end_out(soap)
-		 || soap_envelope_end_out(soap))
-			 return soap->error;
-	};
-	if (soap_end_count(soap)
-	 || soap_response(soap, SOAP_OK)
-	 || soap_envelope_begin_out(soap)
-	 || soap_putheader(soap)
-	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeAcceptPolicyResponse(soap, &soap_tmp_ns__changeAcceptPolicyResponse, "ns:changeAcceptPolicyResponse", NULL)
+	 || soap_put_ns__modifyConferenceResponse(soap, &soap_tmp_ns__modifyConferenceResponse, "ns:modifyConferenceResponse", NULL)
 	 || soap_body_end_out(soap)
 	 || soap_envelope_end_out(soap)
 	 || soap_end_send(soap))
@@ -609,7 +476,7 @@ static int serve_ns__addFloor(BFCPServiceService *soap)
 	soap->error = soap->addFloor(soap_tmp_ns__addFloor.conferenceID, soap_tmp_ns__addFloor.floorID, soap_tmp_ns__addFloor.maxGrantedNum, soap_tmp_ns__addFloorResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__addFloorResponse(soap, &soap_tmp_ns__addFloorResponse);
 	if (soap_begin_count(soap))
@@ -653,7 +520,7 @@ static int serve_ns__removeFloor(BFCPServiceService *soap)
 	soap->error = soap->removeFloor(soap_tmp_ns__removeFloor.conferenceID, soap_tmp_ns__removeFloor.floorID, soap_tmp_ns__removeFloorResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__removeFloorResponse(soap, &soap_tmp_ns__removeFloorResponse);
 	if (soap_begin_count(soap))
@@ -680,33 +547,33 @@ static int serve_ns__removeFloor(BFCPServiceService *soap)
 	return soap_closesock(soap);
 }
 
-static int serve_ns__changeMaxGrantedNum(BFCPServiceService *soap)
-{	struct ns__changeMaxGrantedNum soap_tmp_ns__changeMaxGrantedNum;
-	struct ns__changeMaxGrantedNumResponse soap_tmp_ns__changeMaxGrantedNumResponse;
+static int serve_ns__modifyFloor(BFCPServiceService *soap)
+{	struct ns__modifyFloor soap_tmp_ns__modifyFloor;
+	struct ns__modifyFloorResponse soap_tmp_ns__modifyFloorResponse;
 	enum ns__ErrorCode soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeMaxGrantedNumResponse(soap, &soap_tmp_ns__changeMaxGrantedNumResponse);
+	soap_default_ns__modifyFloorResponse(soap, &soap_tmp_ns__modifyFloorResponse);
 	soap_default_ns__ErrorCode(soap, &soap_tmp_ns__ErrorCode);
-	soap_tmp_ns__changeMaxGrantedNumResponse.errorCode = &soap_tmp_ns__ErrorCode;
-	soap_default_ns__changeMaxGrantedNum(soap, &soap_tmp_ns__changeMaxGrantedNum);
-	if (!soap_get_ns__changeMaxGrantedNum(soap, &soap_tmp_ns__changeMaxGrantedNum, "ns:changeMaxGrantedNum", NULL))
+	soap_tmp_ns__modifyFloorResponse.errorCode = &soap_tmp_ns__ErrorCode;
+	soap_default_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor);
+	if (!soap_get_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor, "ns:modifyFloor", NULL))
 		return soap->error;
 	if (soap_body_end_in(soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->changeMaxGrantedNum(soap_tmp_ns__changeMaxGrantedNum.conferenceID, soap_tmp_ns__changeMaxGrantedNum.floorID, soap_tmp_ns__changeMaxGrantedNum.maxGrantedNum, soap_tmp_ns__changeMaxGrantedNumResponse.errorCode);
+	soap->error = soap->modifyFloor(soap_tmp_ns__modifyFloor.conferenceID, soap_tmp_ns__modifyFloor.floorID, soap_tmp_ns__modifyFloor.maxGrantedNum, soap_tmp_ns__modifyFloorResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
-	soap_serialize_ns__changeMaxGrantedNumResponse(soap, &soap_tmp_ns__changeMaxGrantedNumResponse);
+	soap_serialize_ns__modifyFloorResponse(soap, &soap_tmp_ns__modifyFloorResponse);
 	if (soap_begin_count(soap))
 		return soap->error;
 	if (soap->mode & SOAP_IO_LENGTH)
 	{	if (soap_envelope_begin_out(soap)
 		 || soap_putheader(soap)
 		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeMaxGrantedNumResponse(soap, &soap_tmp_ns__changeMaxGrantedNumResponse, "ns:changeMaxGrantedNumResponse", NULL)
+		 || soap_put_ns__modifyFloorResponse(soap, &soap_tmp_ns__modifyFloorResponse, "ns:modifyFloorResponse", NULL)
 		 || soap_body_end_out(soap)
 		 || soap_envelope_end_out(soap))
 			 return soap->error;
@@ -716,7 +583,7 @@ static int serve_ns__changeMaxGrantedNum(BFCPServiceService *soap)
 	 || soap_envelope_begin_out(soap)
 	 || soap_putheader(soap)
 	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeMaxGrantedNumResponse(soap, &soap_tmp_ns__changeMaxGrantedNumResponse, "ns:changeMaxGrantedNumResponse", NULL)
+	 || soap_put_ns__modifyFloorResponse(soap, &soap_tmp_ns__modifyFloorResponse, "ns:modifyFloorResponse", NULL)
 	 || soap_body_end_out(soap)
 	 || soap_envelope_end_out(soap)
 	 || soap_end_send(soap))
@@ -741,7 +608,7 @@ static int serve_ns__addUser(BFCPServiceService *soap)
 	soap->error = soap->addUser(soap_tmp_ns__addUser.conferenceID, soap_tmp_ns__addUser.userID, soap_tmp_ns__addUser.userName, soap_tmp_ns__addUser.userURI, soap_tmp_ns__addUserResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__addUserResponse(soap, &soap_tmp_ns__addUserResponse);
 	if (soap_begin_count(soap))
@@ -785,7 +652,7 @@ static int serve_ns__removeUser(BFCPServiceService *soap)
 	soap->error = soap->removeUser(soap_tmp_ns__removeUser.conferenceID, soap_tmp_ns__removeUser.userID, soap_tmp_ns__removeUserResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__removeUserResponse(soap, &soap_tmp_ns__removeUserResponse);
 	if (soap_begin_count(soap))
@@ -829,7 +696,7 @@ static int serve_ns__addChair(BFCPServiceService *soap)
 	soap->error = soap->addChair(soap_tmp_ns__addChair.conferenceID, soap_tmp_ns__addChair.floorID, soap_tmp_ns__addChair.userID, soap_tmp_ns__addChairResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__addChairResponse(soap, &soap_tmp_ns__addChairResponse);
 	if (soap_begin_count(soap))
@@ -873,7 +740,7 @@ static int serve_ns__removeChair(BFCPServiceService *soap)
 	soap->error = soap->removeChair(soap_tmp_ns__removeChair.conferenceID, soap_tmp_ns__removeChair.floorID, soap_tmp_ns__removeChairResponse.errorCode);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__removeChairResponse(soap, &soap_tmp_ns__removeChairResponse);
 	if (soap_begin_count(soap))
@@ -914,7 +781,7 @@ static int serve_ns__getConferenceIDs(BFCPServiceService *soap)
 	soap->error = soap->getConferenceIDs(&result);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	result.soap_serialize(soap);
 	if (soap_begin_count(soap))
@@ -955,7 +822,7 @@ static int serve_ns__getConferenceInfo(BFCPServiceService *soap)
 	soap->error = soap->getConferenceInfo(soap_tmp_ns__getConferenceInfo.conferenceID, &result);
 	if (soap->error)
 		return soap->error;
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	result.soap_serialize(soap);
 	if (soap_begin_count(soap))
@@ -982,546 +849,3 @@ static int serve_ns__getConferenceInfo(BFCPServiceService *soap)
 	return soap_closesock(soap);
 }
 /* End of server object code */
-
-int BFCPServiceService::start(enum ns__AddrFamily af,
-                              unsigned short port, 
-                              bool enbaleConnectionThread, 
-                              int workThreadNum, 
-                              enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "start (af:" << (af == kIPv4 ? "IPv4" : "IPv6")
-           << "port: " << port 
-           << ", enableConnectionThread: " << (enbaleConnectionThread ? "true" : "false")
-           << ", workThreadNum: " << workThreadNum << ")";
-
-  if (server_)
-  {
-    LOG_WARN << "Server already start";
-    *errorCode = ns__ErrorCode::kServerAlreadyStart;
-    return SOAP_OK;
-  }
-
-  if (!loop_)
-  {
-    loop_ = thread_.startLoop();
-  }
-
-  muduo::net::InetAddress listenAddr((af == kIPv4 ? AF_INET : AF_INET6), port);
-  server_ = boost::make_shared<bfcp::BaseServer>(loop_, listenAddr);
-  if (enbaleConnectionThread)
-    server_->enableConnectionThread();
-  server_->setWorkerThreadNum(workThreadNum);
-  server_->start();
-
-  *errorCode = ns__ErrorCode::kNoError;
-  return SOAP_OK;
-}
-
-int BFCPServiceService::stop(enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "stop";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  assert(loop_);
-  server_->stop();
-  // NOTE: server_ should destructor in the loop thread
-  loop_->runInLoop(boost::bind(&BFCPServiceService::resetServer, std::move(server_)));
-  server_ = nullptr;
-
-  *errorCode = ns__ErrorCode::kNoError;
-  return SOAP_OK;
-}
-
-void BFCPServiceService::resetServer( BaseServerPtr server )
-{
-  server = nullptr;
-}
-
-int BFCPServiceService::addConference(unsigned int conferenceID, 
-                                      unsigned short maxFloorRequest, 
-                                      enum ns__Policy policy, 
-                                      double timeForChairAction, 
-                                      enum ns__ErrorCode *errorCode)
-{
-  bfcp::AcceptPolicy acceptPolicy = details::convertTo(policy);
-  LOG_INFO << "addConference with (conferenceID: " << conferenceID
-           << ", maxFloorRequest: " << maxFloorRequest
-           << ", policy: " << bfcp::toString(acceptPolicy)
-           << ", timeforChairAction: " << timeForChairAction << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->addConference(
-    conferenceID, 
-    maxFloorRequest, 
-    acceptPolicy, 
-    timeForChairAction, 
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-void BFCPServiceService::handleCallResult( bfcp::ControlError error )
-{
-  muduo::MutexLockGuard lock(mutex_);
-  error_ = error;
-  callFinished_ = true;
-  cond_.notify();
-}
-
-int BFCPServiceService::removeConference(unsigned int conferenceID,
-                                         enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "removeConference with (conferenceID: " << conferenceID << ")";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  callFinished_ = false;
-
-  server_->removeConference(
-    conferenceID, 
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::changeMaxFloorRequest(unsigned int conferenceID,
-                                              unsigned short maxFloorRequest, 
-                                              enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "changeMaxFloorRequest with (conferenceID: " << conferenceID 
-           << ", maxFloorRequest: " << maxFloorRequest << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  callFinished_ = false;
-
-  server_->changeMaxFloorRequest(
-    conferenceID, 
-    maxFloorRequest,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::changeAcceptPolicy(unsigned int conferenceID, 
-                                           enum ns__Policy policy, 
-                                           double timeForChairActoin, 
-                                           enum ns__ErrorCode *errorCode)
-{
-  bfcp::AcceptPolicy acceptPolicy = details::convertTo(policy);
-  LOG_INFO << "changeAcceptPolicy with (conferenceID: " << conferenceID 
-           << ", policy: " << bfcp::toString(acceptPolicy)
-           << ", timeForChairAction: " << timeForChairActoin << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  callFinished_ = false;
-
-  server_->changeAcceptPolicy(
-    conferenceID, 
-    acceptPolicy,
-    timeForChairActoin,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addFloor(unsigned int conferenceID, 
-                                 unsigned short floorID, 
-                                 unsigned short maxGrantedNum, 
-                                 enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "addFloor with (conferenceID: " << conferenceID
-           << ", floorID: " << floorID
-           << ", maxGrantedNum: " << maxGrantedNum << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  callFinished_ = false;
-
-  server_->addFloor(
-    conferenceID,
-    floorID, 
-    maxGrantedNum,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeFloor(unsigned int conferenceID, 
-                                    unsigned short floorID, 
-                                    enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "removeFloor with (conferenceID: " << conferenceID
-           << ", floorID: " << floorID << ")";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-  callFinished_ = false;
-
-  server_->removeFloor(
-    conferenceID,
-    floorID, 
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-
-int BFCPServiceService::changeMaxGrantedNum(unsigned int conferenceID, 
-                                            unsigned short floorID,
-                                            unsigned short maxGrantedNum, 
-                                            enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "changeMaxGrantedNum with (conferenceID: " << conferenceID
-           << ", floorID: " << floorID
-           << ", maxGrantedNum: " << maxGrantedNum << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->changeMaxGrantedNum(
-    conferenceID,
-    floorID, 
-    maxGrantedNum,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addUser(unsigned int conferenceID, 
-                                unsigned short userID, 
-                                char *userName, 
-                                char *userURI, 
-                                enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "addUser with (conferenceID: " << conferenceID
-           << ", userID: " << userID
-           << ", userName: " << (userName ? userName : "")
-           << ", userURI: " << (userURI ? userURI : "") << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  bfcp::UserInfoParam user;
-  user.id = userID;
-  user.username = (userName ? userName : "");
-  user.useruri = (userURI ? userURI : "");
-
-  server_->addUser(
-    conferenceID, 
-    user,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeUser(unsigned int conferenceID, 
-                                   unsigned short userID, 
-                                   enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "removeUser with (conferenceID: " << conferenceID
-           << ", userID: " << userID << ")";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->removeUser(
-    conferenceID, 
-    userID,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::addChair(unsigned int conferenceID, 
-                                 unsigned short floorID, 
-                                 unsigned short userID, 
-                                 enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "addChair with (conferenceID: " << conferenceID
-           << ", floorID: " << floorID
-           << ", userID: " << userID << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->addChair(
-    conferenceID, 
-    floorID,
-    userID,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-  return SOAP_OK;
-}
-
-int BFCPServiceService::removeChair(unsigned int conferenceID, 
-                                    unsigned short floorID, 
-                                    enum ns__ErrorCode *errorCode)
-{
-  LOG_INFO << "addChair with (conferenceID: " << conferenceID
-           << ", floorID: " << floorID << ")";
-
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    *errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->removeChair(
-    conferenceID, 
-    floorID,
-    boost::bind(&BFCPServiceService::handleCallResult, this, _1));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  *errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-int BFCPServiceService::getConferenceIDs(ns__ConferenceListResult *result)
-{
-  LOG_INFO << "getConferenceIDs";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    result->errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->getConferenceIDs(boost::bind(
-    &BFCPServiceService::handleGetCoferenceIDsResult, 
-    this, &result->conferenceIDs, _1, _2));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  result->errorCode = details::convertTo(error_);
-
-  return SOAP_OK;
-}
-
-void BFCPServiceService::handleGetCoferenceIDsResult(ConferenceIDList *ids, 
-                                                     bfcp::ControlError error, 
-                                                     void *data)
-{
-  muduo::MutexLockGuard lock(mutex_);
-  error_ = error;
-  callFinished_ = true;
-  if (data)
-  {
-    bfcp::BaseServer::ConferenceIDList *res = 
-      static_cast<bfcp::BaseServer::ConferenceIDList*>(data);
-    ids->swap(*res);
-  }
-  cond_.notify();
-}
-
-int BFCPServiceService::getConferenceInfo(unsigned int conferenceID, 
-                                          ns__ConferenceInfoResult *result)
-{
-  LOG_INFO << "getConferenceInfo with conferenceID: " << conferenceID  << ")";
-  if (!server_)
-  {
-    LOG_WARN << "Server not start";
-    result->errorCode = ns__ErrorCode::kServerNotStart;
-    return SOAP_OK;
-  }
-
-  callFinished_ = false;
-
-  server_->getConferenceInfo(
-    conferenceID, 
-    boost::bind(&BFCPServiceService::handleGetConferenceInfoResult, 
-      this, result->conferenceInfo, _1, _2));
-
-  {
-    muduo::MutexLockGuard lock(mutex_);
-    while (!callFinished_)
-    {
-      cond_.wait();
-    }
-  }
-  result->errorCode = details::convertTo(error_);
-  return SOAP_OK;
-}
-
-void BFCPServiceService::handleGetConferenceInfoResult(char *&info, 
-                                                       bfcp::ControlError error, 
-                                                       void *data)
-{
-  muduo::MutexLockGuard lock(mutex_);
-  error_ = error;
-  callFinished_ = true;
-  if (data)
-  {
-    bfcp::string *res = static_cast<bfcp::string*>(data);
-    info = soap_strdup(this, res->c_str());
-  }
-  cond_.notify();
-}
-
-int BFCPServiceService::quit() 
-{
-  isRunning_ = false;
-  return send_quit_empty_response(SOAP_OK);
-}
-

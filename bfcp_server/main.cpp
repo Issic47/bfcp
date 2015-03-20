@@ -89,7 +89,7 @@ void printMenu()
     " k      - Delete a user\n"
     " w      - Change number of users that can be granted the same floor at the same time\n"
     " b      - Change the chair policy\n"
-    " u      - Change maximum number of requests a user can make for the same floor\n"
+    " m      - modify the conference\n"
     " s      - Show the conferences in the BFCP server\n"
     " e      - Get all conference IDs in FCS\n"
     " q      - Quit\n"
@@ -120,6 +120,10 @@ void controlFunc(BaseServer *server)
         int threadNum = 0;
         CHECK_CIN_RESULT(std::cin >> threadNum);
         server->setWorkerThreadNum(threadNum);
+        printf("Enter the user obsoleted time:\n");
+        double userObsoletedTime = 0.0;
+        CHECK_CIN_RESULT(std::cin >> userObsoletedTime);
+        server->setUserObsoleteTime(userObsoletedTime);
         server->start(); 
       } break;
     case 'y': 
@@ -129,21 +133,18 @@ void controlFunc(BaseServer *server)
         printf("Enter the desired ConferenceID for the conference:\n");
         uint32_t conferenceID = 0;
         CHECK_CIN_RESULT(std::cin >> conferenceID);
+        bfcp::ConferenceConfig config;
         printf("Enter the maximum number of requests a user can make for the same floor:\n");
-        uint16_t maxFloorRequest = 0;
-        CHECK_CIN_RESULT(std::cin >> maxFloorRequest);
+        CHECK_CIN_RESULT(std::cin >> config.maxFloorRequest);
+        
         printf("Automated policy when chair is missing:\n\t0 = accept the request / 1 = don't\n");
         bool autoReject = 0;
         CHECK_CIN_RESULT(std::cin >> autoReject);
-        printf("Time in seconds the system will wait for a ChairAction: (0 for default number)\n");
-        double timeForChairActionInSec = 5.0;
-        CHECK_CIN_RESULT(std::cin >> timeForChairActionInSec);
-        server->addConference(
-          conferenceID, 
-          maxFloorRequest, 
-          autoReject ? AcceptPolicy::kAutoDeny : AcceptPolicy::kAutoAccept,
-          timeForChairActionInSec,
-          &handleCallResult);
+        config.acceptPolicy = autoReject ? AcceptPolicy::kAutoDeny : AcceptPolicy::kAutoAccept;
+
+        printf("Time in seconds the system will wait for a ChairAction: \n");
+        CHECK_CIN_RESULT(std::cin >> config.timeForChairAction);
+        server->addConference(conferenceID, config, &handleCallResult);
       } break;
     case 'd':
       {
@@ -152,32 +153,23 @@ void controlFunc(BaseServer *server)
         CHECK_CIN_RESULT(std::cin >> conferenceID);
         server->removeConference(conferenceID, &handleCallResult);
       } break;
-    case 'u':
+    case 'm':
       {
         printf("Enter the conference you want to modify:\n");
         uint32_t conferenceID = 0;
         CHECK_CIN_RESULT(std::cin >> conferenceID);
+        bfcp::ConferenceConfig config;
         printf("Enter the maximum number of requests a user can make for the same floor:\n");
-        uint16_t maxFloorRequest = 3;
-        CHECK_CIN_RESULT(std::cin >> maxFloorRequest);
-        server->changeMaxFloorRequest(conferenceID, maxFloorRequest, &handleCallResult);
-      } break;
-    case 'b':
-      {
-        printf("Enter the conference you want to modify:\n");
-        uint32_t conferenceID = 0;
-        CHECK_CIN_RESULT(std::cin >> conferenceID);
+        CHECK_CIN_RESULT(std::cin >> config.maxFloorRequest);
+
         printf("Automated policy when chair is missing:\n\t0 = accept the request / 1 = don't\n");
         bool autoReject = 0;
         CHECK_CIN_RESULT(std::cin >> autoReject);
-        printf("Time in seconds the system will wait for a ChairAction: (0 for default number)\n");
-        double timeForChairActionInSec = 5.0;
-        CHECK_CIN_RESULT(std::cin >> timeForChairActionInSec);
-        server->changeAcceptPolicy(
-          conferenceID, 
-          autoReject ? AcceptPolicy::kAutoDeny : AcceptPolicy::kAutoAccept,
-          timeForChairActionInSec,
-          &handleCallResult);
+        config.acceptPolicy = autoReject ? AcceptPolicy::kAutoDeny : AcceptPolicy::kAutoAccept;
+
+        printf("Time in seconds the system will wait for a ChairAction: \n");
+        CHECK_CIN_RESULT(std::cin >> config.timeForChairAction);
+        server->modifyConference(conferenceID, config, &handleCallResult);
       } break;
     case 'a':
       {
@@ -187,14 +179,10 @@ void controlFunc(BaseServer *server)
         printf("Enter the desired FloorID:\n");
         uint16_t floorID = 0;
         CHECK_CIN_RESULT(std::cin >> floorID);
+        bfcp::FloorConfig config;
         printf("Enter the maximum number of users that can be granted this floor at the same time\n\t(0 for unlimited users):\n");
-        uint16_t maxGrantedNum = 0;
-        CHECK_CIN_RESULT(std::cin >> maxGrantedNum);
-        server->addFloor(
-          conferenceID, 
-          floorID, 
-          maxGrantedNum, 
-          &handleCallResult);
+        CHECK_CIN_RESULT(std::cin >> config.maxGrantedNum);
+        server->addFloor(conferenceID, floorID, config, &handleCallResult);
       } break;
     case 'f':
       {
@@ -272,11 +260,21 @@ void controlFunc(BaseServer *server)
     case 'p':
       {
         printf("Preset Conference\n");
-        server->addConference(100, 3, AcceptPolicy::kAutoAccept, 60.0, &handleCallResult);
-        server->addFloor(100, 10, 1, &handleCallResult);
-        server->addFloor(100, 11, 2, &handleCallResult);
-        server->addFloor(100, 12, 1, &handleCallResult);
-        server->addFloor(100, 13, 1, &handleCallResult);
+        ConferenceConfig config;
+        config.maxFloorRequest = 3;
+        config.acceptPolicy = AcceptPolicy::kAutoAccept;
+        config.timeForChairAction = 60.0;
+        server->addConference(100, config, &handleCallResult);
+
+        FloorConfig floorConfig;
+        floorConfig.maxGrantedNum = 1;
+        server->addFloor(100, 10, floorConfig, &handleCallResult);
+        floorConfig.maxGrantedNum = 2;
+        server->addFloor(100, 11, floorConfig, &handleCallResult);
+        floorConfig.maxGrantedNum = 1;
+        server->addFloor(100, 12, floorConfig, &handleCallResult);
+        floorConfig.maxGrantedNum = 1;
+        server->addFloor(100, 13, floorConfig, &handleCallResult);
 
         UserInfoParam user;
         user.id = 1;

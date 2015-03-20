@@ -21,8 +21,10 @@ int printToString(const char *p, size_t size, void *arg)
 
 } // namespace detail
 
-BfcpMsg::BfcpMsg(Buffer *buf, const InetAddress &src)
-   : msg_(nullptr)
+BfcpMsg::BfcpMsg(muduo::net::Buffer *buf,
+                 const muduo::net::InetAddress &src, 
+                 muduo::Timestamp receivedTime)
+   : msg_(nullptr), receivedTime_(receivedTime)
 {
   mbuf_t mb;
   mbuf_init(&mb);

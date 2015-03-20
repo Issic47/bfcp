@@ -74,15 +74,16 @@ void BfcpConnection::onTimer()
   cachedReplys_.push_back(ReplyBucket());
 }
 
-void BfcpConnection::onMessage(Buffer *buf, const InetAddress &src)
+void BfcpConnection::onMessage(muduo::net::Buffer *buf, 
+                               const muduo::net::InetAddress &src, 
+                               muduo::Timestamp receivedTime)
 {
-  BfcpMsg msg(buf, src);
+  BfcpMsg msg(buf, src, receivedTime);
   LOG_INFO << "Received BFCP message" << msg.toString() 
            << " from " << src.toIpPort();
   LOG_TRACE << "BFCP message in detail: \n"
             << msg.toStringInDetail();
   runInLoop(&BfcpConnection::onMessageInLoop, msg);
-  
 }
 
 void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )

@@ -4,6 +4,7 @@
 #include <muduo/net/Buffer.h>
 #include <muduo/net/InetAddress.h>
 #include <muduo/base/copyable.h>
+#include <muduo/base/Timestamp.h>
 
 #include <bfcp/common/bfcp_ex.h>
 #include <bfcp/common/bfcp_attr.h>
@@ -15,10 +16,12 @@ class BfcpMsg : public muduo::copyable
 {
 public:
   BfcpMsg() : msg_(nullptr), err_(EINVAL) {}
-  BfcpMsg(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
+  BfcpMsg(muduo::net::Buffer *buf, 
+          const muduo::net::InetAddress &src, 
+          muduo::Timestamp receivedTime);
   
   BfcpMsg(const BfcpMsg &other) 
-   : msg_(other.msg_), err_(other.err_)
+   : msg_(other.msg_), err_(other.err_), receivedTime_(other.receivedTime_)
   {
     mem_ref(other.msg_);
   }
@@ -37,6 +40,8 @@ public:
 
   muduo::net::InetAddress getSrc() const 
   { return muduo::net::InetAddress(msg_->src.u.sa); }
+
+  muduo::Timestamp getReceivedTime() const { return receivedTime_; }
 
   uint8_t getVersion() const { return msg_->ver; }
   uint32_t getConferenceID() const { return msg_->confid; }
@@ -86,6 +91,7 @@ private:
 
   ::bfcp_msg_t *msg_;
   int err_;
+  muduo::Timestamp receivedTime_;
 };
 
 } // namespace bfcp

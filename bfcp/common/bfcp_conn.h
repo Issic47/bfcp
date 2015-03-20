@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/circular_buffer.hpp>
 
+#include <muduo/base/Timestamp.h>
 #include <muduo/net/Callbacks.h>
 #include <muduo/net/TimerId.h>
 #include <muduo/net/EventLoop.h>
@@ -84,7 +85,10 @@ public:
   // this should be called once
   void stopCacheTimer(); 
 
-  void onMessage(muduo::net::Buffer *buf, const muduo::net::InetAddress &src);
+  void onMessage(
+    muduo::net::Buffer *buf, 
+    const muduo::net::InetAddress &src,
+    muduo::Timestamp receivedTime);
 
   void setNewRequestCallback(const NewRequestCallback &cb)
   { newRequestCallback_ = cb; }

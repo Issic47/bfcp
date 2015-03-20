@@ -13,14 +13,17 @@ using namespace muduo::net;
 namespace bfcp
 {
 
-BaseServer::BaseServer(EventLoop* loop, const InetAddress& listenAddr ) : 
-  loop_(CHECK_NOTNULL(loop)),
-  server_(loop, listenAddr, "BfcpServer", UdpServer::kReuseAddr),
-  connectionLoop_(loop),
-  numThreads_(0),
-  threadPool_(new ThreadPool("BfcpServerThreadPool")),
-  enableConnectionThread_(false)
+const double BaseServer::kDefaultUserObsoletedTime = 30;
 
+BaseServer::BaseServer(muduo::net::EventLoop* loop, 
+                       const muduo::net::InetAddress& listenAddr) 
+   : loop_(CHECK_NOTNULL(loop)),
+     server_(loop, listenAddr, "BfcpServer", UdpServer::kReuseAddr),
+     connectionLoop_(loop),
+     numThreads_(0),
+     threadPool_(new ThreadPool("BfcpServerThreadPool")),
+     enableConnectionThread_(false),
+     userObsoletedTime_(kDefaultUserObsoletedTime)
 {
   server_.setStartedRecvCallback(
     boost::bind(&BaseServer::onStartedRecv, this, _1));
@@ -51,7 +54,7 @@ void BaseServer::onMessage( const UdpSocketPtr& socket, Buffer* buf, const InetA
     connection_->setNewRequestCallback(
       boost::bind(&BaseServer::onNewRequest, this, _1));
   }
-  connection_->onMessage(buf, src);
+  connection_->onMessage(buf, src, time);
 }
 
 void BaseServer::onWriteComplete( const UdpSocketPtr& socket, int messageId )
@@ -101,34 +104,30 @@ void BaseServer::stop()
 }
 
 void BaseServer::addConference(uint32_t conferenceID, 
-                               uint16_t maxFloorRequest, 
-                               AcceptPolicy policy, 
-                               double timeForChairAction, 
+                               const ConferenceConfig &config, 
                                const ResultCallback &cb)
 {
   if (connectionLoop_->isInLoopThread())
   {
-    addConferenceInLoop(
-      conferenceID, maxFloorRequest, policy, timeForChairAction, cb);
+    addConferenceInLoop(conferenceID, config, cb);
   }
   else
   {
     connectionLoop_->runInLoop(
       boost::bind(&BaseServer::addConferenceInLoop,
-        this, conferenceID, maxFloorRequest, policy, timeForChairAction, cb));
+      this, conferenceID, config, cb));
   }
 }
 
 void BaseServer::addConferenceInLoop(uint32_t conferenceID, 
-                                     uint16_t maxFloorRequest, 
-                                     AcceptPolicy policy, 
-                                     double timeForChairAction, 
+                                     const ConferenceConfig &config,
                                      const ResultCallback &cb)
 {
-  LOG_TRACE << "Add Conference " << conferenceID
-            << " (" << maxFloorRequest
-            << ", " << toString(policy) 
-            << ", " << timeForChairAction << ")";
+  LOG_TRACE << "{conferenceID: " << conferenceID
+            << ", config: {maxFloorRequest: " << config.maxFloorRequest
+            << ", policy: " << toString(config.acceptPolicy)
+            << ", timeForChairAction: " << config.timeForChairAction 
+            << "}}";
   connectionLoop_->assertInLoopThread();
   auto lb = conferenceMap_.lower_bound(conferenceID);
   if (lb != conferenceMap_.end() && (*lb).first == conferenceID)
@@ -141,17 +140,18 @@ void BaseServer::addConferenceInLoop(uint32_t conferenceID,
   }
   else
   {
-    ConferenceConfig config;
-    config.maxFloorRequest = maxFloorRequest;
-    config.acceptPolicy = policy;
-    config.timeForChairAction = timeForChairAction;
+    ConferenceConfig conferenceConfig;
+    conferenceConfig.maxFloorRequest = config.maxFloorRequest;
+    conferenceConfig.acceptPolicy = config.acceptPolicy;
+    conferenceConfig.timeForChairAction = config.timeForChairAction;
+    conferenceConfig.userObsoletedTime = userObsoletedTime_;
 
     ConferencePtr newConference = 
       boost::make_shared<Conference>(
-        connectionLoop_, 
-        connection_,
-        conferenceID,
-        config);
+      connectionLoop_, 
+      connection_,
+      conferenceID,
+      conferenceConfig);
 
     newConference->setChairActionTimeoutCallback(
       boost::bind(&BaseServer::onChairActionTimeout, this, _1, _2));
@@ -217,61 +217,21 @@ void BaseServer::modifyConferenceInLoop(uint32_t conferenceID,
   runTask(&Conference::set, conferenceID, config, cb);
 }
 
-void BaseServer::changeMaxFloorRequest(uint32_t conferenceID, 
-                                       uint16_t maxFloorRequest, 
-                                       const ResultCallback &cb)
-{
-  runInLoop(
-    &BaseServer::changeMaxFloorRequestInLoop, 
-    conferenceID, maxFloorRequest, cb);
-}
-
-void BaseServer::changeMaxFloorRequestInLoop(uint32_t conferenceID, 
-                                             uint16_t maxFloorRequest, 
-                                             const ResultCallback &cb)
-{
-  LOG_TRACE << "Change max floor request to " << maxFloorRequest 
-            << " in Conference " << conferenceID;
-  runTask(&Conference::setMaxFloorRequest, conferenceID, maxFloorRequest, cb);
-}
-
-void BaseServer::changeAcceptPolicy(uint32_t conferenceID, 
-                                    AcceptPolicy policy,
-                                    double timeForChairAction, 
-                                    const ResultCallback &cb)
-{
-  runInLoop(
-    &BaseServer::changeAcceptPolicyInLoop, 
-    conferenceID, policy, timeForChairAction, cb);
-}
-
-void BaseServer::changeAcceptPolicyInLoop(uint32_t conferenceID, 
-                                          AcceptPolicy policy, 
-                                          double timeForChairAction, 
-                                          const ResultCallback &cb)
-{
-  LOG_TRACE << "Change accept policy to " << toString(policy) 
-            << " with " << timeForChairAction 
-            << "s for chair action in Conference " << conferenceID;
-  runTask(&Conference::setAcceptPolicy, 
-    conferenceID, policy, timeForChairAction, cb);
-}
-
 void BaseServer::addFloor(uint32_t conferenceID, 
                           uint16_t floorID, 
-                          uint16_t maxGrantedNum, 
+                          const FloorConfig &config, 
                           const ResultCallback &cb)
 {
-  runInLoop(&BaseServer::addFloorInLoop, conferenceID, floorID, maxGrantedNum, cb);
+  runInLoop(&BaseServer::addFloorInLoop, conferenceID, floorID, config, cb);
 }
 
 void BaseServer::addFloorInLoop(uint32_t conferenceID, 
-                                uint16_t floorID,
-                                uint16_t maxGrantedNum, 
+                                uint16_t floorID, 
+                                const FloorConfig &config,
                                 const ResultCallback &cb)
 {
   LOG_TRACE << "Add Floor " << floorID << " to Conference " << conferenceID;
-  runTask(&Conference::addFloor, conferenceID, floorID, maxGrantedNum, cb);
+  runTask(&Conference::addFloor, conferenceID, floorID, config, cb);
 }
 
 void BaseServer::removeFloor(uint32_t conferenceID, 
@@ -290,26 +250,26 @@ void BaseServer::removeFloorInLoop(uint32_t conferenceID,
   runTask(&Conference::removeFloor, conferenceID, floorID, cb);
 }
 
-
-void BaseServer::changeMaxGrantedNum(uint32_t conferenceID, 
-                                     uint16_t floorID, 
-                                     uint16_t maxGrantedNum, 
-                                     const ResultCallback &cb)
+void BaseServer::modifyFloor(uint32_t conferenceID, 
+                             uint16_t floorID, 
+                             const FloorConfig &config, 
+                             const ResultCallback &cb)
 {
   runInLoop(
-    &BaseServer::changeMaxGrantedNumInLoop, 
-    conferenceID, floorID, maxGrantedNum, cb);
+    &BaseServer::modifyFloorInLoop, 
+    conferenceID, floorID, config, cb);
 }
 
-void BaseServer::changeMaxGrantedNumInLoop(uint32_t conferenceID, 
-                                           uint16_t floorID, 
-                                           uint16_t maxGrantedNum, 
-                                           const ResultCallback &cb)
+void BaseServer::modifyFloorInLoop(uint32_t conferenceID, 
+                                   uint16_t floorID, 
+                                   const FloorConfig &config, 
+                                   const ResultCallback &cb)
 {
-  LOG_TRACE << "Change max granted num to " << maxGrantedNum 
-            << " of Floor " << floorID << " in Conference " << conferenceID;
-  runTask(&Conference::setFloorMaxGrantedCount,
-    conferenceID, floorID, maxGrantedNum, cb);
+  LOG_TRACE << "Modify floor with {conferenceID: " << conferenceID
+            << ", floorID: " << floorID
+            << ", maxGrantedNum: " << config.maxGrantedNum << "}";
+  runTask(&Conference::modifyFloor,
+    conferenceID, floorID, config, cb);
 }
 
 void BaseServer::addUser(uint32_t conferenceID, 

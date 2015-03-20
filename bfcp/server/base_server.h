@@ -35,6 +35,8 @@ public:
   typedef boost::function<void (ControlError, void*)> ResultWithDataCallback;
   typedef std::vector<uint32_t> ConferenceIDList;
 
+  static const double kDefaultUserObsoletedTime;
+
   BaseServer(muduo::net::EventLoop* loop, 
              const muduo::net::InetAddress& listenAddr);
 
@@ -50,14 +52,14 @@ public:
   void setWorkerThreadInitCallback(WorkerThreadInitCallback &&cb)
   { workerThreadInitCallback_ = std::move(cb); }
 
+  void setUserObsoleteTime(double timeInSec) { userObsoletedTime_ = timeInSec; }
+
   void start();
   void stop();
 
   void addConference(
     uint32_t conferenceID, 
-    uint16_t maxFloorRequest, 
-    AcceptPolicy policy, 
-    double timeForChairAction,
+    const ConferenceConfig &config,
     const ResultCallback &cb);
 
   void removeConference(
@@ -69,21 +71,10 @@ public:
     const ConferenceConfig &config,
     const ResultCallback &cb);
 
-  void changeMaxFloorRequest(
-    uint32_t conferenceID, 
-    uint16_t maxFloorRequest,
-    const ResultCallback &cb);
-
-  void changeAcceptPolicy(
-    uint32_t conferenceID, 
-    AcceptPolicy policy, 
-    double timeForChairAction,
-    const ResultCallback &cb);
-
   void addFloor(
     uint32_t conferenceID, 
     uint16_t floorID, 
-    uint16_t maxGrantedNum,
+    const FloorConfig &config,
     const ResultCallback &cb);
 
   void removeFloor(
@@ -91,10 +82,10 @@ public:
     uint16_t floorID, 
     const ResultCallback &cb);
 
-  void changeMaxGrantedNum(
+  void modifyFloor(
     uint32_t conferenceID, 
     uint16_t floorID, 
-    uint16_t maxGrantedNum,
+    const FloorConfig &config,
     const ResultCallback &cb);
 
   void addUser(
@@ -155,6 +146,11 @@ private:
     double timeForChairAction,
     const ResultCallback &cb);
 
+  void addConferenceInLoop(
+    uint32_t conferenceID,
+    const ConferenceConfig &config,
+    const ResultCallback &cb);
+
   void removeConferenceInLoop(
     uint32_t conferenceID, 
     const ResultCallback &cb);
@@ -164,21 +160,10 @@ private:
     const ConferenceConfig &config,
     const ResultCallback &cb);
 
-  void changeMaxFloorRequestInLoop(
-    uint32_t conferenceID, 
-    uint16_t maxFloorRequest,
-    const ResultCallback &cb);
-
-  void changeAcceptPolicyInLoop(
-    uint32_t conferenceID, 
-    AcceptPolicy policy, 
-    double timeForChairAction,
-    const ResultCallback &cb);
-
   void addFloorInLoop(
     uint32_t conferenceID, 
     uint16_t floorID, 
-    uint16_t maxGrantedNum,
+    const FloorConfig &config,
     const ResultCallback &cb);
 
   void removeFloorInLoop(
@@ -186,10 +171,10 @@ private:
     uint16_t floorID, 
     const ResultCallback &cb);
 
-  void changeMaxGrantedNumInLoop(
+  void modifyFloorInLoop(
     uint32_t conferenceID, 
     uint16_t floorID, 
-    uint16_t maxGrantedNum, 
+    const FloorConfig &config,
     const ResultCallback &cb);
 
   void addUserInLoop(
@@ -279,6 +264,7 @@ private:
   muduo::AtomicInt32 started_;
   std::map<uint32_t, ConferencePtr> conferenceMap_;
   bool enableConnectionThread_;
+  double userObsoletedTime_;
 };
 
 } // namespace bfcp

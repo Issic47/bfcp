@@ -28,6 +28,12 @@ struct ConferenceConfig
   uint16_t maxFloorRequest;
   AcceptPolicy acceptPolicy;
   double timeForChairAction;
+  double userObsoletedTime;
+};
+
+struct FloorConfig
+{
+  uint16_t maxGrantedNum;
 };
 
 const char* toString(AcceptPolicy policy);

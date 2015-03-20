@@ -102,7 +102,8 @@ Conference::Conference(muduo::net::EventLoop *loop,
       nextFloorRequestID_(0),
       maxFloorRequest_(config.maxFloorRequest),
       timeForChairAction_(config.timeForChairAction),
-      acceptPolicy_(config.acceptPolicy)
+      acceptPolicy_(config.acceptPolicy),
+      userObsoletedTime_(config.userObsoletedTime)
 {
   LOG_TRACE << "Conference::Conference [" << conferenceID << "] constructing";
   assert(connection_);
@@ -178,10 +179,10 @@ ControlError Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
   return ControlError::kNoError;
 }
 
-ControlError Conference::setFloorMaxGrantedCount(
-  uint16_t floorID, uint16_t maxGrantedCount)
+ControlError Conference::modifyFloor(
+  uint16_t floorID, const FloorConfig &config)
 {
-  LOG_TRACE << "Set max floor granted " << maxGrantedCount 
+  LOG_TRACE << "Set max floor granted " << config.maxGrantedNum 
             << " of Floor " << floorID 
             << " in Conference " << conferenceID_;
   auto floor = findFloor(floorID);
@@ -191,7 +192,7 @@ ControlError Conference::setFloorMaxGrantedCount(
               << " not exist in Conference " << conferenceID_;
     return ControlError::kFloorNotExist;
   }
-  floor->setMaxGrantedCount(maxGrantedCount);
+  floor->setMaxGrantedCount(config.maxGrantedNum);
   return ControlError::kNoError;
 }
 
@@ -343,7 +344,7 @@ void Conference::releaseFloorRequestsFromGrantedByUserID( uint16_t userID )
   }
 }
 
-ControlError Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
+ControlError Conference::addFloor(uint16_t floorID, const FloorConfig &config)
 {
   LOG_TRACE << "Add Floor " << floorID << " to Conference " << conferenceID_;
   ControlError err = ControlError::kNoError;
@@ -353,7 +354,7 @@ ControlError Conference::addFloor( uint16_t floorID, uint16_t maxGrantedCount )
     auto res = floors_.emplace_hint(
       lb, 
       floorID, 
-      boost::make_shared<Floor>(floorID, maxGrantedCount));
+      boost::make_shared<Floor>(floorID, config.maxGrantedNum));
     // FIXME: check if insert success
     (void)(res);
   }
@@ -739,7 +740,7 @@ void Conference::notifyWithFloorStatus( uint16_t floorID )
   for (auto userID : floor->getQueryUsers())
   {
     auto user = findUser(userID);
-    if (user && user->isAvailable())
+    if (user && isUserAvailable(user))
     {
       basicParam.userID = userID;
       basicParam.dst = user->getAddr();
@@ -763,7 +764,7 @@ void Conference::notifyWithFloorRequestStatus(
   for (auto userID : queryUsers)
   {
     auto user = findUser(userID);
-    if (user && user->isAvailable())
+    if (user && isUserAvailable(user))
     {
       param.userID = userID;
       param.dst = user->getAddr();
@@ -788,11 +789,12 @@ void Conference::onNewRequest( const BfcpMsg &msg )
   {
     auto user = findUser(msg.getUserID());
     assert(user);
-    if (!user->isAvailable())
+    if (!isUserAvailable(user))
     {
       user->setAvailable(true);
       user->setAddr(msg.getSrc());
     }
+    user->setActiveTime(msg.getReceivedTime());
 
     bfcp_prim prim = msg.primitive();
     auto it = requestHandler_.find(prim);
@@ -808,6 +810,14 @@ void Conference::onNewRequest( const BfcpMsg &msg )
       replyWithError(msg, BFCP_UNKNOWN_PRIM, errorInfo);
     }
   }
+}
+
+bool Conference::isUserAvailable( const UserPtr &user ) const
+{
+  if (!user->isAvailable()) return false;
+  double livingTime = muduo::timeDifference(
+    muduo::Timestamp::now(), user->getActiveTime());
+  return livingTime < userObsoletedTime_;
 }
 
 bool Conference::checkUnknownAttrs( const BfcpMsg &msg )
@@ -882,6 +892,7 @@ void Conference::handleGoodbye( const BfcpMsg &msg )
   auto user = findUser(msg.getUserID());
   assert(user);
   user->setAvailable(false);
+  user->clearAllSendMessageTasks();
 }
 
 void Conference::handleFloorRequest( const BfcpMsg &msg )
@@ -1670,7 +1681,7 @@ void Conference::replyWithFloorStatus(const BfcpMsg &msg, const uint16_t *floorI
 void Conference::notifyWithFloorStatus(uint16_t userID, uint16_t floorID)
 {
   auto user = findUser(userID);
-  if (user && user->isAvailable())
+  if (user && isUserAvailable(user))
   {
     BasicRequestParam basicParam;
     basicParam.conferenceID = conferenceID_;
@@ -1740,7 +1751,11 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
       LOG_ERROR << "Expected BFCP " << bfcp_prim_name(expectedPrimitive) 
                 << " but get " << bfcp_prim_name(msg.primitive());
     }
-    user->runNextSendMessageTask();
+    user->setActiveTime(msg.getReceivedTime());
+    if (isUserAvailable(user))
+    {
+      user->runNextSendMessageTask();
+    }
   }
 }
 
@@ -1783,7 +1798,7 @@ void Conference::addUserInfoToXMLNode(tinyxml2::XMLDocument *doc,
     {
       userNode->SetAttribute("uri", user.second->getURI().c_str());
     }
-    userNode->SetAttribute("isAvailable", user.second->isAvailable());
+    userNode->SetAttribute("isAvailable", isUserAvailable(user.second));
     userListNode->InsertEndChild(userNode);
   }
 }

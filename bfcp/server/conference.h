@@ -66,9 +66,9 @@ public:
   ControlError addUser(const UserInfoParam &user);
   ControlError removeUser(uint16_t userID);
   
-  ControlError addFloor(uint16_t floorID, uint16_t maxGrantedCount);
+  ControlError addFloor(uint16_t floorID, const FloorConfig &config);
   ControlError removeFloor(uint16_t floorID);
-  ControlError setFloorMaxGrantedCount(uint16_t floorID, uint16_t maxGrantedCount);
+  ControlError modifyFloor(uint16_t floorID, const FloorConfig &config);
 
   ControlError addChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);
@@ -217,6 +217,8 @@ private:
     tinyxml2::XMLNode *node,
     const FloorRequestNodePtr &floorRequest) const;
 
+  bool isUserAvailable(const UserPtr &user) const;
+
   muduo::net::EventLoop *loop_;
   BfcpConnectionPtr connection_;
   uint32_t conferenceID_;
@@ -235,6 +237,8 @@ private:
 
   ChairActionTimeoutCallback chairActionTimeoutCallback_;
   ClientResponseCallback clientReponseCallback_;
+
+  double userObsoletedTime_;
 };
 
 } // namespace bfcp

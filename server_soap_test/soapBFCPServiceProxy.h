@@ -64,8 +64,8 @@ class SOAP_CMAC BFCPServiceProxy : public soap
 #endif
 
 	/// Web service operation 'start' (returns error code or SOAP_OK)
-	virtual	int start(unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode) { return this->start(NULL, NULL, port, enbaleConnectionThread, workThreadNum, errorCode); }
-	virtual	int start(const char *endpoint, const char *soap_action, unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode);
+	virtual	int start(enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, double userObsoletedTime, enum ns__ErrorCode *errorCode) { return this->start(NULL, NULL, af, port, enbaleConnectionThread, workThreadNum, userObsoletedTime, errorCode); }
+	virtual	int start(const char *endpoint, const char *soap_action, enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, double userObsoletedTime, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'stop' (returns error code or SOAP_OK)
 	virtual	int stop(enum ns__ErrorCode *errorCode) { return this->stop(NULL, NULL, errorCode); }
@@ -90,13 +90,9 @@ class SOAP_CMAC BFCPServiceProxy : public soap
 	virtual	int removeConference(unsigned int conferenceID, enum ns__ErrorCode *errorCode) { return this->removeConference(NULL, NULL, conferenceID, errorCode); }
 	virtual	int removeConference(const char *endpoint, const char *soap_action, unsigned int conferenceID, enum ns__ErrorCode *errorCode);
 
-	/// Web service operation 'changeMaxFloorRequest' (returns error code or SOAP_OK)
-	virtual	int changeMaxFloorRequest(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__ErrorCode *errorCode) { return this->changeMaxFloorRequest(NULL, NULL, conferenceID, maxFloorRequest, errorCode); }
-	virtual	int changeMaxFloorRequest(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__ErrorCode *errorCode);
-
-	/// Web service operation 'changeAcceptPolicy' (returns error code or SOAP_OK)
-	virtual	int changeAcceptPolicy(unsigned int conferenceID, enum ns__Policy policy, double timeForChairActoin, enum ns__ErrorCode *errorCode) { return this->changeAcceptPolicy(NULL, NULL, conferenceID, policy, timeForChairActoin, errorCode); }
-	virtual	int changeAcceptPolicy(const char *endpoint, const char *soap_action, unsigned int conferenceID, enum ns__Policy policy, double timeForChairActoin, enum ns__ErrorCode *errorCode);
+	/// Web service operation 'modifyConference' (returns error code or SOAP_OK)
+	virtual	int modifyConference(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode) { return this->modifyConference(NULL, NULL, conferenceID, maxFloorRequest, policy, timeForChairAction, errorCode); }
+	virtual	int modifyConference(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'addFloor' (returns error code or SOAP_OK)
 	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) { return this->addFloor(NULL, NULL, conferenceID, floorID, maxGrantedNum, errorCode); }
@@ -106,13 +102,13 @@ class SOAP_CMAC BFCPServiceProxy : public soap
 	virtual	int removeFloor(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) { return this->removeFloor(NULL, NULL, conferenceID, floorID, errorCode); }
 	virtual	int removeFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode);
 
-	/// Web service operation 'changeMaxGrantedNum' (returns error code or SOAP_OK)
-	virtual	int changeMaxGrantedNum(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) { return this->changeMaxGrantedNum(NULL, NULL, conferenceID, floorID, maxGrantedNum, errorCode); }
-	virtual	int changeMaxGrantedNum(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode);
+	/// Web service operation 'modifyFloor' (returns error code or SOAP_OK)
+	virtual	int modifyFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) { return this->modifyFloor(NULL, NULL, conferenceID, floorID, maxGrantedNum, errorCode); }
+	virtual	int modifyFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'addUser' (returns error code or SOAP_OK)
-	virtual	int addUser(unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode) { return this->addUser(NULL, NULL, conferenceID, userID, userName, userURI, errorCode); }
-	virtual	int addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode);
+	virtual	int addUser(unsigned int conferenceID, unsigned short userID, std::string userName, std::string userURI, enum ns__ErrorCode *errorCode) { return this->addUser(NULL, NULL, conferenceID, userID, userName, userURI, errorCode); }
+	virtual	int addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, std::string userName, std::string userURI, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'removeUser' (returns error code or SOAP_OK)
 	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) { return this->removeUser(NULL, NULL, conferenceID, userID, errorCode); }

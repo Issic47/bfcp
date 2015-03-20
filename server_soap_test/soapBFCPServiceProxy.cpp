@@ -110,7 +110,7 @@ char *BFCPServiceProxy::soap_sprint_fault(char *buf, size_t len)
 }
 #endif
 
-int BFCPServiceProxy::start(const char *endpoint, const char *soap_action, unsigned short port, bool enbaleConnectionThread, int workThreadNum, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::start(const char *endpoint, const char *soap_action, enum ns__AddrFamily af, unsigned short port, bool enbaleConnectionThread, int workThreadNum, double userObsoletedTime, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
 	struct ns__start soap_tmp_ns__start;
 	struct ns__startResponse *soap_tmp_ns__startResponse;
@@ -119,10 +119,12 @@ int BFCPServiceProxy::start(const char *endpoint, const char *soap_action, unsig
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
+	soap_tmp_ns__start.af = af;
 	soap_tmp_ns__start.port = port;
 	soap_tmp_ns__start.enbaleConnectionThread = enbaleConnectionThread;
 	soap_tmp_ns__start.workThreadNum = workThreadNum;
+	soap_tmp_ns__start.userObsoletedTime = userObsoletedTime;
 	soap_serializeheader(soap);
 	soap_serialize_ns__start(soap, &soap_tmp_ns__start);
 	if (soap_begin_count(soap))
@@ -155,7 +157,9 @@ int BFCPServiceProxy::start(const char *endpoint, const char *soap_action, unsig
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__startResponse = soap_get_ns__startResponse(soap, NULL, "ns:startResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__startResponse = soap_get_ns__startResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__startResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -176,7 +180,7 @@ int BFCPServiceProxy::stop(const char *endpoint, const char *soap_action, enum n
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__stop(soap, &soap_tmp_ns__stop);
 	if (soap_begin_count(soap))
@@ -209,7 +213,9 @@ int BFCPServiceProxy::stop(const char *endpoint, const char *soap_action, enum n
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__stopResponse = soap_get_ns__stopResponse(soap, NULL, "ns:stopResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__stopResponse = soap_get_ns__stopResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__stopResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -229,7 +235,7 @@ int BFCPServiceProxy::send_quit(const char *endpoint, const char *soap_action)
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__quit(soap, &soap_tmp_ns__quit);
 	if (soap_begin_count(soap))
@@ -288,7 +294,7 @@ int BFCPServiceProxy::addConference(const char *endpoint, const char *soap_actio
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__addConference.conferenceID = conferenceID;
 	soap_tmp_ns__addConference.maxFloorRequest = maxFloorRequest;
 	soap_tmp_ns__addConference.policy = policy;
@@ -325,7 +331,9 @@ int BFCPServiceProxy::addConference(const char *endpoint, const char *soap_actio
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__addConferenceResponse = soap_get_ns__addConferenceResponse(soap, NULL, "ns:addConferenceResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__addConferenceResponse = soap_get_ns__addConferenceResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__addConferenceResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -346,7 +354,7 @@ int BFCPServiceProxy::removeConference(const char *endpoint, const char *soap_ac
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__removeConference.conferenceID = conferenceID;
 	soap_serializeheader(soap);
 	soap_serialize_ns__removeConference(soap, &soap_tmp_ns__removeConference);
@@ -380,7 +388,9 @@ int BFCPServiceProxy::removeConference(const char *endpoint, const char *soap_ac
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__removeConferenceResponse = soap_get_ns__removeConferenceResponse(soap, NULL, "ns:removeConferenceResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__removeConferenceResponse = soap_get_ns__removeConferenceResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__removeConferenceResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -392,27 +402,29 @@ int BFCPServiceProxy::removeConference(const char *endpoint, const char *soap_ac
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::changeMaxFloorRequest(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::modifyConference(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
-	struct ns__changeMaxFloorRequest soap_tmp_ns__changeMaxFloorRequest;
-	struct ns__changeMaxFloorRequestResponse *soap_tmp_ns__changeMaxFloorRequestResponse;
+	struct ns__modifyConference soap_tmp_ns__modifyConference;
+	struct ns__modifyConferenceResponse *soap_tmp_ns__modifyConferenceResponse;
 	if (endpoint)
 		soap_endpoint = endpoint;
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
-	soap_tmp_ns__changeMaxFloorRequest.conferenceID = conferenceID;
-	soap_tmp_ns__changeMaxFloorRequest.maxFloorRequest = maxFloorRequest;
+	soap->encodingStyle = "";
+	soap_tmp_ns__modifyConference.conferenceID = conferenceID;
+	soap_tmp_ns__modifyConference.maxFloorRequest = maxFloorRequest;
+	soap_tmp_ns__modifyConference.policy = policy;
+	soap_tmp_ns__modifyConference.timeForChairAction = timeForChairAction;
 	soap_serializeheader(soap);
-	soap_serialize_ns__changeMaxFloorRequest(soap, &soap_tmp_ns__changeMaxFloorRequest);
+	soap_serialize_ns__modifyConference(soap, &soap_tmp_ns__modifyConference);
 	if (soap_begin_count(soap))
 		return soap->error;
 	if (soap->mode & SOAP_IO_LENGTH)
 	{	if (soap_envelope_begin_out(soap)
 		 || soap_putheader(soap)
 		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeMaxFloorRequest(soap, &soap_tmp_ns__changeMaxFloorRequest, "ns:changeMaxFloorRequest", NULL)
+		 || soap_put_ns__modifyConference(soap, &soap_tmp_ns__modifyConference, "ns:modifyConference", NULL)
 		 || soap_body_end_out(soap)
 		 || soap_envelope_end_out(soap))
 			 return soap->error;
@@ -423,7 +435,7 @@ int BFCPServiceProxy::changeMaxFloorRequest(const char *endpoint, const char *so
 	 || soap_envelope_begin_out(soap)
 	 || soap_putheader(soap)
 	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeMaxFloorRequest(soap, &soap_tmp_ns__changeMaxFloorRequest, "ns:changeMaxFloorRequest", NULL)
+	 || soap_put_ns__modifyConference(soap, &soap_tmp_ns__modifyConference, "ns:modifyConference", NULL)
 	 || soap_body_end_out(soap)
 	 || soap_envelope_end_out(soap)
 	 || soap_end_send(soap))
@@ -436,72 +448,17 @@ int BFCPServiceProxy::changeMaxFloorRequest(const char *endpoint, const char *so
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__changeMaxFloorRequestResponse = soap_get_ns__changeMaxFloorRequestResponse(soap, NULL, "ns:changeMaxFloorRequestResponse", NULL);
-	if (!soap_tmp_ns__changeMaxFloorRequestResponse || soap->error)
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__modifyConferenceResponse = soap_get_ns__modifyConferenceResponse(soap, NULL, "", NULL);
+	if (!soap_tmp_ns__modifyConferenceResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap_closesock(soap);
-	if (errorCode && soap_tmp_ns__changeMaxFloorRequestResponse->errorCode)
-		*errorCode = *soap_tmp_ns__changeMaxFloorRequestResponse->errorCode;
-	return soap_closesock(soap);
-}
-
-int BFCPServiceProxy::changeAcceptPolicy(const char *endpoint, const char *soap_action, unsigned int conferenceID, enum ns__Policy policy, double timeForChairActoin, enum ns__ErrorCode *errorCode)
-{	struct soap *soap = this;
-	struct ns__changeAcceptPolicy soap_tmp_ns__changeAcceptPolicy;
-	struct ns__changeAcceptPolicyResponse *soap_tmp_ns__changeAcceptPolicyResponse;
-	if (endpoint)
-		soap_endpoint = endpoint;
-	if (soap_endpoint == NULL)
-		soap_endpoint = "http://localhost:8011";
-	soap_begin(soap);
-	soap->encodingStyle = NULL;
-	soap_tmp_ns__changeAcceptPolicy.conferenceID = conferenceID;
-	soap_tmp_ns__changeAcceptPolicy.policy = policy;
-	soap_tmp_ns__changeAcceptPolicy.timeForChairActoin = timeForChairActoin;
-	soap_serializeheader(soap);
-	soap_serialize_ns__changeAcceptPolicy(soap, &soap_tmp_ns__changeAcceptPolicy);
-	if (soap_begin_count(soap))
-		return soap->error;
-	if (soap->mode & SOAP_IO_LENGTH)
-	{	if (soap_envelope_begin_out(soap)
-		 || soap_putheader(soap)
-		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeAcceptPolicy(soap, &soap_tmp_ns__changeAcceptPolicy, "ns:changeAcceptPolicy", NULL)
-		 || soap_body_end_out(soap)
-		 || soap_envelope_end_out(soap))
-			 return soap->error;
-	}
-	if (soap_end_count(soap))
-		return soap->error;
-	if (soap_connect(soap, soap_url(soap, soap_endpoint, NULL), soap_action)
-	 || soap_envelope_begin_out(soap)
-	 || soap_putheader(soap)
-	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeAcceptPolicy(soap, &soap_tmp_ns__changeAcceptPolicy, "ns:changeAcceptPolicy", NULL)
-	 || soap_body_end_out(soap)
-	 || soap_envelope_end_out(soap)
-	 || soap_end_send(soap))
-		return soap_closesock(soap);
-	if (!errorCode)
-		return soap_closesock(soap);
-	soap_default_ns__ErrorCode(soap, errorCode);
-	if (soap_begin_recv(soap)
-	 || soap_envelope_begin_in(soap)
-	 || soap_recv_header(soap)
-	 || soap_body_begin_in(soap))
-		return soap_closesock(soap);
-	soap_tmp_ns__changeAcceptPolicyResponse = soap_get_ns__changeAcceptPolicyResponse(soap, NULL, "ns:changeAcceptPolicyResponse", NULL);
-	if (!soap_tmp_ns__changeAcceptPolicyResponse || soap->error)
-		return soap_recv_fault(soap, 0);
-	if (soap_body_end_in(soap)
-	 || soap_envelope_end_in(soap)
-	 || soap_end_recv(soap))
-		return soap_closesock(soap);
-	if (errorCode && soap_tmp_ns__changeAcceptPolicyResponse->errorCode)
-		*errorCode = *soap_tmp_ns__changeAcceptPolicyResponse->errorCode;
+	if (errorCode && soap_tmp_ns__modifyConferenceResponse->errorCode)
+		*errorCode = *soap_tmp_ns__modifyConferenceResponse->errorCode;
 	return soap_closesock(soap);
 }
 
@@ -514,7 +471,7 @@ int BFCPServiceProxy::addFloor(const char *endpoint, const char *soap_action, un
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__addFloor.conferenceID = conferenceID;
 	soap_tmp_ns__addFloor.floorID = floorID;
 	soap_tmp_ns__addFloor.maxGrantedNum = maxGrantedNum;
@@ -550,7 +507,9 @@ int BFCPServiceProxy::addFloor(const char *endpoint, const char *soap_action, un
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__addFloorResponse = soap_get_ns__addFloorResponse(soap, NULL, "ns:addFloorResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__addFloorResponse = soap_get_ns__addFloorResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__addFloorResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -571,7 +530,7 @@ int BFCPServiceProxy::removeFloor(const char *endpoint, const char *soap_action,
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__removeFloor.conferenceID = conferenceID;
 	soap_tmp_ns__removeFloor.floorID = floorID;
 	soap_serializeheader(soap);
@@ -606,7 +565,9 @@ int BFCPServiceProxy::removeFloor(const char *endpoint, const char *soap_action,
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__removeFloorResponse = soap_get_ns__removeFloorResponse(soap, NULL, "ns:removeFloorResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__removeFloorResponse = soap_get_ns__removeFloorResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__removeFloorResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -618,28 +579,28 @@ int BFCPServiceProxy::removeFloor(const char *endpoint, const char *soap_action,
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::changeMaxGrantedNum(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::modifyFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
-	struct ns__changeMaxGrantedNum soap_tmp_ns__changeMaxGrantedNum;
-	struct ns__changeMaxGrantedNumResponse *soap_tmp_ns__changeMaxGrantedNumResponse;
+	struct ns__modifyFloor soap_tmp_ns__modifyFloor;
+	struct ns__modifyFloorResponse *soap_tmp_ns__modifyFloorResponse;
 	if (endpoint)
 		soap_endpoint = endpoint;
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
-	soap_tmp_ns__changeMaxGrantedNum.conferenceID = conferenceID;
-	soap_tmp_ns__changeMaxGrantedNum.floorID = floorID;
-	soap_tmp_ns__changeMaxGrantedNum.maxGrantedNum = maxGrantedNum;
+	soap->encodingStyle = "";
+	soap_tmp_ns__modifyFloor.conferenceID = conferenceID;
+	soap_tmp_ns__modifyFloor.floorID = floorID;
+	soap_tmp_ns__modifyFloor.maxGrantedNum = maxGrantedNum;
 	soap_serializeheader(soap);
-	soap_serialize_ns__changeMaxGrantedNum(soap, &soap_tmp_ns__changeMaxGrantedNum);
+	soap_serialize_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor);
 	if (soap_begin_count(soap))
 		return soap->error;
 	if (soap->mode & SOAP_IO_LENGTH)
 	{	if (soap_envelope_begin_out(soap)
 		 || soap_putheader(soap)
 		 || soap_body_begin_out(soap)
-		 || soap_put_ns__changeMaxGrantedNum(soap, &soap_tmp_ns__changeMaxGrantedNum, "ns:changeMaxGrantedNum", NULL)
+		 || soap_put_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor, "ns:modifyFloor", NULL)
 		 || soap_body_end_out(soap)
 		 || soap_envelope_end_out(soap))
 			 return soap->error;
@@ -650,7 +611,7 @@ int BFCPServiceProxy::changeMaxGrantedNum(const char *endpoint, const char *soap
 	 || soap_envelope_begin_out(soap)
 	 || soap_putheader(soap)
 	 || soap_body_begin_out(soap)
-	 || soap_put_ns__changeMaxGrantedNum(soap, &soap_tmp_ns__changeMaxGrantedNum, "ns:changeMaxGrantedNum", NULL)
+	 || soap_put_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor, "ns:modifyFloor", NULL)
 	 || soap_body_end_out(soap)
 	 || soap_envelope_end_out(soap)
 	 || soap_end_send(soap))
@@ -663,19 +624,21 @@ int BFCPServiceProxy::changeMaxGrantedNum(const char *endpoint, const char *soap
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__changeMaxGrantedNumResponse = soap_get_ns__changeMaxGrantedNumResponse(soap, NULL, "ns:changeMaxGrantedNumResponse", NULL);
-	if (!soap_tmp_ns__changeMaxGrantedNumResponse || soap->error)
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__modifyFloorResponse = soap_get_ns__modifyFloorResponse(soap, NULL, "", NULL);
+	if (!soap_tmp_ns__modifyFloorResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap_closesock(soap);
-	if (errorCode && soap_tmp_ns__changeMaxGrantedNumResponse->errorCode)
-		*errorCode = *soap_tmp_ns__changeMaxGrantedNumResponse->errorCode;
+	if (errorCode && soap_tmp_ns__modifyFloorResponse->errorCode)
+		*errorCode = *soap_tmp_ns__modifyFloorResponse->errorCode;
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, const char *userName, const char *userURI, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, std::string userName, std::string userURI, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
 	struct ns__addUser soap_tmp_ns__addUser;
 	struct ns__addUserResponse *soap_tmp_ns__addUserResponse;
@@ -684,11 +647,11 @@ int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, uns
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__addUser.conferenceID = conferenceID;
 	soap_tmp_ns__addUser.userID = userID;
-	soap_tmp_ns__addUser.userName = const_cast<char*>(userName);
-	soap_tmp_ns__addUser.userURI = const_cast<char*>(userURI);
+	soap_tmp_ns__addUser.userName = userName;
+	soap_tmp_ns__addUser.userURI = userURI;
 	soap_serializeheader(soap);
 	soap_serialize_ns__addUser(soap, &soap_tmp_ns__addUser);
 	if (soap_begin_count(soap))
@@ -721,7 +684,9 @@ int BFCPServiceProxy::addUser(const char *endpoint, const char *soap_action, uns
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__addUserResponse = soap_get_ns__addUserResponse(soap, NULL, "ns:addUserResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__addUserResponse = soap_get_ns__addUserResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__addUserResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -742,7 +707,7 @@ int BFCPServiceProxy::removeUser(const char *endpoint, const char *soap_action, 
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__removeUser.conferenceID = conferenceID;
 	soap_tmp_ns__removeUser.userID = userID;
 	soap_serializeheader(soap);
@@ -777,7 +742,9 @@ int BFCPServiceProxy::removeUser(const char *endpoint, const char *soap_action, 
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__removeUserResponse = soap_get_ns__removeUserResponse(soap, NULL, "ns:removeUserResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__removeUserResponse = soap_get_ns__removeUserResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__removeUserResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -798,7 +765,7 @@ int BFCPServiceProxy::addChair(const char *endpoint, const char *soap_action, un
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__addChair.conferenceID = conferenceID;
 	soap_tmp_ns__addChair.floorID = floorID;
 	soap_tmp_ns__addChair.userID = userID;
@@ -834,7 +801,9 @@ int BFCPServiceProxy::addChair(const char *endpoint, const char *soap_action, un
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__addChairResponse = soap_get_ns__addChairResponse(soap, NULL, "ns:addChairResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__addChairResponse = soap_get_ns__addChairResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__addChairResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -855,7 +824,7 @@ int BFCPServiceProxy::removeChair(const char *endpoint, const char *soap_action,
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__removeChair.conferenceID = conferenceID;
 	soap_tmp_ns__removeChair.floorID = floorID;
 	soap_serializeheader(soap);
@@ -890,7 +859,9 @@ int BFCPServiceProxy::removeChair(const char *endpoint, const char *soap_action,
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	soap_tmp_ns__removeChairResponse = soap_get_ns__removeChairResponse(soap, NULL, "ns:removeChairResponse", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	soap_tmp_ns__removeChairResponse = soap_get_ns__removeChairResponse(soap, NULL, "", NULL);
 	if (!soap_tmp_ns__removeChairResponse || soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -910,7 +881,7 @@ int BFCPServiceProxy::getConferenceIDs(const char *endpoint, const char *soap_ac
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_serializeheader(soap);
 	soap_serialize_ns__getConferenceIDs(soap, &soap_tmp_ns__getConferenceIDs);
 	if (soap_begin_count(soap))
@@ -943,7 +914,9 @@ int BFCPServiceProxy::getConferenceIDs(const char *endpoint, const char *soap_ac
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	result->soap_get(soap, "ns:ConferenceListResult", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	result->soap_get(soap, "", NULL);
 	if (soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)
@@ -961,7 +934,7 @@ int BFCPServiceProxy::getConferenceInfo(const char *endpoint, const char *soap_a
 	if (soap_endpoint == NULL)
 		soap_endpoint = "http://localhost:8011";
 	soap_begin(soap);
-	soap->encodingStyle = NULL;
+	soap->encodingStyle = "";
 	soap_tmp_ns__getConferenceInfo.conferenceID = conferenceID;
 	soap_serializeheader(soap);
 	soap_serialize_ns__getConferenceInfo(soap, &soap_tmp_ns__getConferenceInfo);
@@ -995,7 +968,9 @@ int BFCPServiceProxy::getConferenceInfo(const char *endpoint, const char *soap_a
 	 || soap_recv_header(soap)
 	 || soap_body_begin_in(soap))
 		return soap_closesock(soap);
-	result->soap_get(soap, "ns:ConferenceInfoResult", NULL);
+	if (soap_recv_fault(soap, 1))
+		return soap->error;
+	result->soap_get(soap, "", NULL);
 	if (soap->error)
 		return soap_recv_fault(soap, 0);
 	if (soap_body_end_in(soap)

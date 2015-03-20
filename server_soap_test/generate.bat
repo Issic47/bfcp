@@ -1,1 +1,1 @@
-soapcpp2 -i -C -x server.h -I %GSOAP_HOME%/gsoap/import
+soapcpp2 -i -C -wx server.h -I %GSOAP_HOME%/gsoap/import

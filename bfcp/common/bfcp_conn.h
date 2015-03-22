@@ -31,19 +31,21 @@ typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
 namespace detail
 {
 
-typedef struct bfcp_strans_entry
+typedef struct bfcp_msg_entry
 {
   bfcp_prim prim;
   bfcp_entity entity;
-} bfcp_strans_entry;
+} bfcp_msg_entry;
 
-inline bool operator<(const bfcp_strans_entry &lhs, const bfcp_strans_entry &rhs)
+inline bool operator<(const bfcp_msg_entry &lhs, const bfcp_msg_entry &rhs)
 {
   int r = compare(lhs.entity, rhs.entity);
   if (r < 0) return true;
   if (r == 0) return lhs.prim < rhs.prim;
   return false;
 }
+
+typedef bfcp_msg_entry bfcp_strans_entry;
 
 } // namespace detail
 
@@ -167,6 +169,7 @@ private:
 
   typedef MBufWrapper MBufPtr;
   typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
+  typedef std::map<detail::bfcp_msg_entry, BfcpMsg> FragmentBucket;
 
   template <typename Func, typename Arg1>
   void runInLoop(Func requestFunc, const Arg1 &basic);
@@ -189,6 +192,7 @@ private:
   template <typename BuildMsgFunc, typename ExtParam>
   void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg, const ExtParam &extParam);
 
+  bool tryHandleFragmentMessage(const BfcpMsg &msg, BfcpMsg &completedMsg);
   bool tryHandleMessageError(const BfcpMsg &msg);
   bool tryHandleResponse(const BfcpMsg &msg);
   bool tryHandleRequest(const BfcpMsg &msg);
@@ -241,7 +245,9 @@ private:
   NewRequestCallback newRequestCallback_;
 
   boost::circular_buffer<ReplyBucket> cachedReplys_;
-  muduo::net::TimerId replyMsgTimer_;
+  muduo::net::TimerId responseTimer_;
+  
+  boost::circular_buffer<FragmentBucket> cachedFragments_;
   
   uint16_t nextTid_;
   bool timerNeedStop_;

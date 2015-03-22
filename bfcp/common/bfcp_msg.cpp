@@ -1,5 +1,6 @@
 #include <bfcp/common/bfcp_msg.h>
 
+#include <algorithm>
 #include <muduo/base/Logging.h>
 
 using muduo::net::Buffer;
@@ -36,6 +37,8 @@ BfcpMsg::BfcpMsg(muduo::net::Buffer *buf,
 
   if (err_ == 0)
     setSrc(src);
+
+  isComplete_ = !valid() || !msg_->f;
 }
 
 std::list<BfcpAttr> BfcpMsg::getAttributes() const
@@ -103,6 +106,103 @@ string BfcpMsg::toStringInDetail() const
   printFunc.arg = &str;
   bfcp_msg_print(&printFunc, msg_);
   return str;
+}
+
+void BfcpMsg::addFragment( const BfcpMsg &msg )
+{
+  assert(this != &msg);
+  if (!valid() || !canMergeWith(msg))
+  {
+    LOG_WARN << "Cannot merge fragment: " << msg.toString();
+    err_ = EBADMSG;
+    return;
+  }
+
+  if (!fragments_)
+  {
+    fragments_.reset(new FragmentSet());
+    fragments_->emplace(msg_->fragoffset, msg_->fraglen, msg_->fragdata);
+  }
+  
+  fragments_->emplace(
+    msg.msg_->fragoffset, msg.msg_->fraglen, msg.msg_->fragdata);
+
+  if (checkComplete())
+  {
+    mergeFragments();
+  }
+}
+
+bool BfcpMsg::canMergeWith( const BfcpMsg &msg ) const
+{
+  return (isFragment() && msg.isFragment()) &&
+         getEntity() == msg.getEntity() &&
+         primitive() == msg.primitive() &&
+         msg_->len == msg.msg_->len &&
+         isResponse() == msg.isResponse();
+}
+
+bool BfcpMsg::checkComplete()
+{
+  isComplete_ = false;
+  auto it = fragments_->begin();
+  if ((*it).getOffset() != 0)
+  {
+    return false;
+  }
+
+  auto nextIt = ++it;
+  size_t len = (*it).getLen();
+  for (; nextIt != fragments_->end(); ++it, ++nextIt)
+  {
+    size_t offsetEnd = (*it).getOffset() + (*it).getLen();
+    if (offsetEnd < (*nextIt).getOffset())
+    {
+      return false;
+    }
+    else if (offsetEnd > (*nextIt).getOffset())
+    {
+      LOG_WARN << "Received overlap fragment BFCP message: " 
+               << toString();
+      err_ = EBADMSG;
+      return false;
+    }
+    len += (*nextIt).getLen();
+  }
+  if (len == msg_->len)
+  {
+    isComplete_ = true;
+    return true;
+  }
+  else if (len > msg_->len)
+  {
+    LOG_WARN << "Received too large fragment BFCP message: "
+             << toString();
+    err_ = EBADMSG;
+    return false;
+  }
+  return false;
+}
+
+void BfcpMsg::mergeFragments()
+{
+  assert(valid());
+
+  uint8_t buf[65536];
+  mbuf_t mb;
+  mbuf_init(&mb);
+  mb.buf = buf;
+  mb.pos = 0;
+  mb.end = 0;
+  mb.size = sizeof buf;
+
+  for (auto &fragment : *fragments_)
+  {
+    mbuf_t *fragBuf = fragment.getBuf();
+    err_ = mbuf_write_mem(&mb, fragBuf->buf, fragBuf->end);
+    assert(err_ == 0);
+  }
+  err_ = bfcp_attrs_decode(&msg_->attrl, &mb, 4 * msg_->len, &msg_->uma);
 }
 
 } // namespace bfcp

@@ -43,14 +43,16 @@ BfcpConnection::BfcpConnection(EventLoop *loop, const UdpSocketPtr &socket)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
       cachedReplys_(BFCP_T2_SEC),
+      cachedFragments_(BFCP_T2_SEC),
       nextTid_(1)
 {
   LOG_TRACE << "BfcpConnection::BfcpConnection constructing";
   // FIXME: unsafe
-  replyMsgTimer_ = 
+  responseTimer_ = 
     loop_->runEvery(1.0, boost::bind(&BfcpConnection::onTimer, this));
   timerNeedStop_ = true;
   cachedReplys_.resize(BFCP_T2_SEC);
+  cachedFragments_.resize(BFCP_T2_SEC);
 }
 
 BfcpConnection::~BfcpConnection()
@@ -63,7 +65,7 @@ void BfcpConnection::stopCacheTimer()
 {
   if (timerNeedStop_)
   {
-    loop_->cancel(replyMsgTimer_);
+    loop_->cancel(responseTimer_);
     timerNeedStop_ = false;
   }
 }
@@ -72,6 +74,7 @@ void BfcpConnection::onTimer()
 {
   //LOG_TRACE << "BfcpConnection::onTimer deleting cached reply messages";
   cachedReplys_.push_back(ReplyBucket());
+  cachedFragments_.push_back(FragmentBucket());
 }
 
 void BfcpConnection::onMessage(muduo::net::Buffer *buf, 
@@ -90,20 +93,63 @@ void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
 {
   loop_->assertInLoopThread();
 
-  if (tryHandleMessageError(msg))
+  BfcpMsg completedMsg;
+  if (tryHandleFragmentMessage(msg, completedMsg))
     return;
 
-  if (tryHandleResponse(msg))
+  if (tryHandleMessageError(completedMsg))
     return;
 
-  if (tryHandleRequest(msg))
+  if (tryHandleResponse(completedMsg))
+    return;
+
+  if (tryHandleRequest(completedMsg))
     return;
 
   if (newRequestCallback_ && !msg.isResponse())
   {
     LOG_INFO << "Received new BFCP request message";
-    newRequestCallback_(msg);
+    newRequestCallback_(completedMsg);
   }
+}
+
+bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
+                                              BfcpMsg &completedMsg)
+{
+  if (msg.isComplete())
+  {
+    completedMsg = msg;
+    return false;
+  }
+
+  detail::bfcp_msg_entry entry;
+  entry.prim = msg.primitive();
+  entry.entity = msg.getEntity();
+
+  for (auto bucket : cachedFragments_)
+  {
+    auto it = bucket.find(entry);
+    if (it != bucket.end())
+    {
+      BfcpMsg &fragMsg = (*it).second;
+      fragMsg.addFragment(msg);
+      if (!fragMsg.valid())
+      {
+        bucket.erase(it);
+      }
+      else if (fragMsg.isComplete())
+      {
+        completedMsg = fragMsg;
+        bucket.erase(it);
+        return false;
+      }
+      return true;
+    }
+  }
+
+  // this msg is first received fragment
+  cachedFragments_.back().insert(std::make_pair(entry, msg));
+  return true;
 }
 
 bool BfcpConnection::tryHandleMessageError( const BfcpMsg &msg )

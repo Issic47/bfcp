@@ -1,6 +1,7 @@
 #ifndef BFCP_MSG_BUILD_H
 #define BFCP_MSG_BUILD_H
 
+#include <vector>
 #include <bfcp/common/bfcp_ex.h>
 #include <bfcp/common/bfcp_param.h>
 
@@ -50,6 +51,8 @@ int build_msg_FloorRequestStatusAck(mbuf_t *buf, uint8_t version, const bfcp_ent
 int build_msg_FloorStatusAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
 int build_msg_Goodbye(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
 int build_msg_GoodbyeAck(mbuf_t *buf, uint8_t version, const bfcp_entity &entity);
+
+int build_msg_fragments(std::vector<mbuf_t*> &fragBufs, mbuf_t *msgBuf, size_t maxMsgSize);
 
 } // namespace bfcp
 

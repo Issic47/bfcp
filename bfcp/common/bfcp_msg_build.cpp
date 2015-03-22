@@ -1,11 +1,15 @@
 #include <bfcp/common/bfcp_msg_build.h>
 
 #include <cassert>
+#include <algorithm>
 
 namespace bfcp
 {
 namespace detail
 {
+
+const size_t kHeaderSize = 12;
+const size_t kHeaderWithFragSize = 16;
 
 inline int build_attr_BENEFICIARY_ID( mbuf_t *buf, uint16_t bID )
 {
@@ -515,6 +519,73 @@ int build_msg_GoodbyeAck( mbuf_t *buf, uint8_t version, const bfcp_entity &entit
     true, BFCP_GOODBYE_ACK, 
     entity.conferenceID, entity.transactionID, entity.userID, 
     0);
+}
+
+int build_msg_fragments( std::vector<mbuf_t*> &fragBufs, mbuf_t *msgBuf, size_t maxMsgSize )
+{
+  assert(kHeaderWithFragSize < maxMsgSize);
+
+  int err = 0;
+  size_t bufSize = msgBuf->end;
+  if (bufSize < maxMsgSize)
+  {
+    fragBufs.push_back(msgBuf);
+    mem_ref(msgBuf);
+  }
+  else
+  {
+    size_t start = msgBuf->pos;
+
+    size_t payloadSize = bufSize - kHeaderSize;
+    size_t maxFragPayloadSize = (maxMsgSize - kHeaderWithFragSize) & ~0x3;
+    size_t fragmentCount = 
+      (payloadSize + maxFragPayloadSize - 1) / maxFragPayloadSize;
+
+    std::vector<mbuf_t*> bufs;
+    bufs.reserve(fragmentCount);
+    
+    bfcp_hdr_t header;
+    err = bfcp_hdr_decode(&header, msgBuf);
+    assert(!err);
+    assert(!header.f);
+
+    size_t remainPayloadSize = payloadSize;
+    for (size_t i = 0; i < fragmentCount; ++i)
+    {
+      mbuf_t *buf = mbuf_alloc(maxMsgSize);
+      if (!buf)
+      {
+        err = ENOMEM;
+        break;
+      }
+      bufs.push_back(buf);
+
+      header.f = 1;
+      header.fragoffset = i * maxFragPayloadSize / 4;
+      size_t actualPayloadSize = (std::min)(maxFragPayloadSize, remainPayloadSize);
+      header.fraglen = actualPayloadSize / 4;
+      remainPayloadSize -= actualPayloadSize;
+      err = bfcp_hdr_encode(buf, &header);
+      if (err) break;
+
+      mbuf_write_mem(buf, msgBuf->buf + msgBuf->pos, actualPayloadSize);
+      msgBuf->pos += actualPayloadSize;
+    }
+    if (err)
+    {
+      for (auto buf : bufs)
+      {
+        mem_deref(buf);
+      }
+    }
+    else
+    {
+      assert(msgBuf->pos == msgBuf->end);
+      msgBuf->pos = start;
+      fragBufs.insert(fragBufs.end(), bufs.begin(), bufs.end());
+    }
+  }
+  return err;
 }
 
 } // namespace bfcp

@@ -74,6 +74,11 @@ void BfcpConnection::onTimer()
 {
   //LOG_TRACE << "BfcpConnection::onTimer deleting cached reply messages";
   cachedReplys_.push_back(ReplyBucket());
+  
+  if (!cachedFragments_.front().empty())
+  {
+    LOG_WARN << "Some cached fragments was cleared";
+  }
   cachedFragments_.push_back(FragmentBucket());
 }
 
@@ -84,8 +89,6 @@ void BfcpConnection::onMessage(muduo::net::Buffer *buf,
   BfcpMsg msg(buf, src, receivedTime);
   LOG_INFO << "Received BFCP message" << msg.toString() 
            << " from " << src.toIpPort();
-  LOG_TRACE << "BFCP message in detail: \n"
-            << msg.toStringInDetail();
   runInLoop(&BfcpConnection::onMessageInLoop, msg);
 }
 
@@ -96,6 +99,9 @@ void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
   BfcpMsg completedMsg;
   if (tryHandleFragmentMessage(msg, completedMsg))
     return;
+
+  LOG_TRACE << "BFCP message in detail: \n"
+            << msg.toStringInDetail();
 
   if (tryHandleMessageError(completedMsg))
     return;
@@ -139,6 +145,7 @@ bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
       }
       else if (fragMsg.isComplete())
       {
+        LOG_TRACE << "Complete fragment";
         completedMsg = fragMsg;
         bucket.erase(it);
         return false;
@@ -194,7 +201,10 @@ bool BfcpConnection::tryHandleRequest(const BfcpMsg &msg)
     if (it != bucket.end())
     {
       LOG_INFO << "Reply BFCP message" << msg.toString() << " with cached reply";
-      socket_->send(msg.getSrc(), (*it).second->buf, static_cast<int>((*it).second->end));
+      for (auto &buf : (*it).second)
+      {
+        socket_->send(msg.getSrc(), buf->buf, static_cast<int>(buf->end));
+      }
       return true;
     }
   }
@@ -360,8 +370,15 @@ void BfcpConnection::startNewClientTransaction(const muduo::net::InetAddress &ds
                                                const ResponseCallback &cb)
 {
   LOG_INFO << "Start new client transaction " << toString(entity);
+
+  msgBuf->pos = 0;
+  std::vector<mbuf_t*> fragBufs;
+  int err = build_msg_fragments(fragBufs, msgBuf, MAX_MSG_SIZE);
+  // FIXME: check error
+  (void)(err);
+
   ClientTransactionPtr ctran = 
-    boost::make_shared<ClientTransaction>(loop_, socket_, dst, entity, msgBuf);
+    boost::make_shared<ClientTransaction>(loop_, socket_, dst, entity, fragBufs);
 
   ctran->setReponseCallback(cb);
   ctran->setRequestTimeoutCallback(
@@ -498,11 +515,32 @@ void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &ds
                                                mbuf_t *msgBuf)
 {
   LOG_INFO << "Start new server transaction to " << toString(entity, primitive);
+  
+  msgBuf->pos = 0;
+  std::vector<mbuf_t*> fragBufs;
+  int err = build_msg_fragments(fragBufs, msgBuf, 30);
+  // FIXME: check error
+  (void)(err);
+  
+  MBufList bufs;
+  bufs.reserve(fragBufs.size());
+  bufs.assign(fragBufs.begin(), fragBufs.end());
+  
+  for (auto buf : fragBufs)
+  {
+    mem_deref(buf);
+  }
+  fragBufs.clear();
+
   detail::bfcp_strans_entry entry;
   entry.entity = entity;
   entry.prim = primitive;
-  cachedReplys_.back().insert(std::make_pair(entry, MBufPtr(msgBuf)));
-  socket_->send(dst, msgBuf->buf, static_cast<int>(msgBuf->end));
+  cachedReplys_.back().insert(std::make_pair(entry, bufs));
+
+  for (auto &buf : bufs)
+  {
+    socket_->send(dst, buf->buf, static_cast<int>(buf->end));
+  }
 }
 
 } // namespace bfcp

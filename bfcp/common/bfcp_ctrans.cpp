@@ -30,36 +30,49 @@ void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
   }
 }
 
-ClientTransaction::ClientTransaction(EventLoop *loop,
-                                     const UdpSocketPtr &socket, 
+ClientTransaction::ClientTransaction(muduo::net::EventLoop *loop, 
+                                     const muduo::net::UdpSocketPtr &socket, 
                                      const muduo::net::InetAddress &dst, 
-                                     const bfcp_entity &entity,
-                                     mbuf_t *msgBuf)
+                                     const bfcp_entity &entity, 
+                                     std::vector<mbuf_t*> &msgBufs)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
-      msgBuf_(CHECK_NOTNULL(msgBuf)), 
       entity_(entity),
       dst_(dst), 
       responseCallback_(defaultResponseCallback),
       txc_(1)
 {
-  mem_ref(msgBuf);
+  assert(!msgBufs.empty());
+  bufs_.swap(msgBufs);
 }
 
 ClientTransaction::~ClientTransaction()
 {
-  mem_deref(msgBuf_);
+  for (auto buf : bufs_)
+  {
+    mem_deref(buf);
+  }
+  bufs_.clear();
 }
 
 void ClientTransaction::start()
 {
-  UdpSocketPtr socket = socket_.lock();
-  assert(socket);
-  socket->send(dst_, msgBuf_->buf, static_cast<int>(msgBuf_->end));
+  sendBufs();
 
   txc_ = 1;
   timer1_ = loop_->runAfter(
     BFCP_T1 / 1000.0, boost::bind(&ClientTransaction::onSendTimeout, shared_from_this()));
+}
+
+void ClientTransaction::sendBufs()
+{
+  UdpSocketPtr socket = socket_.lock();
+  assert(socket);
+
+  for (auto &buf : bufs_)
+  {
+    socket->send(dst_, buf->buf, static_cast<int>(buf->end));
+  }
 }
 
 void ClientTransaction::onSendTimeout()
@@ -85,7 +98,7 @@ void ClientTransaction::onSendTimeout()
   }
   else
   {
-    socket->send(dst_, msgBuf_->buf, static_cast<int>(msgBuf_->end));
+    sendBufs();
     timer1_ = loop_->runAfter(
       delay, boost::bind(&ClientTransaction::onSendTimeout, this));
   }

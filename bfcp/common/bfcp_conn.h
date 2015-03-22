@@ -166,9 +166,11 @@ public:
 private:
   static const int BFCP_T2_SEC = 10;
   static const int BFCP_MBUF_SIZE = 65536;
+  static const size_t MAX_MSG_SIZE = 1472;
 
   typedef MBufWrapper MBufPtr;
-  typedef std::map<detail::bfcp_strans_entry, MBufPtr> ReplyBucket;
+  typedef std::vector<MBufPtr> MBufList;
+  typedef std::map<detail::bfcp_strans_entry, MBufList> ReplyBucket;
   typedef std::map<detail::bfcp_msg_entry, BfcpMsg> FragmentBucket;
 
   template <typename Func, typename Arg1>

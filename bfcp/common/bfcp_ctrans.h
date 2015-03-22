@@ -1,6 +1,8 @@
 #ifndef BFCP_CTRANS_H
 #define BFCP_CTRANS_H
 
+#include <vector>
+
 #include <boost/noncopyable.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
@@ -33,7 +35,7 @@ public:
                     const muduo::net::UdpSocketPtr &socket,
                     const muduo::net::InetAddress &dst, 
                     const bfcp_entity &entity,
-                    mbuf_t *msgBuf);
+                    std::vector<mbuf_t*> &msgBufs);
 
   ~ClientTransaction();
 
@@ -58,10 +60,11 @@ public:
 
 private:
   void onSendTimeout();
+  void sendBufs();
 
   muduo::net::EventLoop *loop_;
   boost::weak_ptr<muduo::net::UdpSocket> socket_;
-  mbuf_t *msgBuf_;
+  std::vector<mbuf_t*> bufs_;
   bfcp_entity entity_;
   muduo::net::InetAddress dst_;
   ResponseCallback responseCallback_;

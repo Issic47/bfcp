@@ -2,7 +2,8 @@
 #define BFCP_MSG_H
 
 #include <set>
-#include <boost/scoped_ptr.hpp>
+
+#include <boost/shared_ptr.hpp>
 
 #include <muduo/net/Buffer.h>
 #include <muduo/net/InetAddress.h>
@@ -76,6 +77,7 @@ public:
    : msg_(other.msg_), 
      err_(other.err_),
      receivedTime_(other.receivedTime_),
+     fragments_(other.fragments_),
      isComplete_(other.isComplete_)
   {
     mem_ref(other.msg_);
@@ -163,7 +165,7 @@ private:
   int err_;
   muduo::Timestamp receivedTime_;
  
-  boost::scoped_ptr<FragmentSet> fragments_;
+  boost::shared_ptr<FragmentSet> fragments_;
   bool isComplete_;
 };
 

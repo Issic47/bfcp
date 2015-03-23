@@ -72,7 +72,6 @@ void BfcpConnection::stopCacheTimer()
 
 void BfcpConnection::onTimer()
 {
-  //LOG_TRACE << "BfcpConnection::onTimer deleting cached reply messages";
   cachedReplys_.push_back(ReplyBucket());
   
   if (!cachedFragments_.front().empty())
@@ -100,8 +99,8 @@ void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
   if (tryHandleFragmentMessage(msg, completedMsg))
     return;
 
-  LOG_TRACE << "BFCP message in detail: \n"
-            << msg.toStringInDetail();
+  LOG_INFO << "Received complete BFCP message in detail: \n" 
+           << completedMsg.toStringInDetail();
 
   if (tryHandleMessageError(completedMsg))
     return;
@@ -132,7 +131,7 @@ bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
   entry.prim = msg.primitive();
   entry.entity = msg.getEntity();
 
-  for (auto bucket : cachedFragments_)
+  for (auto &bucket : cachedFragments_)
   {
     auto it = bucket.find(entry);
     if (it != bucket.end())
@@ -141,11 +140,12 @@ bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
       fragMsg.addFragment(msg);
       if (!fragMsg.valid())
       {
+        LOG_WARN << "Invalid fragments: " << fragMsg.toString();
         bucket.erase(it);
       }
       else if (fragMsg.isComplete())
       {
-        LOG_TRACE << "Complete fragment";
+        LOG_DEBUG << "Complete fragments: " << fragMsg.toString();
         completedMsg = fragMsg;
         bucket.erase(it);
         return false;
@@ -155,6 +155,7 @@ bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
   }
 
   // this msg is first received fragment
+  LOG_DEBUG << "Insert new fragments: " << msg.toString();
   cachedFragments_.back().insert(std::make_pair(entry, msg));
   return true;
 }
@@ -518,7 +519,7 @@ void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &ds
   
   msgBuf->pos = 0;
   std::vector<mbuf_t*> fragBufs;
-  int err = build_msg_fragments(fragBufs, msgBuf, 30);
+  int err = build_msg_fragments(fragBufs, msgBuf, MAX_MSG_SIZE);
   // FIXME: check error
   (void)(err);
   

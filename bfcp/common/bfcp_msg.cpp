@@ -39,6 +39,11 @@ BfcpMsg::BfcpMsg(muduo::net::Buffer *buf,
     setSrc(src);
 
   isComplete_ = !valid() || !msg_->f;
+  if (valid() && msg_->f)
+  {
+    fragments_.reset(new FragmentSet());
+    fragments_->emplace(msg_->fragoffset, msg_->fraglen, msg_->fragdata);
+  }
 }
 
 std::list<BfcpAttr> BfcpMsg::getAttributes() const
@@ -117,12 +122,6 @@ void BfcpMsg::addFragment( const BfcpMsg &msg )
     err_ = EBADMSG;
     return;
   }
-
-  if (!fragments_)
-  {
-    fragments_.reset(new FragmentSet());
-    fragments_->emplace(msg_->fragoffset, msg_->fraglen, msg_->fragdata);
-  }
   
   fragments_->emplace(
     msg.msg_->fragoffset, msg.msg_->fraglen, msg.msg_->fragdata);
@@ -164,8 +163,7 @@ bool BfcpMsg::checkComplete()
     }
     else if (offsetEnd > (*nextIt).getOffset())
     {
-      LOG_WARN << "Received overlap fragment BFCP message: " 
-               << toString();
+      LOG_WARN << "Received overlap fragments: " << toString();
       err_ = EBADMSG;
       return false;
     }
@@ -178,8 +176,7 @@ bool BfcpMsg::checkComplete()
   }
   else if (len > msg_->len)
   {
-    LOG_WARN << "Received too large fragment BFCP message: "
-             << toString();
+    LOG_WARN << "Received too large fragments: " << toString();
     err_ = EBADMSG;
     return false;
   }
@@ -204,7 +201,9 @@ void BfcpMsg::mergeFragments()
     err_ = mbuf_write_mem(&mb, fragBuf->buf, fragBuf->end);
     assert(err_ == 0);
   }
+  mb.pos = 0;
   err_ = bfcp_attrs_decode(&msg_->attrl, &mb, 4 * msg_->len, &msg_->uma);
+  fragments_->clear();
 }
 
 } // namespace bfcp

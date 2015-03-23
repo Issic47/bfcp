@@ -1535,7 +1535,7 @@ void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
   {
     floorRequest = findFloorRequest(accepted_, floorRequestID);
   }
-  if (!floorRequestID)
+  if (!floorRequest)
   {
     floorRequest = findFloorRequest(granted_, floorRequestID);
   }

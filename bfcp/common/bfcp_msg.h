@@ -60,7 +60,7 @@ private:
   mbuf_t *buf_;
 };
 
-class BfcpMsg : public muduo::copyable
+class BfcpMsg : public muduo::copyable // FIXME: BfcpMsg should be noncopyable
 {
 public:
   BfcpMsg() 
@@ -130,13 +130,14 @@ public:
 
   BfcpMsg& operator=(const BfcpMsg &other)
   {
-    if (msg_ != other.msg_)
-    {
-      mem_deref(msg_);
-      msg_ = other.msg_;
-      mem_ref(other.msg_);
-    }
+    mem_ref(other.msg_);
+    mem_deref(msg_);
+    msg_ = other.msg_;
     err_ = other.err_;
+    receivedTime_ = other.receivedTime_;
+    fragments_ = other.fragments_;
+    isComplete_ = other.isComplete_;
+
     return *this;
   }
 

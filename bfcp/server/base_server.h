@@ -139,6 +139,10 @@ private:
     uint32_t conferenceID,
     uint16_t floorRequestID);
 
+  void onHoldingFloorsTimeout(
+    uint32_t conferenceID,
+    uint16_t floorRequestID);
+
   void addConferenceInLoop(
     uint32_t conferenceID, 
     uint16_t maxFloorRequest,

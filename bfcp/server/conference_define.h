@@ -33,7 +33,8 @@ struct ConferenceConfig
 
 struct FloorConfig
 {
-  uint16_t maxGrantedNum;
+  uint16_t maxGrantedNum; // when == 0, unlimited granted num
+  double maxHoldingTime;  // when < 0.0, unlimited holding time
 };
 
 const char* toString(AcceptPolicy policy);

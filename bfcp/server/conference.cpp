@@ -154,7 +154,8 @@ Conference::~Conference()
 
 bfcp::ControlError Conference::set(const ConferenceConfig &config)
 {
-  LOG_TRACE << "{config: {maxFloorRequest: " << config.maxFloorRequest
+  LOG_TRACE << "{conferencID:" << conferenceID_
+            << ", config: {maxFloorRequest: " << config.maxFloorRequest
             << ", acceptPolicy: " << toString(config.acceptPolicy)
             << ", timeForChairAction: " << config.timeForChairAction << "}}";
   maxFloorRequest_ = config.maxFloorRequest;
@@ -182,9 +183,10 @@ ControlError Conference::setMaxFloorRequest( uint16_t maxFloorRequest )
 ControlError Conference::modifyFloor(
   uint16_t floorID, const FloorConfig &config)
 {
-  LOG_TRACE << "Set max floor granted " << config.maxGrantedNum 
-            << " of Floor " << floorID 
-            << " in Conference " << conferenceID_;
+  LOG_TRACE << "{conferencID:" << conferenceID_ 
+            << ", floorID:" << floorID
+            << ", config:{maxGrantedNum:" << config.maxGrantedNum 
+            << ", maxHoldingTime:" << config.maxHoldingTime << "}}";
   auto floor = findFloor(floorID);
   if (!floor)
   {
@@ -193,6 +195,7 @@ ControlError Conference::modifyFloor(
     return ControlError::kFloorNotExist;
   }
   floor->setMaxGrantedCount(config.maxGrantedNum);
+  floor->setMaxHoldingTime(config.maxHoldingTime);
   return ControlError::kNoError;
 }
 
@@ -286,7 +289,7 @@ void Conference::cancelFloorRequestsFromPendingByUserID(uint16_t userID)
       LOG_INFO << "Cancel FloorRequest " << floorRequest->getFloorRequestID()
                << " from Pending Queue in Conference " << conferenceID_;
       it = pending_.erase(it);
-      loop_->cancel(floorRequest->getTimerForChairAction());
+      loop_->cancel(floorRequest->getExpiredTimer()); // cancel the chair action timer
       floorRequest->setOverallStatus(BFCP_CANCELLED);
       floorRequest->removeQueryUser(userID);
       revokeFloorsFromFloorRequest(floorRequest);
@@ -334,6 +337,7 @@ void Conference::releaseFloorRequestsFromGrantedByUserID( uint16_t userID )
       LOG_INFO << "Release FloorRequest " << floorRequest->getFloorRequestID()
                << " from Granted Queue in Conference " << conferenceID_;
       it = granted_.erase(it);
+      loop_->cancel(floorRequest->getExpiredTimer()); // cancel the holding timer
       floorRequest->setOverallStatus(BFCP_RELEASED);
       floorRequest->removeQueryUser(userID);
       revokeFloorsFromFloorRequest(floorRequest);
@@ -354,7 +358,7 @@ ControlError Conference::addFloor(uint16_t floorID, const FloorConfig &config)
     auto res = floors_.emplace_hint(
       lb, 
       floorID, 
-      boost::make_shared<Floor>(floorID, config.maxGrantedNum));
+      boost::make_shared<Floor>(floorID, config.maxGrantedNum, config.maxHoldingTime));
     // FIXME: check if insert success
     (void)(res);
   }
@@ -397,7 +401,7 @@ void Conference::cancelFloorRequestsFromPendingByFloorID(uint16_t floorID)
       LOG_INFO << "Cancel FloorRequest " << (*it)->getFloorRequestID()
                << " from Pending Queue in Conference " << conferenceID_;
       auto floorRequest = *it;
-      loop_->cancel(floorRequest->getTimerForChairAction());
+      loop_->cancel(floorRequest->getExpiredTimer()); // cancel the chair action timer
       floorRequest->setOverallStatus(BFCP_CANCELLED);
       it = pending_.erase(it);
       revokeFloorsFromFloorRequest(floorRequest);
@@ -558,7 +562,7 @@ bool Conference::tryToAcceptFloorRequestsWithFloor(FloorPtr &floor)
       {
         // remove the floor request from pending queue
         it = pending_.erase(it);
-        loop_->cancel(floorRequest->getTimerForChairAction());
+        loop_->cancel(floorRequest->getExpiredTimer()); // cancel the chair action timer
         insertFloorRequestToAcceptedQueue(floorRequest);
         continue;
       }
@@ -604,6 +608,25 @@ void Conference::insertFloorRequestToGrantedQueue(
   floorRequest->setPrioriy(BFCP_PRIO_LOWEST);
   insertFloorRequestToQueue(granted_, floorRequest);
   notifyFloorAndRequestInfo(floorRequest);
+
+  // set holding timer
+  double minHoldingTime = -1.0;
+  for (auto &floorNode : floorRequest->getFloorNodeList())
+  {
+    auto floor = findFloor(floorNode.getFloorID());
+    assert(floor);
+    if (floor->getMaxHoldingTime() > 0.0) 
+    {
+      double holdingTime = floor->getMaxHoldingTime();
+      minHoldingTime = minHoldingTime < 0.0 ? 
+        holdingTime : (std::min)(minHoldingTime, holdingTime); 
+    }
+  }
+  if (minHoldingTime > 0.0)
+  {
+    setFloorRequestExpired(
+      floorRequest, minHoldingTime, holdingTimeoutCallback_);
+  }
 }
 
 void Conference::insertFloorRequestToQueue(
@@ -648,6 +671,28 @@ void Conference::updateQueuePosition( FloorRequestQueue &queue )
   {
     (*it)->setQueuePosition(qpos++);
   }
+}
+
+void Conference::onTimeoutForHoldingFloors( uint16_t floorRequestID )
+{
+  LOG_TRACE << "FloorRequest " << floorRequestID 
+            << " is expired in Conference " << conferenceID_;
+  auto floorRequest = findFloorRequest(granted_, floorRequestID);
+  if (!floorRequest) return;
+
+  for (auto &floorNode : floorRequest->getFloorNodeList())
+  {
+    floorNode.setStatus(BFCP_REVOKED);
+  }
+  LOG_INFO << "Revoke FloorRequest " << floorRequestID
+           << " from Granted Queue in Conference " << conferenceID_;
+  granted_.remove(floorRequest);
+  revokeFloorsFromFloorRequest(floorRequest);
+
+  floorRequest->setStatusInfo("Timeout for holding floor(s).");
+  floorRequest->setOverallStatus(BFCP_REVOKED);
+  notifyFloorAndRequestInfo(floorRequest);
+  tryToGrantFloorRequestsWithAllFloors();
 }
 
 bool Conference::tryToGrantFloorRequestsWithAllFloors()
@@ -972,6 +1017,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
   newFloorRequest->addQueryUser(msg.getUserID());
 
   // handle chair part
+  bool needChairAction = false;
   for (auto &floorNode : newFloorRequest->getFloorNodeList())
   {
     auto floor = findFloor(floorNode.getFloorID());
@@ -986,14 +1032,15 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
       uint16_t chairID = floor->getChairID();
       assert(findUser(chairID));
       (void)(chairID);
-      // start timer for chair action
-      assert(chairActionTimeoutCallback_);
-      uint16_t floorRequestID = newFloorRequest->getFloorRequestID();
-      muduo::net::TimerId timerId = loop_->runAfter(
-        timeForChairAction_, 
-        boost::bind(chairActionTimeoutCallback_, conferenceID_, floorRequestID));
-      newFloorRequest->setTimerForChairAction(timerId);
+      needChairAction = true;
     }
+  }
+
+  if (needChairAction) 
+  {
+    // start timer for chair action
+    setFloorRequestExpired(
+      newFloorRequest, timeForChairAction_, chairActionTimeoutCallback_);
   }
 
   // check if the floor request is accepted
@@ -1088,6 +1135,18 @@ void Conference::replyWithFloorRequestStatus(
   connection_->replyWithFloorRequestStatus(msg, param);
 }
 
+void Conference::setFloorRequestExpired(FloorRequestNodePtr &floorRequest,
+                                        double expiredTime, 
+                                        const FloorRequestExpiredCallback &cb)
+{
+  assert(cb);
+  uint16_t floorRequestID = floorRequest->getFloorRequestID();
+  muduo::net::TimerId timerId = loop_->runAfter(
+    expiredTime, 
+    boost::bind(cb, conferenceID_, floorRequestID));
+  floorRequest->setExpiredTimer(timerId);
+}
+
 bool Conference::tryToGrantFloorRequestWithAllFloors(
   FloorRequestNodePtr &floorRequest)
 {
@@ -1120,7 +1179,7 @@ bool Conference::tryToGrantFloorRequestWithAllFloors(
 void Conference::onTimeoutForChairAction( uint16_t floorRequestID )
 {
   LOG_TRACE << "FloorRequest " << floorRequestID 
-            << " is timeout in Conference " << conferenceID_;
+            << " is expired in Conference " << conferenceID_;
   auto floorRequest = findFloorRequest(pending_, floorRequestID);
   if (!floorRequest) return;
 
@@ -1192,7 +1251,8 @@ FloorRequestNodePtr Conference::removeFloorRequest(
     LOG_INFO << "Cancel FloorRequest " << floorRequestID 
              << " from Pending Queue in Conference " << conferenceID_;
     floorRequest->setOverallStatus(BFCP_CANCELLED);
-    loop_->cancel(floorRequest->getTimerForChairAction());
+    // cancel the chair action timer
+    loop_->cancel(floorRequest->getExpiredTimer());
     return floorRequest;
   }
 
@@ -1217,6 +1277,8 @@ FloorRequestNodePtr Conference::removeFloorRequest(
     LOG_INFO << "Release FloorRequest " << floorRequestID 
              << " from Granted Queue in Conference " << conferenceID_;
     floorRequest->setOverallStatus(BFCP_RELEASED);
+    // cancel the holding timer
+    loop_->cancel(floorRequest->getExpiredTimer());
     return floorRequest;
   }
 
@@ -1385,7 +1447,8 @@ void Conference::acceptFloorRequest(
   if (floorRequest->isAllFloorStatus(BFCP_ACCEPTED))
   {
     pending_.remove(floorRequest);
-    loop_->cancel(floorRequest->getTimerForChairAction());
+    // cancel the chair action timer
+    loop_->cancel(floorRequest->getExpiredTimer());
     insertFloorRequestToAcceptedQueue(floorRequest);
     tryToGrantFloorRequestWithAllFloors(floorRequest);
   }
@@ -1406,7 +1469,8 @@ void Conference::denyFloorRequest(
   // reply chair action ack
   connection_->replyWithChairActionAck(msg);
 
-  loop_->cancel(floorRequest->getTimerForChairAction());
+  // cancel the chair action timer
+  loop_->cancel(floorRequest->getExpiredTimer());
   pending_.remove(floorRequest);
   revokeFloorsFromFloorRequest(floorRequest);
   

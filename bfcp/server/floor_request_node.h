@@ -95,10 +95,10 @@ public:
 
   FloorRequestInfoParam toFloorRequestInfoParam(const UserDict &users) const;
 
-  void setTimerForChairAction(const muduo::net::TimerId &timerId)
-  { timerForChairAction_ = timerId; }
-  const muduo::net::TimerId& getTimerForChairAction() const 
-  { return timerForChairAction_; }
+  void setExpiredTimer(const muduo::net::TimerId &timerId) 
+  { expiredTimer_ = timerId; }
+  const muduo::net::TimerId& getExpiredTimer() const
+  { return expiredTimer_; }
 
 private:
   void setFloors(const bfcp_floor_id_list &floorIDs);
@@ -114,7 +114,7 @@ private:
   string statusInfo_;
   QueryUserSet queryUsers_;
   FloorNodeList floors_;
-  muduo::net::TimerId timerForChairAction_;
+  muduo::net::TimerId expiredTimer_; // for chair action or holding timeout
 };
 
 typedef boost::shared_ptr<FloorRequestNode> FloorRequestNodePtr;

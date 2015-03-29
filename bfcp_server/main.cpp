@@ -82,12 +82,12 @@ void printMenu()
     " i      - Insert a new conference\n"
     " d      - Delete a conference\n"
     " a      - Add a new floor\n"
+    " w      - Modify a floor\n"
     " f      - Delete a floor\n"
     " r      - Add a floor chair\n"
     " g      - Delete a floor chair\n"
     " j      - Add a new user\n"
     " k      - Delete a user\n"
-    " w      - Change number of users that can be granted the same floor at the same time\n"
     " b      - Change the chair policy\n"
     " m      - modify the conference\n"
     " s      - Show the conferences in the BFCP server\n"
@@ -182,7 +182,24 @@ void controlFunc(BaseServer *server)
         bfcp::FloorConfig config;
         printf("Enter the maximum number of users that can be granted this floor at the same time\n\t(0 for unlimited users):\n");
         CHECK_CIN_RESULT(std::cin >> config.maxGrantedNum);
+        printf("Enter the maximum holding time\n\t(< 0 for unlimited time):\n");
+        CHECK_CIN_RESULT(std::cin >> config.maxHoldingTime);
         server->addFloor(conferenceID, floorID, config, &handleCallResult);
+      } break;
+    case 'w':
+      {
+        printf("Enter the conference you want to modify the floor in:\n");
+        uint32_t conferenceID = 0;
+        CHECK_CIN_RESULT(std::cin >> conferenceID);
+        printf("Enter the desired FloorID:\n");
+        uint16_t floorID = 0;
+        CHECK_CIN_RESULT(std::cin >> floorID);
+        bfcp::FloorConfig config;
+        printf("Enter the maximum number of users that can be granted this floor at the same time\n\t(0 for unlimited users):\n");
+        CHECK_CIN_RESULT(std::cin >> config.maxGrantedNum);
+        printf("Enter the maximum holding time\n\t(< 0 for unlimited time):\n");
+        CHECK_CIN_RESULT(std::cin >> config.maxHoldingTime);
+        server->modifyFloor(conferenceID, floorID, config, &handleCallResult);
       } break;
     case 'f':
       {

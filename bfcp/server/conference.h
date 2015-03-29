@@ -39,7 +39,7 @@ class Conference
 public:
   typedef boost::function<
     void (uint32_t, uint16_t)
-  > ChairActionTimeoutCallback;
+  > FloorRequestExpiredCallback;
   
   typedef boost::function<
     void (uint32_t, bfcp_prim, uint16_t, ResponseError, const BfcpMsg&)
@@ -76,10 +76,16 @@ public:
   string getConferenceInfo() const;
   
   // onTimeoutForChairAction should be called in cb.
-  void setChairActionTimeoutCallback(const ChairActionTimeoutCallback &cb)
+  void setChairActionTimeoutCallback(const FloorRequestExpiredCallback &cb)
   { chairActionTimeoutCallback_ = cb; }
-  void setChairActionTimeoutCallback(ChairActionTimeoutCallback &&cb)
+  void setChairActionTimeoutCallback(FloorRequestExpiredCallback &&cb)
   { chairActionTimeoutCallback_ = std::move(cb); }
+
+  // onTimeoutForHoldingFloors should be called in cb.
+  void setHoldingTimeoutCallback(const FloorRequestExpiredCallback &cb)
+  { holdingTimeoutCallback_ = cb; }
+  void setHoldingTimeoutCallback(FloorRequestExpiredCallback &&cb)
+  { holdingTimeoutCallback_ = std::move(cb); }
 
   // onResponse should be callback in cb.
   void setClientReponseCallback(const ClientResponseCallback &cb)
@@ -94,6 +100,7 @@ public:
     ResponseError err, 
     const BfcpMsg &msg);
   void onTimeoutForChairAction(uint16_t floorRequestID);
+  void onTimeoutForHoldingFloors(uint16_t floorRequestID);
 
 private:
   typedef std::list<FloorRequestNodePtr> FloorRequestQueue;
@@ -194,10 +201,6 @@ private:
     uint16_t floorID,
     const FloorRequestQueue &queue) const;
 
-private:
-  typedef boost::function<void (const BfcpMsg&)> Handler;
-  typedef std::unordered_map<int, Handler> HandlerDict;
-
   void addUserInfoToXMLNode(
     tinyxml2::XMLDocument *doc,
     tinyxml2::XMLNode *node) const;
@@ -219,6 +222,15 @@ private:
 
   bool isUserAvailable(const UserPtr &user) const;
 
+  void setFloorRequestExpired(
+    FloorRequestNodePtr &floorRequest, 
+    double expiredTime,
+    const FloorRequestExpiredCallback &cb);
+
+private:
+  typedef boost::function<void (const BfcpMsg&)> Handler;
+  typedef std::unordered_map<int, Handler> HandlerDict;
+
   muduo::net::EventLoop *loop_;
   BfcpConnectionPtr connection_;
   uint32_t conferenceID_;
@@ -235,7 +247,8 @@ private:
   std::map<uint16_t, FloorPtr> floors_;
   HandlerDict requestHandler_;
 
-  ChairActionTimeoutCallback chairActionTimeoutCallback_;
+  FloorRequestExpiredCallback chairActionTimeoutCallback_;
+  FloorRequestExpiredCallback holdingTimeoutCallback_;
   ClientResponseCallback clientReponseCallback_;
 
   double userObsoletedTime_;

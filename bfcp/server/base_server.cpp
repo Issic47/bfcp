@@ -155,6 +155,8 @@ void BaseServer::addConferenceInLoop(uint32_t conferenceID,
 
     newConference->setChairActionTimeoutCallback(
       boost::bind(&BaseServer::onChairActionTimeout, this, _1, _2));
+    newConference->setHoldingTimeoutCallback(
+      boost::bind(&BaseServer::onHoldingFloorsTimeout, this, _1, _2));
     newConference->setClientReponseCallback(
       boost::bind(&BaseServer::onResponse, this, _1, _2, _3, _4, _5));
     conferenceMap_.insert(lb, std::make_pair(conferenceID, newConference));
@@ -547,7 +549,8 @@ void BaseServer::onResponse(uint32_t conferenceID,
 void BaseServer::onChairActionTimeout(uint32_t conferenceID, 
                                       uint16_t floorRequestID)
 {
-  LOG_TRACE << "BfcpServer received response";
+  LOG_TRACE << "Chair action timeout with {conferenceID:" << conferenceID
+            << ", floorRequestID:" << floorRequestID << "}";
   connectionLoop_->assertInLoopThread();
   auto it = conferenceMap_.find(conferenceID);
   if (it == conferenceMap_.end()) // conference not found
@@ -561,6 +564,29 @@ void BaseServer::onChairActionTimeout(uint32_t conferenceID,
       boost::bind(&Conference::onTimeoutForChairAction, 
         (*it).second, floorRequestID),
       ThreadPool::kNormalPriority);
+    (void)(res);
+    assert(res == 0);
+  }
+}
+
+void BaseServer::onHoldingFloorsTimeout(uint32_t conferenceID, 
+                                        uint16_t floorRequestID)
+{
+  LOG_TRACE << "Holding Floor(s) timeout with {conferenceID:" << conferenceID
+            << ", floorRequestID:" << floorRequestID << "}";
+  connectionLoop_->assertInLoopThread();
+  auto it = conferenceMap_.find(conferenceID);
+  if (it == conferenceMap_.end()) // conference not found
+  {
+    LOG_ERROR << "Conference " << conferenceID << " not found";
+  }
+  else
+  {
+    int res = threadPool_->run(
+      conferenceID,
+      boost::bind(&Conference::onTimeoutForHoldingFloors, 
+        (*it).second, floorRequestID),
+      ThreadPool::kHighPriority);
     (void)(res);
     assert(res == 0);
   }

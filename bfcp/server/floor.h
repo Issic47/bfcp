@@ -15,11 +15,12 @@ class Floor : boost::noncopyable
 public:
   typedef std::set<uint16_t> QueryUserSet;
 
-  Floor(uint16_t floorID, uint16_t maxGrantedCount)
+  Floor(uint16_t floorID, uint16_t maxGrantedCount, double maxHoldingTime)
       : floorID_(floorID), 
         maxGrantedCount_(maxGrantedCount),
         currentGrantedCount_(0),
         chairID_(0),
+        maxHoldingTime_(maxHoldingTime),
         isAssigned_(false)
   {}
 
@@ -44,8 +45,15 @@ public:
   { maxGrantedCount_ = maxGrantedCount; }
   uint16_t getMaxGrantedCount() const { return maxGrantedCount_; }
 
+  void setMaxHoldingTime(double maxHoldingTime)
+  { maxHoldingTime_ = maxHoldingTime; }
+  double getMaxHoldingTime() const { return maxHoldingTime_; }
+
   uint16_t getGrantedCount() const { return currentGrantedCount_; }
-  bool isFreeToGrant() const { return currentGrantedCount_ < maxGrantedCount_; }
+  bool isFreeToGrant() const 
+  { 
+    return maxGrantedCount_ == 0 || currentGrantedCount_ < maxGrantedCount_;
+  }
   bool tryToGrant();
   void revoke();
 
@@ -55,6 +63,7 @@ private:
   uint16_t maxGrantedCount_;
   uint16_t currentGrantedCount_;
   uint16_t chairID_;
+  double maxHoldingTime_;
   bool isAssigned_;
 };
 
@@ -62,7 +71,8 @@ typedef boost::shared_ptr<Floor> FloorPtr;
 
 inline bool Floor::tryToGrant()
 {
-  if (currentGrantedCount_ + 1 > maxGrantedCount_)
+  if (maxGrantedCount_ > 0 && 
+      currentGrantedCount_ + 1 > maxGrantedCount_)
   {
     return false;
   }

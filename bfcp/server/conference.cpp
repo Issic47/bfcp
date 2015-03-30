@@ -953,18 +953,6 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
   auto beneficiaryUser = user;
   if (param.hasBeneficiaryID)
   {
-    // NOTE: Third-party FloorRequests only allowed for chairs
-    if (!isChair(msg.getUserID()))
-    {
-      char errorInfo[128];
-      snprintf(errorInfo, sizeof errorInfo,
-        "Third-party FloorRequests only allowed for chairs "
-        "(User %hu is not chair of any floor)",
-        msg.getUserID());
-      replyWithError(msg, BFCP_UNAUTH_OPERATION, errorInfo);
-      return;
-    }
-
     if (!checkUserID(msg, param.beneficiaryID)) return;
     beneficiaryUser = findUser(param.beneficiaryID);
     assert(beneficiaryUser);

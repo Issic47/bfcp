@@ -285,12 +285,15 @@ void controlFunc(BaseServer *server)
 
         FloorConfig floorConfig;
         floorConfig.maxGrantedNum = 1;
+        floorConfig.maxHoldingTime = -1.0;
         server->addFloor(100, 10, floorConfig, &handleCallResult);
         floorConfig.maxGrantedNum = 2;
         server->addFloor(100, 11, floorConfig, &handleCallResult);
         floorConfig.maxGrantedNum = 1;
+        floorConfig.maxHoldingTime = 20.0;
         server->addFloor(100, 12, floorConfig, &handleCallResult);
         floorConfig.maxGrantedNum = 1;
+        floorConfig.maxHoldingTime = -1.0;
         server->addFloor(100, 13, floorConfig, &handleCallResult);
 
         UserInfoParam user;

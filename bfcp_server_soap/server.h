@@ -173,6 +173,7 @@ int ns__modifyConference(unsigned int conferenceID,
 int ns__addFloor(unsigned int conferenceID, 
                  unsigned short floorID,
                  unsigned short maxGrantedNum,
+                 double maxHoldingTime,
                  enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: remove a floor from the conference
@@ -184,6 +185,7 @@ int ns__removeFloor(unsigned int conferenceID,
 int ns__modifyFloor(unsigned int conferenceID, 
                     unsigned short floorID,
                     unsigned short maxGrantedNum,
+                    double maxHoldingTime,
                     enum ns__ErrorCode *errorCode);
 
 //gsoap ns service method-documentation: add a user to the conference

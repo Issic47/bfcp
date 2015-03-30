@@ -131,6 +131,7 @@
  <part name="conferenceID" type="xsd:unsignedInt"/><!-- ns__addFloor::conferenceID -->
  <part name="floorID" type="xsd:unsignedShort"/><!-- ns__addFloor::floorID -->
  <part name="maxGrantedNum" type="xsd:unsignedShort"/><!-- ns__addFloor::maxGrantedNum -->
+ <part name="maxHoldingTime" type="xsd:double"/><!-- ns__addFloor::maxHoldingTime -->
 </message>
 
 <message name="addFloorResponse">
@@ -150,6 +151,7 @@
  <part name="conferenceID" type="xsd:unsignedInt"/><!-- ns__modifyFloor::conferenceID -->
  <part name="floorID" type="xsd:unsignedShort"/><!-- ns__modifyFloor::floorID -->
  <part name="maxGrantedNum" type="xsd:unsignedShort"/><!-- ns__modifyFloor::maxGrantedNum -->
+ <part name="maxHoldingTime" type="xsd:double"/><!-- ns__modifyFloor::maxHoldingTime -->
 </message>
 
 <message name="modifyFloorResponse">

@@ -65,7 +65,7 @@ int main(int argc, char **argv)
       calc.removeConference(100, &errorCode);
       break;
     case 'a':
-      calc.addFloor(100, 11, 2, &errorCode);
+      calc.addFloor(100, 11, 2, -1.0, &errorCode);
       break;
     case 'f':
       calc.removeFloor(100, 11, &errorCode);

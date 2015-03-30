@@ -473,7 +473,7 @@ static int serve_ns__addFloor(BFCPServiceService *soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->addFloor(soap_tmp_ns__addFloor.conferenceID, soap_tmp_ns__addFloor.floorID, soap_tmp_ns__addFloor.maxGrantedNum, soap_tmp_ns__addFloorResponse.errorCode);
+	soap->error = soap->addFloor(soap_tmp_ns__addFloor.conferenceID, soap_tmp_ns__addFloor.floorID, soap_tmp_ns__addFloor.maxGrantedNum, soap_tmp_ns__addFloor.maxHoldingTime, soap_tmp_ns__addFloorResponse.errorCode);
 	if (soap->error)
 		return soap->error;
 	soap->encodingStyle = "";
@@ -561,7 +561,7 @@ static int serve_ns__modifyFloor(BFCPServiceService *soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->modifyFloor(soap_tmp_ns__modifyFloor.conferenceID, soap_tmp_ns__modifyFloor.floorID, soap_tmp_ns__modifyFloor.maxGrantedNum, soap_tmp_ns__modifyFloorResponse.errorCode);
+	soap->error = soap->modifyFloor(soap_tmp_ns__modifyFloor.conferenceID, soap_tmp_ns__modifyFloor.floorID, soap_tmp_ns__modifyFloor.maxGrantedNum, soap_tmp_ns__modifyFloor.maxHoldingTime, soap_tmp_ns__modifyFloorResponse.errorCode);
 	if (soap->error)
 		return soap->error;
 	soap->encodingStyle = "";

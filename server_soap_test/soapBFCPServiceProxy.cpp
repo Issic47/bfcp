@@ -462,7 +462,7 @@ int BFCPServiceProxy::modifyConference(const char *endpoint, const char *soap_ac
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::addFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::addFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
 	struct ns__addFloor soap_tmp_ns__addFloor;
 	struct ns__addFloorResponse *soap_tmp_ns__addFloorResponse;
@@ -475,6 +475,7 @@ int BFCPServiceProxy::addFloor(const char *endpoint, const char *soap_action, un
 	soap_tmp_ns__addFloor.conferenceID = conferenceID;
 	soap_tmp_ns__addFloor.floorID = floorID;
 	soap_tmp_ns__addFloor.maxGrantedNum = maxGrantedNum;
+	soap_tmp_ns__addFloor.maxHoldingTime = maxHoldingTime;
 	soap_serializeheader(soap);
 	soap_serialize_ns__addFloor(soap, &soap_tmp_ns__addFloor);
 	if (soap_begin_count(soap))
@@ -579,7 +580,7 @@ int BFCPServiceProxy::removeFloor(const char *endpoint, const char *soap_action,
 	return soap_closesock(soap);
 }
 
-int BFCPServiceProxy::modifyFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode)
+int BFCPServiceProxy::modifyFloor(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime, enum ns__ErrorCode *errorCode)
 {	struct soap *soap = this;
 	struct ns__modifyFloor soap_tmp_ns__modifyFloor;
 	struct ns__modifyFloorResponse *soap_tmp_ns__modifyFloorResponse;
@@ -592,6 +593,7 @@ int BFCPServiceProxy::modifyFloor(const char *endpoint, const char *soap_action,
 	soap_tmp_ns__modifyFloor.conferenceID = conferenceID;
 	soap_tmp_ns__modifyFloor.floorID = floorID;
 	soap_tmp_ns__modifyFloor.maxGrantedNum = maxGrantedNum;
+	soap_tmp_ns__modifyFloor.maxHoldingTime = maxHoldingTime;
 	soap_serializeheader(soap);
 	soap_serialize_ns__modifyFloor(soap, &soap_tmp_ns__modifyFloor);
 	if (soap_begin_count(soap))

@@ -332,6 +332,7 @@ int BfcpService::modifyConference(unsigned int conferenceID,
 int BfcpService::addFloor(unsigned int conferenceID, 
                           unsigned short floorID, 
                           unsigned short maxGrantedNum, 
+                          double maxHoldingTime, 
                           enum ns__ErrorCode *errorCode)
 {
   LOG_INFO << "addFloor with {conferenceID: " << conferenceID
@@ -348,6 +349,7 @@ int BfcpService::addFloor(unsigned int conferenceID,
 
   bfcp::FloorConfig config;
   config.maxGrantedNum = maxGrantedNum;
+  config.maxHoldingTime = maxHoldingTime;
 
   server_->addFloor(
     conferenceID,
@@ -398,7 +400,8 @@ int BfcpService::removeFloor( unsigned int conferenceID, unsigned short floorID,
 
 int BfcpService::modifyFloor(unsigned int conferenceID, 
                              unsigned short floorID, 
-                             unsigned short maxGrantedNum,
+                             unsigned short maxGrantedNum, 
+                             double maxHoldingTime, 
                              enum ns__ErrorCode *errorCode)
 {
   LOG_INFO << "modifyFloor with {conferenceID: " << conferenceID
@@ -416,6 +419,7 @@ int BfcpService::modifyFloor(unsigned int conferenceID,
 
   bfcp::FloorConfig config;
   config.maxGrantedNum = maxGrantedNum;
+  config.maxHoldingTime = maxHoldingTime;
 
   server_->modifyFloor(
     conferenceID,

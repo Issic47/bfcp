@@ -103,13 +103,13 @@ class SOAP_CMAC BFCPServiceService : public soap
 	virtual	int modifyConference(unsigned int conferenceID, unsigned short maxFloorRequest, enum ns__Policy policy, double timeForChairAction, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'addFloor' (returns error code or SOAP_OK)
-	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	virtual	int addFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'removeFloor' (returns error code or SOAP_OK)
 	virtual	int removeFloor(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'modifyFloor' (returns error code or SOAP_OK)
-	virtual	int modifyFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	virtual	int modifyFloor(unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'addUser' (returns error code or SOAP_OK)
 	virtual	int addUser(unsigned int conferenceID, unsigned short userID, std::string userName, std::string userURI, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;

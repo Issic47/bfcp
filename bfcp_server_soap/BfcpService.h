@@ -27,84 +27,86 @@ public:
   /// Destructor, also frees all deserialized data
   virtual ~BfcpService();
 
-  virtual int run(int port);
+  int run(int port) override;
 
-  virtual BFCPServiceService * copy();
+  BFCPServiceService * copy() override;
 
-  virtual int start(
+  int start(
     enum ns__AddrFamily af,
     unsigned short port, bool enbaleConnectionThread, 
     int workThreadNum, 
     double userObsoletedTime, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
   
-  virtual int stop(enum ns__ErrorCode *errorCode);
+  int stop(enum ns__ErrorCode *errorCode) override;
 
-  virtual int quit();
+  int quit() override;
   
-  virtual int addConference(
+  int addConference(
     unsigned int conferenceID, 
     unsigned short maxFloorRequest, 
     enum ns__Policy policy, 
     double timeForChairAction, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int removeConference(
+  int removeConference(
     unsigned int conferenceID, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int modifyConference(
+  int modifyConference(
     unsigned int conferenceID, 
     unsigned short maxFloorRequest, 
     enum ns__Policy policy, 
     double timeForChairAction, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int addFloor(
+  int addFloor(
     unsigned int conferenceID, 
     unsigned short floorID, 
     unsigned short maxGrantedNum, 
-    enum ns__ErrorCode *errorCode);
+    double maxHoldingTime,
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int removeFloor(
+  int removeFloor(
     unsigned int conferenceID, 
     unsigned short floorID, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int modifyFloor(
+  int modifyFloor(
     unsigned int conferenceID, 
     unsigned short floorID, 
     unsigned short maxGrantedNum, 
-    enum ns__ErrorCode *errorCode);
+    double maxHoldingTime,
+    enum ns__ErrorCode *errorCode) override;
   
-  virtual int addUser(
+  int addUser(
     unsigned int conferenceID, 
     unsigned short userID, 
     std::string userName, 
     std::string userURI, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int removeUser(
+  int removeUser(
     unsigned int conferenceID, 
     unsigned short userID, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int addChair(
+  int addChair(
     unsigned int conferenceID, 
     unsigned short floorID, 
     unsigned short userID, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int removeChair(
+  int removeChair(
     unsigned int conferenceID, 
     unsigned short floorID, 
-    enum ns__ErrorCode *errorCode);
+    enum ns__ErrorCode *errorCode) override;
 
-  virtual int getConferenceIDs(ns__ConferenceListResult *result);
+  int getConferenceIDs(ns__ConferenceListResult *result) override;
 
-  virtual int getConferenceInfo(
+  int getConferenceInfo(
     unsigned int conferenceID, 
-    ns__ConferenceInfoResult *result);
+    ns__ConferenceInfoResult *result) override;
 
 private:
   typedef boost::shared_ptr<bfcp::BaseServer> BaseServerPtr;

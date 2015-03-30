@@ -15,7 +15,7 @@ compiling, linking, and/or using OpenSSL is allowed.
 
 #include "soapH.h"
 
-SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-03-20 06:52:02 GMT")
+SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-03-30 02:51:41 GMT")
 
 
 #ifndef WITH_NOGLOBAL
@@ -3883,6 +3883,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__modifyFloor(struct soap *soap, struc
 	soap_default_unsignedInt(soap, &a->conferenceID);
 	soap_default_unsignedShort(soap, &a->floorID);
 	soap_default_unsignedShort(soap, &a->maxGrantedNum);
+	soap_default_double(soap, &a->maxHoldingTime);
 }
 
 SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__modifyFloor(struct soap *soap, const struct ns__modifyFloor *a)
@@ -3903,6 +3904,8 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__modifyFloor(struct soap *soap, const char
 		return soap->error;
 	if (soap_out_unsignedShort(soap, "maxGrantedNum", -1, &a->maxGrantedNum, ""))
 		return soap->error;
+	if (soap_out_double(soap, "maxHoldingTime", -1, &a->maxHoldingTime, ""))
+		return soap->error;
 	return soap_element_end_out(soap, tag);
 }
 
@@ -3911,6 +3914,7 @@ SOAP_FMAC3 struct ns__modifyFloor * SOAP_FMAC4 soap_in_ns__modifyFloor(struct so
 	size_t soap_flag_conferenceID = 1;
 	size_t soap_flag_floorID = 1;
 	size_t soap_flag_maxGrantedNum = 1;
+	size_t soap_flag_maxHoldingTime = 1;
 	if (soap_element_begin_in(soap, tag, 0, type))
 		return NULL;
 	a = (struct ns__modifyFloor *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__modifyFloor, sizeof(struct ns__modifyFloor), 0, NULL, NULL, NULL);
@@ -3936,6 +3940,11 @@ SOAP_FMAC3 struct ns__modifyFloor * SOAP_FMAC4 soap_in_ns__modifyFloor(struct so
 				{	soap_flag_maxGrantedNum--;
 					continue;
 				}
+			if (soap_flag_maxHoldingTime && soap->error == SOAP_TAG_MISMATCH)
+				if (soap_in_double(soap, "maxHoldingTime", &a->maxHoldingTime, "xsd:double"))
+				{	soap_flag_maxHoldingTime--;
+					continue;
+				}
 			if (soap->error == SOAP_TAG_MISMATCH)
 				soap->error = soap_ignore_element(soap);
 			if (soap->error == SOAP_NO_TAG)
@@ -3951,7 +3960,7 @@ SOAP_FMAC3 struct ns__modifyFloor * SOAP_FMAC4 soap_in_ns__modifyFloor(struct so
 		if (soap->body && soap_element_end_in(soap, tag))
 			return NULL;
 	}
-	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_conferenceID > 0 || soap_flag_floorID > 0 || soap_flag_maxGrantedNum > 0))
+	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_conferenceID > 0 || soap_flag_floorID > 0 || soap_flag_maxGrantedNum > 0 || soap_flag_maxHoldingTime > 0))
 	{	soap->error = SOAP_OCCURS;
 		return NULL;
 	}
@@ -4340,6 +4349,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__addFloor(struct soap *soap, struct n
 	soap_default_unsignedInt(soap, &a->conferenceID);
 	soap_default_unsignedShort(soap, &a->floorID);
 	soap_default_unsignedShort(soap, &a->maxGrantedNum);
+	soap_default_double(soap, &a->maxHoldingTime);
 }
 
 SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__addFloor(struct soap *soap, const struct ns__addFloor *a)
@@ -4360,6 +4370,8 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__addFloor(struct soap *soap, const char *t
 		return soap->error;
 	if (soap_out_unsignedShort(soap, "maxGrantedNum", -1, &a->maxGrantedNum, ""))
 		return soap->error;
+	if (soap_out_double(soap, "maxHoldingTime", -1, &a->maxHoldingTime, ""))
+		return soap->error;
 	return soap_element_end_out(soap, tag);
 }
 
@@ -4368,6 +4380,7 @@ SOAP_FMAC3 struct ns__addFloor * SOAP_FMAC4 soap_in_ns__addFloor(struct soap *so
 	size_t soap_flag_conferenceID = 1;
 	size_t soap_flag_floorID = 1;
 	size_t soap_flag_maxGrantedNum = 1;
+	size_t soap_flag_maxHoldingTime = 1;
 	if (soap_element_begin_in(soap, tag, 0, type))
 		return NULL;
 	a = (struct ns__addFloor *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__addFloor, sizeof(struct ns__addFloor), 0, NULL, NULL, NULL);
@@ -4393,6 +4406,11 @@ SOAP_FMAC3 struct ns__addFloor * SOAP_FMAC4 soap_in_ns__addFloor(struct soap *so
 				{	soap_flag_maxGrantedNum--;
 					continue;
 				}
+			if (soap_flag_maxHoldingTime && soap->error == SOAP_TAG_MISMATCH)
+				if (soap_in_double(soap, "maxHoldingTime", &a->maxHoldingTime, "xsd:double"))
+				{	soap_flag_maxHoldingTime--;
+					continue;
+				}
 			if (soap->error == SOAP_TAG_MISMATCH)
 				soap->error = soap_ignore_element(soap);
 			if (soap->error == SOAP_NO_TAG)
@@ -4408,7 +4426,7 @@ SOAP_FMAC3 struct ns__addFloor * SOAP_FMAC4 soap_in_ns__addFloor(struct soap *so
 		if (soap->body && soap_element_end_in(soap, tag))
 			return NULL;
 	}
-	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_conferenceID > 0 || soap_flag_floorID > 0 || soap_flag_maxGrantedNum > 0))
+	if ((soap->mode & SOAP_XML_STRICT) && (soap_flag_conferenceID > 0 || soap_flag_floorID > 0 || soap_flag_maxGrantedNum > 0 || soap_flag_maxHoldingTime > 0))
 	{	soap->error = SOAP_OCCURS;
 		return NULL;
 	}

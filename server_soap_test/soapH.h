@@ -904,9 +904,9 @@ SOAP_FMAC1 struct ns__modifyFloor * SOAP_FMAC2 soap_instantiate_ns__modifyFloor(
 
 inline struct ns__modifyFloor * soap_new_ns__modifyFloor(struct soap *soap, int n = -1) { return soap_instantiate_ns__modifyFloor(soap, n, NULL, NULL, NULL); }
 
-inline struct ns__modifyFloor * soap_new_req_ns__modifyFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) { struct ns__modifyFloor *_p = soap_instantiate_ns__modifyFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__modifyFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; } return _p; }
+inline struct ns__modifyFloor * soap_new_req_ns__modifyFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime) { struct ns__modifyFloor *_p = soap_instantiate_ns__modifyFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__modifyFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; _p->maxHoldingTime = maxHoldingTime; } return _p; }
 
-inline struct ns__modifyFloor * soap_new_set_ns__modifyFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) { struct ns__modifyFloor *_p = soap_instantiate_ns__modifyFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__modifyFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; } return _p; }
+inline struct ns__modifyFloor * soap_new_set_ns__modifyFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime) { struct ns__modifyFloor *_p = soap_instantiate_ns__modifyFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__modifyFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; _p->maxHoldingTime = maxHoldingTime; } return _p; }
 
 inline void soap_delete_ns__modifyFloor(struct soap *soap, struct ns__modifyFloor *p) { soap_delete(soap, p); }
 
@@ -1032,9 +1032,9 @@ SOAP_FMAC1 struct ns__addFloor * SOAP_FMAC2 soap_instantiate_ns__addFloor(struct
 
 inline struct ns__addFloor * soap_new_ns__addFloor(struct soap *soap, int n = -1) { return soap_instantiate_ns__addFloor(soap, n, NULL, NULL, NULL); }
 
-inline struct ns__addFloor * soap_new_req_ns__addFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) { struct ns__addFloor *_p = soap_instantiate_ns__addFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__addFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; } return _p; }
+inline struct ns__addFloor * soap_new_req_ns__addFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime) { struct ns__addFloor *_p = soap_instantiate_ns__addFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__addFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; _p->maxHoldingTime = maxHoldingTime; } return _p; }
 
-inline struct ns__addFloor * soap_new_set_ns__addFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum) { struct ns__addFloor *_p = soap_instantiate_ns__addFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__addFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; } return _p; }
+inline struct ns__addFloor * soap_new_set_ns__addFloor(struct soap *soap, unsigned int conferenceID, unsigned short floorID, unsigned short maxGrantedNum, double maxHoldingTime) { struct ns__addFloor *_p = soap_instantiate_ns__addFloor(soap, -1, NULL, NULL, NULL); if (_p) { soap_default_ns__addFloor(soap, _p); _p->conferenceID = conferenceID; _p->floorID = floorID; _p->maxGrantedNum = maxGrantedNum; _p->maxHoldingTime = maxHoldingTime; } return _p; }
 
 inline void soap_delete_ns__addFloor(struct soap *soap, struct ns__addFloor *p) { soap_delete(soap, p); }
 

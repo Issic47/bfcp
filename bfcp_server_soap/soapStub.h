@@ -265,6 +265,7 @@ public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short maxGrantedNum;	/* required element of type xsd:unsignedShort */
+	double maxHoldingTime;	/* required element of type xsd:double */
 public:
 	int soap_type() const { return 42; } /* = unique type id SOAP_TYPE_ns__addFloor */
 };
@@ -316,6 +317,7 @@ public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short maxGrantedNum;	/* required element of type xsd:unsignedShort */
+	double maxHoldingTime;	/* required element of type xsd:double */
 public:
 	int soap_type() const { return 48; } /* = unique type id SOAP_TYPE_ns__modifyFloor */
 };

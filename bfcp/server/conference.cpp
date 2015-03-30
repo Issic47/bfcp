@@ -680,14 +680,15 @@ void Conference::onTimeoutForHoldingFloors( uint16_t floorRequestID )
   auto floorRequest = findFloorRequest(granted_, floorRequestID);
   if (!floorRequest) return;
 
-  for (auto &floorNode : floorRequest->getFloorNodeList())
-  {
-    floorNode.setStatus(BFCP_REVOKED);
-  }
   LOG_INFO << "Revoke FloorRequest " << floorRequestID
            << " from Granted Queue in Conference " << conferenceID_;
   granted_.remove(floorRequest);
   revokeFloorsFromFloorRequest(floorRequest);
+
+  for (auto &floorNode : floorRequest->getFloorNodeList())
+  {
+    floorNode.setStatus(BFCP_REVOKED);
+  }
 
   floorRequest->setStatusInfo("Timeout for holding floor(s).");
   floorRequest->setOverallStatus(BFCP_REVOKED);
@@ -1548,6 +1549,8 @@ void Conference::revokeFloorRequest(
 
   granted_.remove(floorRequest);
 
+  revokeFloorsFromFloorRequest(floorRequest);
+
   for (auto &floorReqStatus : info.fRS)
   {
     auto floorNode = floorRequest->findFloor(floorReqStatus.floorID);
@@ -1555,8 +1558,6 @@ void Conference::revokeFloorRequest(
     floorNode->setStatus(BFCP_REVOKED);
     floorNode->setStatusInfo(floorReqStatus.statusInfo);
   }
-
-  revokeFloorsFromFloorRequest(floorRequest);
 
   floorRequest->setStatusInfo(info.oRS.statusInfo);
   floorRequest->setOverallStatus(BFCP_REVOKED);

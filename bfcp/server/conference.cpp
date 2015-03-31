@@ -90,8 +90,6 @@ const char * toString( AcceptPolicy policy )
   }
 }
 
-const double Conference::kDefaultTimeForChairAction = 5.0;
-
 Conference::Conference(muduo::net::EventLoop *loop, 
                        const BfcpConnectionPtr &connection, 
                        uint32_t conferenceID, 
@@ -108,8 +106,6 @@ Conference::Conference(muduo::net::EventLoop *loop,
   LOG_TRACE << "Conference::Conference [" << conferenceID << "] constructing";
   assert(connection_);
   initRequestHandlers();
-  if (timeForChairAction_ <= 0.0)
-    timeForChairAction_ = kDefaultTimeForChairAction;
 }
 
 void Conference::initRequestHandlers()
@@ -160,15 +156,7 @@ bfcp::ControlError Conference::set(const ConferenceConfig &config)
             << ", timeForChairAction: " << config.timeForChairAction << "}}";
   maxFloorRequest_ = config.maxFloorRequest;
   acceptPolicy_ = config.acceptPolicy;
-  if (config.timeForChairAction < 0.0)
-  {
-    LOG_ERROR << "Invalid timeout for chair action: " << config.timeForChairAction;
-    timeForChairAction_ = kDefaultTimeForChairAction;
-  }
-  else
-  {
-    timeForChairAction_ = config.timeForChairAction;
-  }
+  timeForChairAction_ = config.timeForChairAction;
   return ControlError::kNoError;
 }
 
@@ -205,11 +193,6 @@ ControlError Conference::setAcceptPolicy(
   LOG_TRACE << "Set accept policy " << toString(policy)
             << " and chair action time to " << timeForChairAction 
             << "s in Conference " << conferenceID_;
-  if (timeForChairAction < 0.0)
-  {
-    LOG_ERROR << "Invalid timeout for chair action: " << timeForChairAction;
-    timeForChairAction = kDefaultTimeForChairAction;
-  }
   timeForChairAction_ = timeForChairAction;
   acceptPolicy_ = policy;
   return ControlError::kNoError;
@@ -861,9 +844,13 @@ void Conference::onNewRequest( const BfcpMsg &msg )
 bool Conference::isUserAvailable( const UserPtr &user ) const
 {
   if (!user->isAvailable()) return false;
-  muduo::Timestamp now = muduo::Timestamp::now();
-  double livingTime = muduo::timeDifference(now, user->getActiveTime());
-  return livingTime < userObsoletedTime_;
+  if (userObsoletedTime_ > 0.0) 
+  {
+    muduo::Timestamp now = muduo::Timestamp::now();
+    double livingTime = muduo::timeDifference(now, user->getActiveTime());
+    return livingTime < userObsoletedTime_;
+  }
+  return true;
 }
 
 bool Conference::checkUnknownAttrs( const BfcpMsg &msg )
@@ -1028,8 +1015,11 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
   if (needChairAction) 
   {
     // start timer for chair action
-    setFloorRequestExpired(
-      newFloorRequest, timeForChairAction_, chairActionTimeoutCallback_);
+    if (timeForChairAction_ > 0.0) 
+    {
+      setFloorRequestExpired(
+        newFloorRequest, timeForChairAction_, chairActionTimeoutCallback_);
+    }
   }
 
   // check if the floor request is accepted
@@ -1129,6 +1119,7 @@ void Conference::setFloorRequestExpired(FloorRequestNodePtr &floorRequest,
                                         const FloorRequestExpiredCallback &cb)
 {
   assert(cb);
+  assert(expiredTime > 0.0);
   uint16_t floorRequestID = floorRequest->getFloorRequestID();
   muduo::net::TimerId timerId = loop_->runAfter(
     expiredTime, 

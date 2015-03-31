@@ -45,8 +45,6 @@ public:
     void (uint32_t, bfcp_prim, uint16_t, ResponseError, const BfcpMsg&)
   > ClientResponseCallback;
 
-  static const double kDefaultTimeForChairAction;
-
 public:
   Conference(
     muduo::net::EventLoop *loop,

@@ -27,14 +27,14 @@ struct ConferenceConfig
 {
   uint16_t maxFloorRequest;
   AcceptPolicy acceptPolicy;
-  double timeForChairAction;
-  double userObsoletedTime;
+  double timeForChairAction; // when < 0.0, unlimited
+  double userObsoletedTime; // when < 0.0, unlimited
 };
 
 struct FloorConfig
 {
-  uint16_t maxGrantedNum; // when == 0, unlimited granted num
-  double maxHoldingTime;  // when < 0.0, unlimited holding time
+  uint16_t maxGrantedNum; // when == 0, unlimited
+  double maxHoldingTime;  // when < 0.0, unlimited
 };
 
 const char* toString(AcceptPolicy policy);

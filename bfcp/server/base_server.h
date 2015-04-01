@@ -98,7 +98,7 @@ public:
     uint16_t userID,
     const ResultCallback &cb);
 
-  void addChair(
+  void setChair(
     uint32_t conferenceID, 
     uint16_t floorID, 
     uint16_t userID,
@@ -191,7 +191,7 @@ private:
     uint16_t userID, 
     const ResultCallback &cb);
 
-  void addChairInLoop(
+  void setChairInLoop(
     uint32_t conferenceID,
     uint16_t floorID,
     uint16_t userID,

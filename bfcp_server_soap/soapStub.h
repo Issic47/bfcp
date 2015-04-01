@@ -375,29 +375,29 @@ public:
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__addChairResponse
-#define SOAP_TYPE_ns__addChairResponse (56)
-/* ns:addChairResponse */
-struct ns__addChairResponse
+#ifndef SOAP_TYPE_ns__setChairResponse
+#define SOAP_TYPE_ns__setChairResponse (56)
+/* ns:setChairResponse */
+struct ns__setChairResponse
 {
 public:
 	enum ns__ErrorCode *errorCode;	/* SOAP 1.2 RPC return element (when namespace qualified) */	/* optional element of type ns:ErrorCode */
 public:
-	int soap_type() const { return 56; } /* = unique type id SOAP_TYPE_ns__addChairResponse */
+	int soap_type() const { return 56; } /* = unique type id SOAP_TYPE_ns__setChairResponse */
 };
 #endif
 
-#ifndef SOAP_TYPE_ns__addChair
-#define SOAP_TYPE_ns__addChair (57)
-/* ns:addChair */
-struct ns__addChair
+#ifndef SOAP_TYPE_ns__setChair
+#define SOAP_TYPE_ns__setChair (57)
+/* ns:setChair */
+struct ns__setChair
 {
 public:
 	unsigned int conferenceID;	/* required element of type xsd:unsignedInt */
 	unsigned short floorID;	/* required element of type xsd:unsignedShort */
 	unsigned short userID;	/* required element of type xsd:unsignedShort */
 public:
-	int soap_type() const { return 57; } /* = unique type id SOAP_TYPE_ns__addChair */
+	int soap_type() const { return 57; } /* = unique type id SOAP_TYPE_ns__setChair */
 };
 #endif
 

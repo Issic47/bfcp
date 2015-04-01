@@ -511,7 +511,7 @@ int BfcpService::removeUser( unsigned int conferenceID, unsigned short userID, e
   return SOAP_OK;
 }
 
-int BfcpService::addChair( unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode )
+int BfcpService::setChair( unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode )
 {
   LOG_INFO << "addChair with {conferenceID: " << conferenceID
            << ", floorID: " << floorID
@@ -526,7 +526,7 @@ int BfcpService::addChair( unsigned int conferenceID, unsigned short floorID, un
 
   callFinished_ = false;
 
-  server_->addChair(
+  server_->setChair(
     conferenceID, 
     floorID,
     userID,

@@ -304,16 +304,16 @@ void BaseServer::removeUserInLoop(uint32_t conferenceID,
   runTask(&Conference::removeUser, conferenceID, userID, cb);
 }
 
-void BaseServer::addChair( uint32_t conferenceID, uint16_t floorID, uint16_t userID, const ResultCallback &cb )
+void BaseServer::setChair( uint32_t conferenceID, uint16_t floorID, uint16_t userID, const ResultCallback &cb )
 {
-  runInLoop(&BaseServer::addChairInLoop, conferenceID, floorID, userID, cb);
+  runInLoop(&BaseServer::setChairInLoop, conferenceID, floorID, userID, cb);
 }
 
-void BaseServer::addChairInLoop( uint32_t conferenceID, uint16_t floorID, uint16_t userID, const ResultCallback &cb )
+void BaseServer::setChairInLoop( uint32_t conferenceID, uint16_t floorID, uint16_t userID, const ResultCallback &cb )
 {
-  LOG_TRACE << "Add Chair " << userID << " of Floor " << floorID 
+  LOG_TRACE << "Set Chair " << userID << " of Floor " << floorID 
             << " in Conference " << conferenceID;
-  runTask(&Conference::addChair, conferenceID, floorID, userID, cb);
+  runTask(&Conference::setChair, conferenceID, floorID, userID, cb);
 }
 
 void BaseServer::removeChair( uint32_t conferenceID, uint16_t floorID, const ResultCallback &cb )

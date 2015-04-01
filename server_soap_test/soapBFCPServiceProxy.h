@@ -114,9 +114,9 @@ class SOAP_CMAC BFCPServiceProxy : public soap
 	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) { return this->removeUser(NULL, NULL, conferenceID, userID, errorCode); }
 	virtual	int removeUser(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode);
 
-	/// Web service operation 'addChair' (returns error code or SOAP_OK)
-	virtual	int addChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode) { return this->addChair(NULL, NULL, conferenceID, floorID, userID, errorCode); }
-	virtual	int addChair(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode);
+	/// Web service operation 'setChair' (returns error code or SOAP_OK)
+	virtual	int setChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode) { return this->setChair(NULL, NULL, conferenceID, floorID, userID, errorCode); }
+	virtual	int setChair(const char *endpoint, const char *soap_action, unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode);
 
 	/// Web service operation 'removeChair' (returns error code or SOAP_OK)
 	virtual	int removeChair(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) { return this->removeChair(NULL, NULL, conferenceID, floorID, errorCode); }

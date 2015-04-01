@@ -68,7 +68,7 @@ public:
   ControlError removeFloor(uint16_t floorID);
   ControlError modifyFloor(uint16_t floorID, const FloorConfig &config);
 
-  ControlError addChair(uint16_t floorID, uint16_t userID);
+  ControlError setChair(uint16_t floorID, uint16_t userID);
   ControlError removeChair(uint16_t floorID);
 
   string getConferenceInfo() const;

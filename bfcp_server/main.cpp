@@ -303,13 +303,13 @@ void controlFunc(BaseServer *server)
         // user 2 is chair of floor 10 and floor 11
         user.id = 2;
         server->addUser(100, user, &handleCallResult);
-        server->addChair(100, 10, 2, &handleCallResult);
-        server->addChair(100, 11, 2, &handleCallResult);
+        server->setChair(100, 10, 2, &handleCallResult);
+        server->setChair(100, 11, 2, &handleCallResult);
 
         // user 3 is chair of floor 13
         user.id = 3;
         server->addUser(100, user, &handleCallResult);
-        server->addChair(100, 13, 3, &handleCallResult);
+        server->setChair(100, 13, 3, &handleCallResult);
 
       } break;
     default:

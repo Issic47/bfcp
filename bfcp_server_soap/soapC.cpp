@@ -15,7 +15,7 @@ compiling, linking, and/or using OpenSSL is allowed.
 
 #include "soapH.h"
 
-SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-03-30 02:45:48 GMT")
+SOAP_SOURCE_STAMP("@(#) soapC.cpp ver 2.8.21 2015-04-01 08:10:34 GMT")
 
 
 #ifndef WITH_NOGLOBAL
@@ -224,10 +224,10 @@ SOAP_FMAC3 void * SOAP_FMAC4 soap_getelement(struct soap *soap, int *type)
 		return soap_in_ns__removeChair(soap, NULL, NULL, "ns:removeChair");
 	case SOAP_TYPE_ns__removeChairResponse:
 		return soap_in_ns__removeChairResponse(soap, NULL, NULL, "ns:removeChairResponse");
-	case SOAP_TYPE_ns__addChair:
-		return soap_in_ns__addChair(soap, NULL, NULL, "ns:addChair");
-	case SOAP_TYPE_ns__addChairResponse:
-		return soap_in_ns__addChairResponse(soap, NULL, NULL, "ns:addChairResponse");
+	case SOAP_TYPE_ns__setChair:
+		return soap_in_ns__setChair(soap, NULL, NULL, "ns:setChair");
+	case SOAP_TYPE_ns__setChairResponse:
+		return soap_in_ns__setChairResponse(soap, NULL, NULL, "ns:setChairResponse");
 	case SOAP_TYPE_ns__removeUser:
 		return soap_in_ns__removeUser(soap, NULL, NULL, "ns:removeUser");
 	case SOAP_TYPE_ns__removeUserResponse:
@@ -365,13 +365,13 @@ SOAP_FMAC3 void * SOAP_FMAC4 soap_getelement(struct soap *soap, int *type)
 		{	*type = SOAP_TYPE_ns__removeChairResponse;
 			return soap_in_ns__removeChairResponse(soap, NULL, NULL, NULL);
 		}
-		if (!soap_match_tag(soap, t, "ns:addChair"))
-		{	*type = SOAP_TYPE_ns__addChair;
-			return soap_in_ns__addChair(soap, NULL, NULL, NULL);
+		if (!soap_match_tag(soap, t, "ns:setChair"))
+		{	*type = SOAP_TYPE_ns__setChair;
+			return soap_in_ns__setChair(soap, NULL, NULL, NULL);
 		}
-		if (!soap_match_tag(soap, t, "ns:addChairResponse"))
-		{	*type = SOAP_TYPE_ns__addChairResponse;
-			return soap_in_ns__addChairResponse(soap, NULL, NULL, NULL);
+		if (!soap_match_tag(soap, t, "ns:setChairResponse"))
+		{	*type = SOAP_TYPE_ns__setChairResponse;
+			return soap_in_ns__setChairResponse(soap, NULL, NULL, NULL);
 		}
 		if (!soap_match_tag(soap, t, "ns:removeUser"))
 		{	*type = SOAP_TYPE_ns__removeUser;
@@ -570,10 +570,10 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_putelement(struct soap *soap, const void *ptr, co
 		return soap_out_ns__removeChair(soap, tag, id, (const struct ns__removeChair *)ptr, "ns:removeChair");
 	case SOAP_TYPE_ns__removeChairResponse:
 		return soap_out_ns__removeChairResponse(soap, tag, id, (const struct ns__removeChairResponse *)ptr, "ns:removeChairResponse");
-	case SOAP_TYPE_ns__addChair:
-		return soap_out_ns__addChair(soap, tag, id, (const struct ns__addChair *)ptr, "ns:addChair");
-	case SOAP_TYPE_ns__addChairResponse:
-		return soap_out_ns__addChairResponse(soap, tag, id, (const struct ns__addChairResponse *)ptr, "ns:addChairResponse");
+	case SOAP_TYPE_ns__setChair:
+		return soap_out_ns__setChair(soap, tag, id, (const struct ns__setChair *)ptr, "ns:setChair");
+	case SOAP_TYPE_ns__setChairResponse:
+		return soap_out_ns__setChairResponse(soap, tag, id, (const struct ns__setChairResponse *)ptr, "ns:setChairResponse");
 	case SOAP_TYPE_ns__removeUser:
 		return soap_out_ns__removeUser(soap, tag, id, (const struct ns__removeUser *)ptr, "ns:removeUser");
 	case SOAP_TYPE_ns__removeUserResponse:
@@ -668,11 +668,11 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_markelement(struct soap *soap, const void *ptr, 
 	case SOAP_TYPE_ns__removeChairResponse:
 		soap_serialize_ns__removeChairResponse(soap, (const struct ns__removeChairResponse *)ptr);
 		break;
-	case SOAP_TYPE_ns__addChair:
-		soap_serialize_ns__addChair(soap, (const struct ns__addChair *)ptr);
+	case SOAP_TYPE_ns__setChair:
+		soap_serialize_ns__setChair(soap, (const struct ns__setChair *)ptr);
 		break;
-	case SOAP_TYPE_ns__addChairResponse:
-		soap_serialize_ns__addChairResponse(soap, (const struct ns__addChairResponse *)ptr);
+	case SOAP_TYPE_ns__setChairResponse:
+		soap_serialize_ns__setChairResponse(soap, (const struct ns__setChairResponse *)ptr);
 		break;
 	case SOAP_TYPE_ns__removeUser:
 		soap_serialize_ns__removeUser(soap, (const struct ns__removeUser *)ptr);
@@ -812,10 +812,10 @@ SOAP_FMAC3 void * SOAP_FMAC4 soap_instantiate(struct soap *soap, int t, const ch
 		return (void*)soap_instantiate_ns__removeUserResponse(soap, -1, type, arrayType, n);
 	case SOAP_TYPE_ns__removeUser:
 		return (void*)soap_instantiate_ns__removeUser(soap, -1, type, arrayType, n);
-	case SOAP_TYPE_ns__addChairResponse:
-		return (void*)soap_instantiate_ns__addChairResponse(soap, -1, type, arrayType, n);
-	case SOAP_TYPE_ns__addChair:
-		return (void*)soap_instantiate_ns__addChair(soap, -1, type, arrayType, n);
+	case SOAP_TYPE_ns__setChairResponse:
+		return (void*)soap_instantiate_ns__setChairResponse(soap, -1, type, arrayType, n);
+	case SOAP_TYPE_ns__setChair:
+		return (void*)soap_instantiate_ns__setChair(soap, -1, type, arrayType, n);
 	case SOAP_TYPE_ns__removeChairResponse:
 		return (void*)soap_instantiate_ns__removeChairResponse(soap, -1, type, arrayType, n);
 	case SOAP_TYPE_ns__removeChair:
@@ -999,17 +999,17 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_fdelete(struct soap_clist *p)
 		else
 			SOAP_DELETE_ARRAY((struct ns__removeUser*)p->ptr);
 		break;
-	case SOAP_TYPE_ns__addChairResponse:
+	case SOAP_TYPE_ns__setChairResponse:
 		if (p->size < 0)
-			SOAP_DELETE((struct ns__addChairResponse*)p->ptr);
+			SOAP_DELETE((struct ns__setChairResponse*)p->ptr);
 		else
-			SOAP_DELETE_ARRAY((struct ns__addChairResponse*)p->ptr);
+			SOAP_DELETE_ARRAY((struct ns__setChairResponse*)p->ptr);
 		break;
-	case SOAP_TYPE_ns__addChair:
+	case SOAP_TYPE_ns__setChair:
 		if (p->size < 0)
-			SOAP_DELETE((struct ns__addChair*)p->ptr);
+			SOAP_DELETE((struct ns__setChair*)p->ptr);
 		else
-			SOAP_DELETE_ARRAY((struct ns__addChair*)p->ptr);
+			SOAP_DELETE_ARRAY((struct ns__setChair*)p->ptr);
 		break;
 	case SOAP_TYPE_ns__removeChairResponse:
 		if (p->size < 0)
@@ -3176,7 +3176,7 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__removeChairResponse(struct soap *soap, 
 	*(struct ns__removeChairResponse*)p = *(struct ns__removeChairResponse*)q;
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__addChair(struct soap *soap, struct ns__addChair *a)
+SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__setChair(struct soap *soap, struct ns__setChair *a)
 {
 	(void)soap; (void)a; /* appease -Wall -Werror */
 	soap_default_unsignedInt(soap, &a->conferenceID);
@@ -3184,17 +3184,17 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__addChair(struct soap *soap, struct n
 	soap_default_unsignedShort(soap, &a->userID);
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__addChair(struct soap *soap, const struct ns__addChair *a)
+SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__setChair(struct soap *soap, const struct ns__setChair *a)
 {
 	(void)soap; (void)a; /* appease -Wall -Werror */
 #ifndef WITH_NOIDREF
 #endif
 }
 
-SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__addChair(struct soap *soap, const char *tag, int id, const struct ns__addChair *a, const char *type)
+SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__setChair(struct soap *soap, const char *tag, int id, const struct ns__setChair *a, const char *type)
 {
 	(void)soap; (void)tag; (void)id; (void)a; (void)type; /* appease -Wall -Werror */
-	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__addChair), type))
+	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__setChair), type))
 		return soap->error;
 	if (soap_out_unsignedInt(soap, "conferenceID", -1, &a->conferenceID, ""))
 		return soap->error;
@@ -3205,17 +3205,17 @@ SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__addChair(struct soap *soap, const char *t
 	return soap_element_end_out(soap, tag);
 }
 
-SOAP_FMAC3 struct ns__addChair * SOAP_FMAC4 soap_in_ns__addChair(struct soap *soap, const char *tag, struct ns__addChair *a, const char *type)
+SOAP_FMAC3 struct ns__setChair * SOAP_FMAC4 soap_in_ns__setChair(struct soap *soap, const char *tag, struct ns__setChair *a, const char *type)
 {
 	size_t soap_flag_conferenceID = 1;
 	size_t soap_flag_floorID = 1;
 	size_t soap_flag_userID = 1;
 	if (soap_element_begin_in(soap, tag, 0, type))
 		return NULL;
-	a = (struct ns__addChair *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__addChair, sizeof(struct ns__addChair), 0, NULL, NULL, NULL);
+	a = (struct ns__setChair *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__setChair, sizeof(struct ns__setChair), 0, NULL, NULL, NULL);
 	if (!a)
 		return NULL;
-	soap_default_ns__addChair(soap, a);
+	soap_default_ns__setChair(soap, a);
 	if (soap->body && !*soap->href)
 	{
 		for (;;)
@@ -3246,7 +3246,7 @@ SOAP_FMAC3 struct ns__addChair * SOAP_FMAC4 soap_in_ns__addChair(struct soap *so
 			return NULL;
 	}
 	else
-	{	a = (struct ns__addChair *)soap_id_forward(soap, soap->href, (void*)a, 0, SOAP_TYPE_ns__addChair, 0, sizeof(struct ns__addChair), 0, NULL);
+	{	a = (struct ns__setChair *)soap_id_forward(soap, soap->href, (void*)a, 0, SOAP_TYPE_ns__setChair, 0, sizeof(struct ns__setChair), 0, NULL);
 		if (soap->body && soap_element_end_in(soap, tag))
 			return NULL;
 	}
@@ -3257,59 +3257,59 @@ SOAP_FMAC3 struct ns__addChair * SOAP_FMAC4 soap_in_ns__addChair(struct soap *so
 	return a;
 }
 
-SOAP_FMAC3 int SOAP_FMAC4 soap_put_ns__addChair(struct soap *soap, const struct ns__addChair *a, const char *tag, const char *type)
+SOAP_FMAC3 int SOAP_FMAC4 soap_put_ns__setChair(struct soap *soap, const struct ns__setChair *a, const char *tag, const char *type)
 {
-	register int id = soap_embed(soap, (void*)a, NULL, 0, SOAP_TYPE_ns__addChair);
-	if (soap_out_ns__addChair(soap, tag?tag:"ns:addChair", id, a, type))
+	register int id = soap_embed(soap, (void*)a, NULL, 0, SOAP_TYPE_ns__setChair);
+	if (soap_out_ns__setChair(soap, tag?tag:"ns:setChair", id, a, type))
 		return soap->error;
 	return soap_putindependent(soap);
 }
 
-SOAP_FMAC3 struct ns__addChair * SOAP_FMAC4 soap_get_ns__addChair(struct soap *soap, struct ns__addChair *p, const char *tag, const char *type)
+SOAP_FMAC3 struct ns__setChair * SOAP_FMAC4 soap_get_ns__setChair(struct soap *soap, struct ns__setChair *p, const char *tag, const char *type)
 {
-	if ((p = soap_in_ns__addChair(soap, tag, p, type)))
+	if ((p = soap_in_ns__setChair(soap, tag, p, type)))
 		if (soap_getindependent(soap))
 			return NULL;
 	return p;
 }
 
-SOAP_FMAC1 struct ns__addChair * SOAP_FMAC2 soap_instantiate_ns__addChair(struct soap *soap, int n, const char *type, const char *arrayType, size_t *size)
+SOAP_FMAC1 struct ns__setChair * SOAP_FMAC2 soap_instantiate_ns__setChair(struct soap *soap, int n, const char *type, const char *arrayType, size_t *size)
 {
-	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "soap_instantiate_ns__addChair(%d, %s, %s)\n", n, type?type:"", arrayType?arrayType:""));
-	struct soap_clist *cp = soap_link(soap, NULL, SOAP_TYPE_ns__addChair, n, soap_fdelete);
+	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "soap_instantiate_ns__setChair(%d, %s, %s)\n", n, type?type:"", arrayType?arrayType:""));
+	struct soap_clist *cp = soap_link(soap, NULL, SOAP_TYPE_ns__setChair, n, soap_fdelete);
 	(void)type; (void)arrayType; /* appease -Wall -Werror */
 	if (!cp)
 		return NULL;
 	if (n < 0)
-	{	cp->ptr = (void*)SOAP_NEW(struct ns__addChair);
+	{	cp->ptr = (void*)SOAP_NEW(struct ns__setChair);
 		if (size)
-			*size = sizeof(struct ns__addChair);
+			*size = sizeof(struct ns__setChair);
 	}
 	else
-	{	cp->ptr = (void*)SOAP_NEW_ARRAY(struct ns__addChair, n);
+	{	cp->ptr = (void*)SOAP_NEW_ARRAY(struct ns__setChair, n);
 		if (size)
-			*size = n * sizeof(struct ns__addChair);
+			*size = n * sizeof(struct ns__setChair);
 	}
 	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Instantiated location=%p\n", cp->ptr));
 	if (!cp->ptr)
 		soap->error = SOAP_EOM;
-	return (struct ns__addChair*)cp->ptr;
+	return (struct ns__setChair*)cp->ptr;
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__addChair(struct soap *soap, int st, int tt, void *p, size_t len, const void *q, size_t n)
+SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__setChair(struct soap *soap, int st, int tt, void *p, size_t len, const void *q, size_t n)
 {
 	(void)soap; (void)tt; (void)st; (void)len; (void)n; /* appease -Wall -Werror */
-	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Copying struct ns__addChair %p -> %p\n", q, p));
-	*(struct ns__addChair*)p = *(struct ns__addChair*)q;
+	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Copying struct ns__setChair %p -> %p\n", q, p));
+	*(struct ns__setChair*)p = *(struct ns__setChair*)q;
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__addChairResponse(struct soap *soap, struct ns__addChairResponse *a)
+SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__setChairResponse(struct soap *soap, struct ns__setChairResponse *a)
 {
 	(void)soap; (void)a; /* appease -Wall -Werror */
 	a->errorCode = NULL;
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__addChairResponse(struct soap *soap, const struct ns__addChairResponse *a)
+SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__setChairResponse(struct soap *soap, const struct ns__setChairResponse *a)
 {
 	(void)soap; (void)a; /* appease -Wall -Werror */
 #ifndef WITH_NOIDREF
@@ -3317,25 +3317,25 @@ SOAP_FMAC3 void SOAP_FMAC4 soap_serialize_ns__addChairResponse(struct soap *soap
 #endif
 }
 
-SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__addChairResponse(struct soap *soap, const char *tag, int id, const struct ns__addChairResponse *a, const char *type)
+SOAP_FMAC3 int SOAP_FMAC4 soap_out_ns__setChairResponse(struct soap *soap, const char *tag, int id, const struct ns__setChairResponse *a, const char *type)
 {
 	(void)soap; (void)tag; (void)id; (void)a; (void)type; /* appease -Wall -Werror */
-	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__addChairResponse), type))
+	if (soap_element_begin_out(soap, tag, soap_embedded_id(soap, id, a, SOAP_TYPE_ns__setChairResponse), type))
 		return soap->error;
 	if (soap_out_PointerTons__ErrorCode(soap, "errorCode", -1, &a->errorCode, ""))
 		return soap->error;
 	return soap_element_end_out(soap, tag);
 }
 
-SOAP_FMAC3 struct ns__addChairResponse * SOAP_FMAC4 soap_in_ns__addChairResponse(struct soap *soap, const char *tag, struct ns__addChairResponse *a, const char *type)
+SOAP_FMAC3 struct ns__setChairResponse * SOAP_FMAC4 soap_in_ns__setChairResponse(struct soap *soap, const char *tag, struct ns__setChairResponse *a, const char *type)
 {
 	size_t soap_flag_errorCode = 1;
 	if (soap_element_begin_in(soap, tag, 0, type))
 		return NULL;
-	a = (struct ns__addChairResponse *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__addChairResponse, sizeof(struct ns__addChairResponse), 0, NULL, NULL, NULL);
+	a = (struct ns__setChairResponse *)soap_id_enter(soap, soap->id, a, SOAP_TYPE_ns__setChairResponse, sizeof(struct ns__setChairResponse), 0, NULL, NULL, NULL);
 	if (!a)
 		return NULL;
-	soap_default_ns__addChairResponse(soap, a);
+	soap_default_ns__setChairResponse(soap, a);
 	if (soap->body && !*soap->href)
 	{
 		for (;;)
@@ -3356,57 +3356,57 @@ SOAP_FMAC3 struct ns__addChairResponse * SOAP_FMAC4 soap_in_ns__addChairResponse
 			return NULL;
 	}
 	else
-	{	a = (struct ns__addChairResponse *)soap_id_forward(soap, soap->href, (void*)a, 0, SOAP_TYPE_ns__addChairResponse, 0, sizeof(struct ns__addChairResponse), 0, NULL);
+	{	a = (struct ns__setChairResponse *)soap_id_forward(soap, soap->href, (void*)a, 0, SOAP_TYPE_ns__setChairResponse, 0, sizeof(struct ns__setChairResponse), 0, NULL);
 		if (soap->body && soap_element_end_in(soap, tag))
 			return NULL;
 	}
 	return a;
 }
 
-SOAP_FMAC3 int SOAP_FMAC4 soap_put_ns__addChairResponse(struct soap *soap, const struct ns__addChairResponse *a, const char *tag, const char *type)
+SOAP_FMAC3 int SOAP_FMAC4 soap_put_ns__setChairResponse(struct soap *soap, const struct ns__setChairResponse *a, const char *tag, const char *type)
 {
-	register int id = soap_embed(soap, (void*)a, NULL, 0, SOAP_TYPE_ns__addChairResponse);
-	if (soap_out_ns__addChairResponse(soap, tag?tag:"ns:addChairResponse", id, a, type))
+	register int id = soap_embed(soap, (void*)a, NULL, 0, SOAP_TYPE_ns__setChairResponse);
+	if (soap_out_ns__setChairResponse(soap, tag?tag:"ns:setChairResponse", id, a, type))
 		return soap->error;
 	return soap_putindependent(soap);
 }
 
-SOAP_FMAC3 struct ns__addChairResponse * SOAP_FMAC4 soap_get_ns__addChairResponse(struct soap *soap, struct ns__addChairResponse *p, const char *tag, const char *type)
+SOAP_FMAC3 struct ns__setChairResponse * SOAP_FMAC4 soap_get_ns__setChairResponse(struct soap *soap, struct ns__setChairResponse *p, const char *tag, const char *type)
 {
-	if ((p = soap_in_ns__addChairResponse(soap, tag, p, type)))
+	if ((p = soap_in_ns__setChairResponse(soap, tag, p, type)))
 		if (soap_getindependent(soap))
 			return NULL;
 	return p;
 }
 
-SOAP_FMAC1 struct ns__addChairResponse * SOAP_FMAC2 soap_instantiate_ns__addChairResponse(struct soap *soap, int n, const char *type, const char *arrayType, size_t *size)
+SOAP_FMAC1 struct ns__setChairResponse * SOAP_FMAC2 soap_instantiate_ns__setChairResponse(struct soap *soap, int n, const char *type, const char *arrayType, size_t *size)
 {
-	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "soap_instantiate_ns__addChairResponse(%d, %s, %s)\n", n, type?type:"", arrayType?arrayType:""));
-	struct soap_clist *cp = soap_link(soap, NULL, SOAP_TYPE_ns__addChairResponse, n, soap_fdelete);
+	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "soap_instantiate_ns__setChairResponse(%d, %s, %s)\n", n, type?type:"", arrayType?arrayType:""));
+	struct soap_clist *cp = soap_link(soap, NULL, SOAP_TYPE_ns__setChairResponse, n, soap_fdelete);
 	(void)type; (void)arrayType; /* appease -Wall -Werror */
 	if (!cp)
 		return NULL;
 	if (n < 0)
-	{	cp->ptr = (void*)SOAP_NEW(struct ns__addChairResponse);
+	{	cp->ptr = (void*)SOAP_NEW(struct ns__setChairResponse);
 		if (size)
-			*size = sizeof(struct ns__addChairResponse);
+			*size = sizeof(struct ns__setChairResponse);
 	}
 	else
-	{	cp->ptr = (void*)SOAP_NEW_ARRAY(struct ns__addChairResponse, n);
+	{	cp->ptr = (void*)SOAP_NEW_ARRAY(struct ns__setChairResponse, n);
 		if (size)
-			*size = n * sizeof(struct ns__addChairResponse);
+			*size = n * sizeof(struct ns__setChairResponse);
 	}
 	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Instantiated location=%p\n", cp->ptr));
 	if (!cp->ptr)
 		soap->error = SOAP_EOM;
-	return (struct ns__addChairResponse*)cp->ptr;
+	return (struct ns__setChairResponse*)cp->ptr;
 }
 
-SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__addChairResponse(struct soap *soap, int st, int tt, void *p, size_t len, const void *q, size_t n)
+SOAP_FMAC3 void SOAP_FMAC4 soap_copy_ns__setChairResponse(struct soap *soap, int st, int tt, void *p, size_t len, const void *q, size_t n)
 {
 	(void)soap; (void)tt; (void)st; (void)len; (void)n; /* appease -Wall -Werror */
-	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Copying struct ns__addChairResponse %p -> %p\n", q, p));
-	*(struct ns__addChairResponse*)p = *(struct ns__addChairResponse*)q;
+	DBGLOG(TEST, SOAP_MESSAGE(fdebug, "Copying struct ns__setChairResponse %p -> %p\n", q, p));
+	*(struct ns__setChairResponse*)p = *(struct ns__setChairResponse*)q;
 }
 
 SOAP_FMAC3 void SOAP_FMAC4 soap_default_ns__removeUser(struct soap *soap, struct ns__removeUser *a)

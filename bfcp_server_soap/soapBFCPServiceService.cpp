@@ -184,7 +184,7 @@ static int serve_ns__removeFloor(BFCPServiceService*);
 static int serve_ns__modifyFloor(BFCPServiceService*);
 static int serve_ns__addUser(BFCPServiceService*);
 static int serve_ns__removeUser(BFCPServiceService*);
-static int serve_ns__addChair(BFCPServiceService*);
+static int serve_ns__setChair(BFCPServiceService*);
 static int serve_ns__removeChair(BFCPServiceService*);
 static int serve_ns__getConferenceIDs(BFCPServiceService*);
 static int serve_ns__getConferenceInfo(BFCPServiceService*);
@@ -213,8 +213,8 @@ int BFCPServiceService::dispatch()
 		return serve_ns__addUser(this);
 	if (!soap_match_tag(this, this->tag, "ns:removeUser"))
 		return serve_ns__removeUser(this);
-	if (!soap_match_tag(this, this->tag, "ns:addChair"))
-		return serve_ns__addChair(this);
+	if (!soap_match_tag(this, this->tag, "ns:setChair"))
+		return serve_ns__setChair(this);
 	if (!soap_match_tag(this, this->tag, "ns:removeChair"))
 		return serve_ns__removeChair(this);
 	if (!soap_match_tag(this, this->tag, "ns:getConferenceIDs"))
@@ -679,33 +679,33 @@ static int serve_ns__removeUser(BFCPServiceService *soap)
 	return soap_closesock(soap);
 }
 
-static int serve_ns__addChair(BFCPServiceService *soap)
-{	struct ns__addChair soap_tmp_ns__addChair;
-	struct ns__addChairResponse soap_tmp_ns__addChairResponse;
+static int serve_ns__setChair(BFCPServiceService *soap)
+{	struct ns__setChair soap_tmp_ns__setChair;
+	struct ns__setChairResponse soap_tmp_ns__setChairResponse;
 	enum ns__ErrorCode soap_tmp_ns__ErrorCode;
-	soap_default_ns__addChairResponse(soap, &soap_tmp_ns__addChairResponse);
+	soap_default_ns__setChairResponse(soap, &soap_tmp_ns__setChairResponse);
 	soap_default_ns__ErrorCode(soap, &soap_tmp_ns__ErrorCode);
-	soap_tmp_ns__addChairResponse.errorCode = &soap_tmp_ns__ErrorCode;
-	soap_default_ns__addChair(soap, &soap_tmp_ns__addChair);
-	if (!soap_get_ns__addChair(soap, &soap_tmp_ns__addChair, "ns:addChair", NULL))
+	soap_tmp_ns__setChairResponse.errorCode = &soap_tmp_ns__ErrorCode;
+	soap_default_ns__setChair(soap, &soap_tmp_ns__setChair);
+	if (!soap_get_ns__setChair(soap, &soap_tmp_ns__setChair, "ns:setChair", NULL))
 		return soap->error;
 	if (soap_body_end_in(soap)
 	 || soap_envelope_end_in(soap)
 	 || soap_end_recv(soap))
 		return soap->error;
-	soap->error = soap->addChair(soap_tmp_ns__addChair.conferenceID, soap_tmp_ns__addChair.floorID, soap_tmp_ns__addChair.userID, soap_tmp_ns__addChairResponse.errorCode);
+	soap->error = soap->setChair(soap_tmp_ns__setChair.conferenceID, soap_tmp_ns__setChair.floorID, soap_tmp_ns__setChair.userID, soap_tmp_ns__setChairResponse.errorCode);
 	if (soap->error)
 		return soap->error;
 	soap->encodingStyle = "";
 	soap_serializeheader(soap);
-	soap_serialize_ns__addChairResponse(soap, &soap_tmp_ns__addChairResponse);
+	soap_serialize_ns__setChairResponse(soap, &soap_tmp_ns__setChairResponse);
 	if (soap_begin_count(soap))
 		return soap->error;
 	if (soap->mode & SOAP_IO_LENGTH)
 	{	if (soap_envelope_begin_out(soap)
 		 || soap_putheader(soap)
 		 || soap_body_begin_out(soap)
-		 || soap_put_ns__addChairResponse(soap, &soap_tmp_ns__addChairResponse, "ns:addChairResponse", NULL)
+		 || soap_put_ns__setChairResponse(soap, &soap_tmp_ns__setChairResponse, "ns:setChairResponse", NULL)
 		 || soap_body_end_out(soap)
 		 || soap_envelope_end_out(soap))
 			 return soap->error;
@@ -715,7 +715,7 @@ static int serve_ns__addChair(BFCPServiceService *soap)
 	 || soap_envelope_begin_out(soap)
 	 || soap_putheader(soap)
 	 || soap_body_begin_out(soap)
-	 || soap_put_ns__addChairResponse(soap, &soap_tmp_ns__addChairResponse, "ns:addChairResponse", NULL)
+	 || soap_put_ns__setChairResponse(soap, &soap_tmp_ns__setChairResponse, "ns:setChairResponse", NULL)
 	 || soap_body_end_out(soap)
 	 || soap_envelope_end_out(soap)
 	 || soap_end_send(soap))

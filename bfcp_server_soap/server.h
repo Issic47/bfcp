@@ -202,7 +202,7 @@ int ns__removeUser(unsigned int conferenceID,
 
 
 //gsoap ns service method-documentation: remove a user from the conference
-int ns__addChair(unsigned int conferenceID,
+int ns__setChair(unsigned int conferenceID,
                  unsigned short floorID,
                  unsigned short userID,
                  enum ns__ErrorCode *errorCode);

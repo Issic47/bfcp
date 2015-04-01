@@ -117,8 +117,8 @@ class SOAP_CMAC BFCPServiceService : public soap
 	/// Web service operation 'removeUser' (returns error code or SOAP_OK)
 	virtual	int removeUser(unsigned int conferenceID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
-	/// Web service operation 'addChair' (returns error code or SOAP_OK)
-	virtual	int addChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
+	/// Web service operation 'setChair' (returns error code or SOAP_OK)
+	virtual	int setChair(unsigned int conferenceID, unsigned short floorID, unsigned short userID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;
 
 	/// Web service operation 'removeChair' (returns error code or SOAP_OK)
 	virtual	int removeChair(unsigned int conferenceID, unsigned short floorID, enum ns__ErrorCode *errorCode) SOAP_PURE_VIRTUAL;

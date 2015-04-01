@@ -91,7 +91,7 @@ public:
     unsigned short userID, 
     enum ns__ErrorCode *errorCode) override;
 
-  int addChair(
+  int setChair(
     unsigned int conferenceID, 
     unsigned short floorID, 
     unsigned short userID, 

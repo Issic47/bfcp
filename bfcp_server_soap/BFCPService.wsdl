@@ -178,14 +178,14 @@
  <part name="errorCode" type="ns:ErrorCode"/><!-- ns__removeUser::errorCode -->
 </message>
 
-<message name="addChairRequest">
- <part name="conferenceID" type="xsd:unsignedInt"/><!-- ns__addChair::conferenceID -->
- <part name="floorID" type="xsd:unsignedShort"/><!-- ns__addChair::floorID -->
- <part name="userID" type="xsd:unsignedShort"/><!-- ns__addChair::userID -->
+<message name="setChairRequest">
+ <part name="conferenceID" type="xsd:unsignedInt"/><!-- ns__setChair::conferenceID -->
+ <part name="floorID" type="xsd:unsignedShort"/><!-- ns__setChair::floorID -->
+ <part name="userID" type="xsd:unsignedShort"/><!-- ns__setChair::userID -->
 </message>
 
-<message name="addChairResponse">
- <part name="errorCode" type="ns:ErrorCode"/><!-- ns__addChair::errorCode -->
+<message name="setChairResponse">
+ <part name="errorCode" type="ns:ErrorCode"/><!-- ns__setChair::errorCode -->
 </message>
 
 <message name="removeChairRequest">
@@ -269,10 +269,10 @@
   <input message="tns:removeUserRequest"/>
   <output message="tns:removeUserResponse"/>
  </operation>
- <operation name="addChair">
-  <documentation>Service definition of function ns__addChair</documentation>
-  <input message="tns:addChairRequest"/>
-  <output message="tns:addChairResponse"/>
+ <operation name="setChair">
+  <documentation>Service definition of function ns__setChair</documentation>
+  <input message="tns:setChairRequest"/>
+  <output message="tns:setChairResponse"/>
  </operation>
  <operation name="removeChair">
   <documentation>Service definition of function ns__removeChair</documentation>
@@ -389,7 +389,7 @@
      <SOAP:body use="encoded" namespace="urn:BFCPService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>
   </output>
  </operation>
- <operation name="addChair">
+ <operation name="setChair">
   <SOAP:operation style="rpc" soapAction=""/>
   <input>
      <SOAP:body use="encoded" namespace="urn:BFCPService" encodingStyle="http://schemas.xmlsoap.org/soap/encoding/"/>

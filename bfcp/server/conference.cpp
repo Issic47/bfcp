@@ -434,9 +434,9 @@ void Conference::releaseFloorRequestsFromGrantedByFloorID(uint16_t floorID)
   }
 }
 
-ControlError Conference::addChair( uint16_t floorID, uint16_t userID )
+ControlError Conference::setChair( uint16_t floorID, uint16_t userID )
 {
-  LOG_TRACE << "Add Chair " << userID << " of Floor " << floorID
+  LOG_TRACE << "Set Chair " << userID << " of Floor " << floorID
             << " in Conference " << conferenceID_;
   ControlError err = ControlError::kNoError;
   do 
@@ -457,13 +457,7 @@ ControlError Conference::addChair( uint16_t floorID, uint16_t userID )
       err = ControlError::kFloorNotExist;
       break;
     }
-    if (floor->isAssigned())
-    {
-      LOG_ERROR << "Chair of Floor " << floorID 
-                << " already exist";
-      err = ControlError::kChairAlreadyExist;
-      break;
-    }
+    floor->unassigned();
     floor->assignedToChair(userID);
   } while (false);
   return err;

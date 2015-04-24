@@ -95,7 +95,7 @@ inline int build_attr_REQUESTED_BY_INFORMATION( mbuf_t *buf, const UserInfoParam
   const char *useruri = 
     requested_by.useruri.empty() ? nullptr : requested_by.useruri.c_str();
   return bfcp_attrs_encode(
-    buf, 1, BFCP_BENEFICIARY_INFO | BFCP_MANDATORY, 2, &requested_by.id,
+    buf, 1, BFCP_REQUESTED_BY_INFO, 2, &requested_by.id,
     BFCP_USER_DISP_NAME, 0, username,
     BFCP_USER_URI, 0, useruri);
 }

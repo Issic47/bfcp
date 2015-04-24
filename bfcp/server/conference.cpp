@@ -524,7 +524,7 @@ bool Conference::tryToAcceptFloorRequestsWithFloor(FloorPtr &floor)
   bool hasAcceptFloor = false;
   for (auto it = pending_.begin(); it != pending_.end();)
   {
-    auto &floorRequest = *it;
+    auto floorRequest = *it;
     auto floorNode = floorRequest->findFloor(floorID);
     if (floorNode && floorNode->getStatus() != BFCP_ACCEPTED)
     {

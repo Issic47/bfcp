@@ -43,6 +43,7 @@ BfcpConnection::BfcpConnection(EventLoop *loop, const UdpSocketPtr &socket)
     : loop_(CHECK_NOTNULL(loop)),
       socket_(socket),
       cachedReplys_(BFCP_T2_SEC),
+      currentCachedReplys_(0),
       cachedFragments_(BFCP_T2_SEC),
       nextTid_(1)
 {
@@ -72,6 +73,7 @@ void BfcpConnection::stopCacheTimer()
 
 void BfcpConnection::onTimer()
 {
+  currentCachedReplys_ -= cachedReplys_.front().size();
   cachedReplys_.push_back(ReplyBucket());
   
   if (!cachedFragments_.front().empty())
@@ -533,10 +535,13 @@ void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &ds
   }
   fragBufs.clear();
 
-  detail::bfcp_strans_entry entry;
-  entry.entity = entity;
-  entry.prim = primitive;
-  cachedReplys_.back().insert(std::make_pair(entry, bufs));
+  if (currentCachedReplys_ < MAX_CACHED_REPLY_SIZE) {
+    detail::bfcp_strans_entry entry;
+    entry.entity = entity;
+    entry.prim = primitive;
+    cachedReplys_.back().insert(std::make_pair(entry, bufs));
+    ++currentCachedReplys_;
+  }
 
   for (auto &buf : bufs)
   {

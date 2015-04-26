@@ -167,6 +167,7 @@ private:
   static const int BFCP_T2_SEC = 10;
   static const int BFCP_MBUF_SIZE = 65536;
   static const size_t MAX_MSG_SIZE = 1472;
+  static const size_t MAX_CACHED_REPLY_SIZE = 100;
 
   typedef MBufWrapper MBufPtr;
   typedef std::vector<MBufPtr> MBufList;
@@ -247,6 +248,7 @@ private:
   NewRequestCallback newRequestCallback_;
 
   boost::circular_buffer<ReplyBucket> cachedReplys_;
+  size_t currentCachedReplys_;
   muduo::net::TimerId responseTimer_;
   
   boost::circular_buffer<FragmentBucket> cachedFragments_;

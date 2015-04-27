@@ -95,9 +95,9 @@ public:
 
   FloorRequestInfoParam toFloorRequestInfoParam(const UserDict &users) const;
 
-  void setExpiredTimer(const muduo::net::TimerId &timerId) 
+  void setExpiredTimer(muduo::net::TimerId timerId) 
   { expiredTimer_ = timerId; }
-  const muduo::net::TimerId& getExpiredTimer() const
+  muduo::net::TimerId getExpiredTimer() const
   { return expiredTimer_; }
 
 private:

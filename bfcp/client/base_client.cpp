@@ -404,6 +404,7 @@ void BaseClient::handleFloorStatus( const BfcpMsg &msg )
     BfcpAttr floorIDAttr(*attr);
     FloorStatusParam param;
     param.floorID = floorIDAttr.getFloorID();
+    param.hasFloorID = true;
 
     auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
     for (auto &attr : attrs)

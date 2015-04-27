@@ -529,7 +529,7 @@ void BaseServer::onResponse(uint32_t conferenceID,
 {
   LOG_TRACE << "BfcpServer received response";
   connectionLoop_->assertInLoopThread();
-  auto it = conferenceMap_.find(msg.getConferenceID());
+  auto it = conferenceMap_.find(conferenceID);
   if (it == conferenceMap_.end()) // conference not found
   {
     LOG_ERROR << "Conference " << conferenceID << " not found";

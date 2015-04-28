@@ -153,7 +153,6 @@ bool BfcpMsg::checkComplete()
   auto nextIt = it;
   ++nextIt;
   size_t len = it->getLen();
-  size_t fragmentCount = fragments_->size();
   for (; nextIt != fragments_->end(); ++it, ++nextIt)
   {
     size_t offsetEnd = (*it).getOffset() + (*it).getLen();

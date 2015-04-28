@@ -43,6 +43,7 @@ public:
     mem_ref(other.buf_);
     mem_deref(buf_);
     buf_ = other.buf_;
+    return *this;
   }
 
   uint16_t getOffset() const { return offset_; }

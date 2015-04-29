@@ -203,7 +203,13 @@ ControlError Conference::addUser(const UserInfoParam &user)
   LOG_TRACE << "Add User " << user.id << " to Conference " << conferenceID_;
   ControlError err = ControlError::kNoError;
   auto lb = users_.lower_bound(user.id);
-  if (lb == users_.end() || users_.key_comp()((*lb).first, user.id))
+  if (lb != users_.end() && !users_.key_comp()(user.id, (*lb).first))
+  {
+    LOG_ERROR << "User " << user.id 
+              << " already exist in Conference " << conferenceID_;
+    err = ControlError::kUserAlreadyExist;
+  }
+  else
   {
     auto res = users_.emplace_hint(
       lb,
@@ -211,12 +217,6 @@ ControlError Conference::addUser(const UserInfoParam &user)
       boost::make_shared<User>(user.id, user.username, user.useruri));
     // FIXME: check if insert success
     (void)(res);
-  }
-  else // This user already exists
-  {
-    LOG_ERROR << "User " << user.id 
-              << " already exist in Conference " << conferenceID_;
-    err = ControlError::kUserAlreadyExist;
   }
   return err;
 }
@@ -336,7 +336,13 @@ ControlError Conference::addFloor(uint16_t floorID, const FloorConfig &config)
   LOG_TRACE << "Add Floor " << floorID << " to Conference " << conferenceID_;
   ControlError err = ControlError::kNoError;
   auto lb = floors_.lower_bound(floorID);
-  if (lb == floors_.end() || floors_.key_comp()((*lb).first, floorID))
+  if (lb != floors_.end() && !floors_.key_comp()(floorID, (*lb).first))
+  { // This floor already exists
+    LOG_ERROR << "Floor " << floorID 
+              << " already exist in Conference " << conferenceID_;
+    err = ControlError::kFloorAlreadyExist;
+  } 
+  else
   {
     auto res = floors_.emplace_hint(
       lb, 
@@ -344,12 +350,6 @@ ControlError Conference::addFloor(uint16_t floorID, const FloorConfig &config)
       boost::make_shared<Floor>(floorID, config.maxGrantedNum, config.maxHoldingTime));
     // FIXME: check if insert success
     (void)(res);
-  }
-  else // This floor already exists
-  {
-    LOG_ERROR << "Floor " << floorID 
-              << " already exist in Conference " << conferenceID_;
-    err = ControlError::kFloorAlreadyExist;
   }
   return err;
 }

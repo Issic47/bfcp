@@ -44,12 +44,12 @@ int main(int argc, char* argv[])
 
 void handleCallResult(ControlError err)
 {
-  printf("call result: %d\n", err);
+  printf("call result: %d\n", static_cast<int>(err));
 }
 
 void handleGetConferenceInfoResult(ControlError err, void *data)
 {
-  printf("call result: %d\n", err);
+  printf("call result: %d\n", static_cast<int>(err));
   if (err == ControlError::kNoError)
   {
     bfcp::string *res = static_cast<bfcp::string*>(data);
@@ -59,7 +59,7 @@ void handleGetConferenceInfoResult(ControlError err, void *data)
 
 void handleGetConferenceIDsResult(ControlError err, void *data)
 {
-  printf("call result: %d\n", err);
+  printf("call result: %d\n", static_cast<int>(err));
   if (err == ControlError::kNoError)
   {
     BaseServer::ConferenceIDList *res = static_cast<BaseServer::ConferenceIDList*>(data);
@@ -298,7 +298,7 @@ void controlFunc(BaseServer *server)
 
         UserInfoParam user;
         user.id = 1;
-        server->addUser(100, user, &handleCallResult); 
+        server->addUser(100, user, &handleCallResult);
 
         // user 2 is chair of floor 10 and floor 11
         user.id = 2;

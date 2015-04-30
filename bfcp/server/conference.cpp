@@ -1206,7 +1206,7 @@ void Conference::handleFloorRelease( const BfcpMsg &msg )
   replyWithFloorRequestStatus(msg, floorRequest);
   floorRequest->removeQueryUser(msg.getUserID());
   // notify the interested users
-  notifyWithFloorRequestStatus(floorRequest);
+  notifyFloorAndRequestInfo(floorRequest);
 
   if (revokeFloorsFromFloorRequest(floorRequest))
   {

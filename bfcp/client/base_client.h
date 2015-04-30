@@ -81,7 +81,7 @@ public:
   void sendGoodbye();
 
 private:
-  typedef boost::function<void (const BfcpMsg&)> Handler;
+  typedef boost::function<void (const BfcpMsgPtr&)> Handler;
   typedef std::unordered_map<int, Handler> HandlerDict;
   typedef boost::function<void ()> SendMessageTask;
   typedef std::list<SendMessageTask> TaskList;
@@ -93,21 +93,21 @@ private:
                  muduo::Timestamp time);
 
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
-  void onNewRequest(const BfcpMsg &msg);
-  void onResponse(bfcp_prim requestPrimitive, ResponseError err, const BfcpMsg &msg);
+  void onNewRequest(const BfcpMsgPtr &msg);
+  void onResponse(bfcp_prim requestPrimitive, ResponseError err, const BfcpMsgPtr &msg);
 
   void onHeartBeatTimeout();
 
   void initResponseHandlers();
-  void handleFloorRequestStatus(const BfcpMsg &msg);
-  void handleUserStatus(const BfcpMsg &msg);
-  void handleFloorStatus(const BfcpMsg &msg);
-  void handleChairAcionAck(const BfcpMsg &msg);
-  void handleHelloAck(const BfcpMsg &msg);
-  void handleGoodbyeAck(const BfcpMsg &msg);
-  void handleError(const BfcpMsg &msg);
+  void handleFloorRequestStatus(const BfcpMsgPtr &msg);
+  void handleUserStatus(const BfcpMsgPtr &msg);
+  void handleFloorStatus(const BfcpMsgPtr &msg);
+  void handleChairAcionAck(const BfcpMsgPtr &msg);
+  void handleHelloAck(const BfcpMsgPtr &msg);
+  void handleGoodbyeAck(const BfcpMsgPtr &msg);
+  void handleError(const BfcpMsgPtr &msg);
 
-  bool checkMsg(const BfcpMsg &msg, bfcp_prim expectedPrimitive) const;
+  bool checkMsg(const BfcpMsgPtr &msg, bfcp_prim expectedPrimitive) const;
   BasicRequestParam generateBasicParam(bfcp_prim primitive);
 
   void changeState(State state);

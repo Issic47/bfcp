@@ -122,31 +122,31 @@ public:
   void sendGoodbye(const BasicRequestParam &basicParam)
   { runInLoop(&BfcpConnection::sendGoodbyeInLoop, basicParam); }
 
-  void replyWithFloorRequestStatus(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo)
+  void replyWithFloorRequestStatus(const BfcpMsgPtr &msg, const FloorRequestInfoParam &frqInfo)
   { runInLoop(&BfcpConnection::replyWithFloorRequestStatusInLoop, msg, frqInfo); }
 
-  void replyWithFloorStatus(const BfcpMsg &msg, const FloorStatusParam &floorStatus) 
+  void replyWithFloorStatus(const BfcpMsgPtr &msg, const FloorStatusParam &floorStatus) 
   { runInLoop(&BfcpConnection::replyWithFloorStatusInLoop, msg, floorStatus); }
 
-  void replyWithUserStatus(const BfcpMsg &msg, const UserStatusParam &userStatus)
+  void replyWithUserStatus(const BfcpMsgPtr &msg, const UserStatusParam &userStatus)
   { runInLoop(&BfcpConnection::replyWithUserStatusInLoop, msg, userStatus); }
 
-  void replyWithChairActionAck(const BfcpMsg &msg) 
+  void replyWithChairActionAck(const BfcpMsgPtr &msg) 
   { runInLoop(&BfcpConnection::replyWithChairActionAckInLoop, msg); }
 
-  void replyWithHelloAck(const BfcpMsg &msg, const HelloAckParam &helloAck)
+  void replyWithHelloAck(const BfcpMsgPtr &msg, const HelloAckParam &helloAck)
   { runInLoop(&BfcpConnection::replyWithHelloAckInLoop, msg, helloAck); }
 
-  void replyWithError(const BfcpMsg &msg, const ErrorParam &error)
+  void replyWithError(const BfcpMsgPtr &msg, const ErrorParam &error)
   { runInLoop(&BfcpConnection::replyWithErrorInLoop, msg, error); }
 
-  void replyWithFloorRequestStatusAck(const BfcpMsg &msg)
+  void replyWithFloorRequestStatusAck(const BfcpMsgPtr &msg)
   { runInLoop(&BfcpConnection::replyWithFloorRequestStatusAckInLoop, msg); }
 
-  void replyWithFloorStatusAck(const BfcpMsg &msg)
+  void replyWithFloorStatusAck(const BfcpMsgPtr &msg)
   { runInLoop(&BfcpConnection::replyWithFloorStatusAckInLoop, msg); }
 
-  void replyWithGoodbyeAck(const BfcpMsg &msg)
+  void replyWithGoodbyeAck(const BfcpMsgPtr &msg)
   { runInLoop(&BfcpConnection::replyWithGoodbyeAckInLoop, msg); }
 
   // FIXME: make frqInfo to smart pointer
@@ -172,7 +172,7 @@ private:
   typedef MBufWrapper MBufPtr;
   typedef std::vector<MBufPtr> MBufList;
   typedef std::map<detail::bfcp_strans_entry, MBufList> ReplyBucket;
-  typedef std::map<detail::bfcp_msg_entry, BfcpMsg> FragmentBucket;
+  typedef std::map<detail::bfcp_msg_entry, BfcpMsgPtr> FragmentBucket;
 
   template <typename Func, typename Arg1>
   void runInLoop(Func requestFunc, const Arg1 &basic);
@@ -190,17 +190,17 @@ private:
                          const ExtParam &extParam);
 
   template <typename BuildMsgFunc>
-  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg);
+  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsgPtr &msg);
 
   template <typename BuildMsgFunc, typename ExtParam>
-  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg, const ExtParam &extParam);
+  void sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsgPtr &msg, const ExtParam &extParam);
 
-  bool tryHandleFragmentMessage(const BfcpMsg &msg, BfcpMsg &completedMsg);
-  bool tryHandleMessageError(const BfcpMsg &msg);
-  bool tryHandleResponse(const BfcpMsg &msg);
-  bool tryHandleRequest(const BfcpMsg &msg);
+  bool tryHandleFragmentMessage(const BfcpMsgPtr &msg, BfcpMsgPtr &completedMsg);
+  bool tryHandleMessageError(const BfcpMsgPtr &msg);
+  bool tryHandleResponse(const BfcpMsgPtr &msg);
+  bool tryHandleRequest(const BfcpMsgPtr &msg);
   void onRequestTimeout(const ClientTransactionPtr &ctran);
-  void onMessageInLoop(const BfcpMsg &msg);
+  void onMessageInLoop(const BfcpMsgPtr &msg);
   void onTimer();
 
   void sendFloorRequestInLoop(const BasicRequestParam &basicParam, const FloorRequestParam &floorRequest);
@@ -212,15 +212,15 @@ private:
   void sendHelloInLoop(const BasicRequestParam &basicParam);
   void sendGoodbyeInLoop(const BasicRequestParam &basicParam);
 
-  void replyWithUserStatusInLoop(const BfcpMsg &msg, const UserStatusParam &userStatus);
-  void replyWithChairActionAckInLoop(const BfcpMsg &msg);
-  void replyWithHelloAckInLoop(const BfcpMsg &msg, const HelloAckParam &helloAck);
-  void replyWithErrorInLoop(const BfcpMsg &msg, const ErrorParam &error);
-  void replyWithFloorRequestStatusAckInLoop(const BfcpMsg &msg);
-  void replyWithFloorStatusAckInLoop(const BfcpMsg &msg);
-  void replyWithGoodbyeAckInLoop(const BfcpMsg &msg);
-  void replyWithFloorRequestStatusInLoop(const BfcpMsg &msg, const FloorRequestInfoParam &frqInfo);
-  void replyWithFloorStatusInLoop(const BfcpMsg &msg, const FloorStatusParam &floorStatus);
+  void replyWithUserStatusInLoop(const BfcpMsgPtr &msg, const UserStatusParam &userStatus);
+  void replyWithChairActionAckInLoop(const BfcpMsgPtr &msg);
+  void replyWithHelloAckInLoop(const BfcpMsgPtr &msg, const HelloAckParam &helloAck);
+  void replyWithErrorInLoop(const BfcpMsgPtr &msg, const ErrorParam &error);
+  void replyWithFloorRequestStatusAckInLoop(const BfcpMsgPtr &msg);
+  void replyWithFloorStatusAckInLoop(const BfcpMsgPtr &msg);
+  void replyWithGoodbyeAckInLoop(const BfcpMsgPtr &msg);
+  void replyWithFloorRequestStatusInLoop(const BfcpMsgPtr &msg, const FloorRequestInfoParam &frqInfo);
+  void replyWithFloorStatusInLoop(const BfcpMsgPtr &msg, const FloorStatusParam &floorStatus);
 
   void notifyFloorRequestStatusInLoop(const BasicRequestParam &basicParam, 
                                       const FloorRequestInfoParam &frqInfo);

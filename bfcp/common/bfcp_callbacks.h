@@ -13,6 +13,7 @@ namespace bfcp
 class BfcpMsg;
 class ClientTransaction;
 typedef boost::shared_ptr<ClientTransaction> ClientTransactionPtr;
+typedef boost::shared_ptr<BfcpMsg> BfcpMsgPtr;
 
 enum class ResponseError
 {
@@ -20,10 +21,10 @@ enum class ResponseError
   kTimeout = 1,
 };
 
-typedef boost::function<void (ResponseError, const BfcpMsg&)> ResponseCallback;
-typedef boost::function<void (const BfcpMsg&)> NewRequestCallback;
+typedef boost::function<void (ResponseError, const BfcpMsgPtr&)> ResponseCallback;
+typedef boost::function<void (const BfcpMsgPtr&)> NewRequestCallback;
 
-void defaultResponseCallback(ResponseError err, const BfcpMsg &msg);
+void defaultResponseCallback(ResponseError err, const BfcpMsgPtr &msg);
 const char* response_error_name(ResponseError err);
 
 } // namespace bfcp

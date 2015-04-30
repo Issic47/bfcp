@@ -22,7 +22,7 @@ const char* response_error_name( ResponseError err )
   }
 }
 
-void defaultResponseCallback(ResponseError err, const BfcpMsg &msg)
+void defaultResponseCallback(ResponseError err, const BfcpMsgPtr &msg)
 {
   if (err != ResponseError::kNoError)
   {
@@ -104,7 +104,7 @@ void ClientTransaction::onSendTimeout()
   }
 }
 
-void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
+void ClientTransaction::onResponse( ResponseError err, const BfcpMsgPtr &msg )
 {
   loop_->cancel(timer1_);
   if (err != ResponseError::kNoError)
@@ -114,9 +114,9 @@ void ClientTransaction::onResponse( ResponseError err, const BfcpMsg &msg )
   }
   else
   {
-    assert(msg.valid());
+    assert(msg->valid());
     LOG_INFO << "Client transaction" << toString(entity_)
-             << " on response with " << bfcp_prim_name(msg.primitive());
+             << " on response with " << bfcp_prim_name(msg->primitive());
   }
   if (responseCallback_)
     loop_->queueInLoop(boost::bind(responseCallback_, err, msg));

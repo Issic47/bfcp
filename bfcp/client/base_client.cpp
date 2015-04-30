@@ -282,12 +282,12 @@ void BaseClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
   LOG_TRACE << "message " << messageId << " write completed";
 }
 
-void BaseClient::onNewRequest( const BfcpMsg &msg )
+void BaseClient::onNewRequest( const BfcpMsgPtr &msg )
 {
   LOG_TRACE << "BfcpClient received new request " 
-            << bfcp_prim_name(msg.primitive());
+            << bfcp_prim_name(msg->primitive());
 
-  switch (msg.primitive())
+  switch (msg->primitive())
   {
     case BFCP_FLOOR_STATUS: 
       handleFloorStatus(msg); break;
@@ -297,14 +297,14 @@ void BaseClient::onNewRequest( const BfcpMsg &msg )
 
     default:
       LOG_ERROR << "Ignore unexpected BFCP request message " 
-                << msg.primitive();
+                << msg->primitive();
       break;
   }
 }
 
 void BaseClient::onResponse(bfcp_prim requestPrimitive, 
                             ResponseError err, 
-                            const BfcpMsg &msg)
+                            const BfcpMsgPtr &msg)
 {
   if (err != ResponseError::kNoError)
   {
@@ -315,9 +315,9 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
   else
   {
     LOG_TRACE << "BfcpClient received response " 
-              << bfcp_prim_name(msg.primitive());
+              << bfcp_prim_name(msg->primitive());
     runNextSendMesssageTask();
-    if (msg.primitive() == BFCP_ERROR) 
+    if (msg->primitive() == BFCP_ERROR) 
     {
       handleError(msg);
     }
@@ -330,16 +330,16 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
   }
 }
 
-void BaseClient::handleFloorRequestStatus( const BfcpMsg &msg )
+void BaseClient::handleFloorRequestStatus( const BfcpMsgPtr &msg )
 {
   if (!checkMsg(msg, BFCP_FLOOR_REQUEST_STATUS)) return;
 
-  if (!msg.isResponse())
+  if (!msg->isResponse())
   {
     connection_->replyWithFloorRequestStatusAck(msg);
   }
 
-  auto attr = msg.findAttribute(BFCP_FLOOR_REQ_INFO);
+  auto attr = msg->findAttribute(BFCP_FLOOR_REQ_INFO);
   if (!attr) 
   {
     LOG_ERROR << "No FLOOR-REQUEST-INFORMATION found in BFCP FloorRequestStatus message";
@@ -359,13 +359,13 @@ void BaseClient::handleFloorRequestStatus( const BfcpMsg &msg )
   }
 }
 
-void BaseClient::handleUserStatus( const BfcpMsg &msg )
+void BaseClient::handleUserStatus( const BfcpMsgPtr &msg )
 {
-  assert(msg.isResponse());
+  assert(msg->isResponse());
   if (!checkMsg(msg, BFCP_USER_STATUS)) return;
 
   UserStatusParam param;
-  auto attr = msg.findAttribute(BFCP_BENEFICIARY_INFO);
+  auto attr = msg->findAttribute(BFCP_BENEFICIARY_INFO);
   if (attr) 
   {
     BfcpAttr beneficiaryInfoAttr(*attr);
@@ -373,7 +373,7 @@ void BaseClient::handleUserStatus( const BfcpMsg &msg )
     param.setBeneficiary(info);
   }
 
-  auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
+  auto attrs = msg->findAttributes(BFCP_FLOOR_REQ_INFO);
   for (auto &attr : attrs)
   {
     bfcp_floor_request_info frqInfo = attr.getFloorRequestInfo();
@@ -384,16 +384,16 @@ void BaseClient::handleUserStatus( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_USER_STATUS, &param);
 }
 
-void BaseClient::handleFloorStatus( const BfcpMsg &msg )
+void BaseClient::handleFloorStatus( const BfcpMsgPtr &msg )
 {
   if (!checkMsg(msg, BFCP_FLOOR_STATUS)) return;
 
-  if (!msg.isResponse()) 
+  if (!msg->isResponse()) 
   {
     connection_->replyWithFloorStatusAck(msg);
   }
 
-  auto attr = msg.findAttribute(BFCP_FLOOR_ID);
+  auto attr = msg->findAttribute(BFCP_FLOOR_ID);
   if (!attr)
   {
     if (responseReceivedCallback_)
@@ -406,7 +406,7 @@ void BaseClient::handleFloorStatus( const BfcpMsg &msg )
     param.floorID = floorIDAttr.getFloorID();
     param.hasFloorID = true;
 
-    auto attrs = msg.findAttributes(BFCP_FLOOR_REQ_INFO);
+    auto attrs = msg->findAttributes(BFCP_FLOOR_REQ_INFO);
     for (auto &attr : attrs)
     {
       bfcp_floor_request_info info = attr.getFloorRequestInfo();
@@ -418,22 +418,22 @@ void BaseClient::handleFloorStatus( const BfcpMsg &msg )
   }
 }
 
-void BaseClient::handleChairAcionAck( const BfcpMsg &msg )
+void BaseClient::handleChairAcionAck( const BfcpMsgPtr &msg )
 {
-  assert(msg.isResponse());
+  assert(msg->isResponse());
   if (!checkMsg(msg, BFCP_CHAIR_ACTION_ACK)) return;
   if (responseReceivedCallback_)
     responseReceivedCallback_(kNoError, BFCP_CHAIR_ACTION_ACK, nullptr);
 }
 
-void BaseClient::handleHelloAck( const BfcpMsg &msg )
+void BaseClient::handleHelloAck( const BfcpMsgPtr &msg )
 {
-  assert(msg.isResponse());
+  assert(msg->isResponse());
   if (!checkMsg(msg, BFCP_HELLO_ACK)) return;
   
   changeState(kConnected);
 
-  auto attr = msg.findAttribute(BFCP_SUPPORTED_PRIMS);
+  auto attr = msg->findAttribute(BFCP_SUPPORTED_PRIMS);
   if (!attr)
   {
     LOG_ERROR << "No SUPPORTED-PRIMITIVES found in BFCP HelloAck message";
@@ -449,7 +449,7 @@ void BaseClient::handleHelloAck( const BfcpMsg &msg )
     (void)(supPrims);
   }
 
-  attr = msg.findAttribute(BFCP_SUPPORTED_ATTRS);
+  attr = msg->findAttribute(BFCP_SUPPORTED_ATTRS);
   if (!attr)
   {
     LOG_ERROR << "No SUPPORTED-ATTRIBUTES found in BFCP HelloAck message";
@@ -469,9 +469,9 @@ void BaseClient::handleHelloAck( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_HELLO_ACK, nullptr);
 }
 
-void BaseClient::handleGoodbyeAck( const BfcpMsg &msg )
+void BaseClient::handleGoodbyeAck( const BfcpMsgPtr &msg )
 {
-  assert(msg.isResponse());
+  assert(msg->isResponse());
   if (!checkMsg(msg, BFCP_GOODBYE_ACK)) return;
 
   if (state_ == kDisconnecting)
@@ -481,13 +481,13 @@ void BaseClient::handleGoodbyeAck( const BfcpMsg &msg )
   }
 }
 
-void BaseClient::handleError( const BfcpMsg &msg )
+void BaseClient::handleError( const BfcpMsgPtr &msg )
 {
-  assert(msg.isResponse());
+  assert(msg->isResponse());
   if (!checkMsg(msg, BFCP_ERROR)) return;
   
   ErrorParam param;
-  auto attr = msg.findAttribute(BFCP_ERROR_CODE);
+  auto attr = msg->findAttribute(BFCP_ERROR_CODE);
   if (!attr)
   {
     LOG_ERROR << "No ERROR-CODE found in BFCP Error message";
@@ -500,7 +500,7 @@ void BaseClient::handleError( const BfcpMsg &msg )
   bfcp_errcode errcode = errorCodeAttr.getErrorCode();
   param.errorCode.set(errcode);
 
-  attr = msg.findAttribute(BFCP_ERROR_INFO);
+  attr = msg->findAttribute(BFCP_ERROR_INFO);
   if (attr)
   {
     BfcpAttr errorInfoAttr(*attr);
@@ -512,35 +512,35 @@ void BaseClient::handleError( const BfcpMsg &msg )
     responseReceivedCallback_(kNoError, BFCP_ERROR, &param);
 }
 
-bool BaseClient::checkMsg( const BfcpMsg &msg, bfcp_prim expectedPrimitive ) const
+bool BaseClient::checkMsg( const BfcpMsgPtr &msg, bfcp_prim expectedPrimitive ) const
 {
-  if (msg.getConferenceID() != conferenceID_)
+  if (msg->getConferenceID() != conferenceID_)
   {
     LOG_ERROR << "Expected BFCP Conference ID is " << conferenceID_
-              << " but get " << msg.getConferenceID();
+              << " but get " << msg->getConferenceID();
     return false;
   }
 
-  if (msg.getUserID() != userID_)
+  if (msg->getUserID() != userID_)
   {
     LOG_ERROR << "Expected BFCP User ID is " << userID_
-              << " but get " << msg.getUserID();
+              << " but get " << msg->getUserID();
     return false;
   }
 
-  if (msg.primitive() != expectedPrimitive) 
+  if (msg->primitive() != expectedPrimitive) 
   {
     LOG_ERROR << "Expected BFCP " << bfcp_prim_name(expectedPrimitive) 
-              << " but get " << bfcp_prim_name(msg.primitive());
+              << " but get " << bfcp_prim_name(msg->primitive());
     return false;
   }
 
-  auto &unknownAttrs = msg.getUnknownAttrs();
+  auto &unknownAttrs = msg->getUnknownAttrs();
   if (unknownAttrs.typec != 0)
   {
     LOG_WARN << "Ignore " << unknownAttrs.typec 
              << " unknown attribute(s) in the received " 
-             << bfcp_prim_name(msg.primitive());
+             << bfcp_prim_name(msg->primitive());
   }
 
   return true;

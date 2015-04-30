@@ -87,22 +87,22 @@ void BfcpConnection::onMessage(muduo::net::Buffer *buf,
                                const muduo::net::InetAddress &src, 
                                muduo::Timestamp receivedTime)
 {
-  BfcpMsg msg(buf, src, receivedTime);
-  LOG_INFO << "Received BFCP message" << msg.toString() 
+  BfcpMsgPtr msg = boost::make_shared<BfcpMsg>(buf, src, receivedTime);
+  LOG_INFO << "Received BFCP message" << msg->toString() 
            << " from " << src.toIpPort();
   runInLoop(&BfcpConnection::onMessageInLoop, msg);
 }
 
-void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
+void BfcpConnection::onMessageInLoop( const BfcpMsgPtr &msg )
 {
   loop_->assertInLoopThread();
 
-  BfcpMsg completedMsg;
+  BfcpMsgPtr completedMsg;
   if (tryHandleFragmentMessage(msg, completedMsg))
     return;
 
   LOG_INFO << "Received complete BFCP message in detail: \n" 
-           << completedMsg.toStringInDetail();
+           << completedMsg->toStringInDetail();
 
   if (tryHandleMessageError(completedMsg))
     return;
@@ -113,41 +113,41 @@ void BfcpConnection::onMessageInLoop( const BfcpMsg &msg )
   if (tryHandleRequest(completedMsg))
     return;
 
-  if (newRequestCallback_ && !msg.isResponse())
+  if (newRequestCallback_ && !msg->isResponse())
   {
     LOG_INFO << "Received new BFCP request message";
     newRequestCallback_(completedMsg);
   }
 }
 
-bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
-                                              BfcpMsg &completedMsg)
+bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsgPtr &msg,
+                                              BfcpMsgPtr &completedMsg)
 {
-  if (msg.isComplete())
+  if (msg->isComplete())
   {
     completedMsg = msg;
     return false;
   }
 
   detail::bfcp_msg_entry entry;
-  entry.prim = msg.primitive();
-  entry.entity = msg.getEntity();
+  entry.prim = msg->primitive();
+  entry.entity = msg->getEntity();
 
   for (auto &bucket : cachedFragments_)
   {
     auto it = bucket.find(entry);
     if (it != bucket.end())
     {
-      BfcpMsg &fragMsg = (*it).second;
-      fragMsg.addFragment(msg);
-      if (!fragMsg.valid())
+      BfcpMsgPtr &fragMsg = (*it).second;
+      fragMsg->addFragment(msg);
+      if (!fragMsg->valid())
       {
-        LOG_WARN << "Invalid fragments: " << fragMsg.toString();
+        LOG_WARN << "Invalid fragments: " << fragMsg->toString();
         bucket.erase(it);
       }
-      else if (fragMsg.isComplete())
+      else if (fragMsg->isComplete())
       {
-        LOG_DEBUG << "Complete fragments: " << fragMsg.toString();
+        LOG_DEBUG << "Complete fragments: " << fragMsg->toString();
         completedMsg = fragMsg;
         bucket.erase(it);
         return false;
@@ -157,28 +157,28 @@ bool BfcpConnection::tryHandleFragmentMessage(const BfcpMsg &msg,
   }
 
   // this msg is first received fragment
-  LOG_DEBUG << "Insert new fragments: " << msg.toString();
+  LOG_DEBUG << "Insert new fragments: " << msg->toString();
   cachedFragments_.back().insert(std::make_pair(entry, msg));
   return true;
 }
 
-bool BfcpConnection::tryHandleMessageError( const BfcpMsg &msg )
+bool BfcpConnection::tryHandleMessageError( const BfcpMsgPtr &msg )
 {
-  if (!msg.valid() || msg.getVersion() == BFCP_VER1)
+  if (!msg->valid() || msg->getVersion() == BFCP_VER1)
   {
-    // msg.error(): ENOMEM, ENODATA, EBADMSG, ENOSYS,
+    // msg->error(): ENOMEM, ENODATA, EBADMSG, ENOSYS,
     // FIXME: check error and report to the sender
-    LOG_WARN << "Ignore invalid BFCP message" << msg.toString();
+    LOG_WARN << "Ignore invalid BFCP message" << msg->toString();
     return true;
   }
   return false;
 }
 
-bool BfcpConnection::tryHandleResponse(const BfcpMsg &msg)
+bool BfcpConnection::tryHandleResponse(const BfcpMsgPtr &msg)
 {
-  if (!msg.isResponse()) return false;
+  if (!msg->isResponse()) return false;
 
-  ::bfcp_entity entity = msg.getEntity();
+  ::bfcp_entity entity = msg->getEntity();
   auto it = ctrans_.find(entity);
   if (it != ctrans_.end())
   {
@@ -190,23 +190,23 @@ bool BfcpConnection::tryHandleResponse(const BfcpMsg &msg)
   return false;
 }
 
-bool BfcpConnection::tryHandleRequest(const BfcpMsg &msg)
+bool BfcpConnection::tryHandleRequest(const BfcpMsgPtr &msg)
 {
-  if (msg.isResponse()) return false;
+  if (msg->isResponse()) return false;
 
   detail::bfcp_strans_entry entry;
-  entry.prim = msg.primitive();
-  entry.entity = msg.getEntity();
+  entry.prim = msg->primitive();
+  entry.entity = msg->getEntity();
 
   for (auto &bucket : cachedReplys_)
   {
     auto it = bucket.find(entry);
     if (it != bucket.end())
     {
-      LOG_INFO << "Reply BFCP message" << msg.toString() << " with cached reply";
+      LOG_INFO << "Reply BFCP message" << msg->toString() << " with cached reply";
       for (auto &buf : (*it).second)
       {
-        socket_->send(msg.getSrc(), buf->buf, static_cast<int>(buf->end));
+        socket_->send(msg->getSrc(), buf->buf, static_cast<int>(buf->end));
       }
       return true;
     }
@@ -220,7 +220,7 @@ void BfcpConnection::onRequestTimeout(const ClientTransactionPtr &transaction)
   auto it = ctrans_.find(transaction->getEntity());
   if (it != ctrans_.end())
   {
-    BfcpMsg msg;
+    BfcpMsgPtr msg = boost::make_shared<BfcpMsg>();
     (*it).second->onResponse(ResponseError::kTimeout, msg);
     ctrans_.erase(it);
   }
@@ -391,73 +391,73 @@ void BfcpConnection::startNewClientTransaction(const muduo::net::InetAddress &ds
   ctran->start();
 }
 
-void BfcpConnection::replyWithUserStatusInLoop(const BfcpMsg &msg, 
+void BfcpConnection::replyWithUserStatusInLoop(const BfcpMsgPtr &msg, 
                                                const UserStatusParam &userStatus)
 { 
-  assert(msg.primitive() == BFCP_USER_QUERY);
-  LOG_INFO << "Reply with UserStatus to " << msg.toString();
+  assert(msg->primitive() == BFCP_USER_QUERY);
+  LOG_INFO << "Reply with UserStatus to " << msg->toString();
   sendReplyInLoop(&build_msg_UserStatus, msg, userStatus); 
 }
 
-void BfcpConnection::replyWithChairActionAckInLoop( const BfcpMsg &msg )
+void BfcpConnection::replyWithChairActionAckInLoop( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_CHAIR_ACTION);
-  LOG_INFO << "Reply with ChairActionAck to " << msg.toString();
+  assert(msg->primitive() == BFCP_CHAIR_ACTION);
+  LOG_INFO << "Reply with ChairActionAck to " << msg->toString();
   sendReplyInLoop(&build_msg_ChairActionAck, msg);
 }
 
-void BfcpConnection::replyWithHelloAckInLoop( const BfcpMsg &msg, const HelloAckParam &helloAck )
+void BfcpConnection::replyWithHelloAckInLoop( const BfcpMsgPtr &msg, const HelloAckParam &helloAck )
 {
-  assert(msg.primitive() == BFCP_HELLO);
-  LOG_INFO << "Reply with HelloAck to " << msg.toString();
+  assert(msg->primitive() == BFCP_HELLO);
+  LOG_INFO << "Reply with HelloAck to " << msg->toString();
   sendReplyInLoop(&build_msg_HelloAck, msg, helloAck);
 }
 
-void BfcpConnection::replyWithErrorInLoop( const BfcpMsg &msg, const ErrorParam &error )
+void BfcpConnection::replyWithErrorInLoop( const BfcpMsgPtr &msg, const ErrorParam &error )
 {
-  LOG_INFO << "Reply with Error to " << msg.toString();
+  LOG_INFO << "Reply with Error to " << msg->toString();
   sendReplyInLoop(&build_msg_Error, msg, error);
 }
 
-void BfcpConnection::replyWithFloorRequestStatusAckInLoop( const BfcpMsg &msg )
+void BfcpConnection::replyWithFloorRequestStatusAckInLoop( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQUEST_STATUS);
-  LOG_INFO << "Reply with FloorRequestStatusAck to " << msg.toString();
+  assert(msg->primitive() == BFCP_FLOOR_REQUEST_STATUS);
+  LOG_INFO << "Reply with FloorRequestStatusAck to " << msg->toString();
   sendReplyInLoop(&build_msg_FloorRequestStatusAck, msg);
 }
 
-void BfcpConnection::replyWithFloorStatusAckInLoop( const BfcpMsg &msg )
+void BfcpConnection::replyWithFloorStatusAckInLoop( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_STATUS);
-  LOG_INFO << "Reply with FloorStatusAck to " << msg.toString();
+  assert(msg->primitive() == BFCP_FLOOR_STATUS);
+  LOG_INFO << "Reply with FloorStatusAck to " << msg->toString();
   sendReplyInLoop(&build_msg_FloorStatusAck, msg);
 }
 
-void BfcpConnection::replyWithGoodbyeAckInLoop( const BfcpMsg &msg )
+void BfcpConnection::replyWithGoodbyeAckInLoop( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_GOODBYE);
-  LOG_INFO << "Reply with GoodbyeAck to " << msg.toString();
+  assert(msg->primitive() == BFCP_GOODBYE);
+  LOG_INFO << "Reply with GoodbyeAck to " << msg->toString();
   sendReplyInLoop(&build_msg_GoodbyeAck, msg);
 }
 
-void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsg &msg,
+void BfcpConnection::replyWithFloorRequestStatusInLoop(const BfcpMsgPtr &msg,
                                                        const FloorRequestInfoParam &frqInfo)
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQUEST_QUERY || 
-         msg.primitive() == BFCP_FLOOR_REQUEST ||
-         msg.primitive() == BFCP_FLOOR_RELEASE);
-  LOG_INFO << "Reply with FloorRequestStatus to " << msg.toString();
+  assert(msg->primitive() == BFCP_FLOOR_REQUEST_QUERY || 
+         msg->primitive() == BFCP_FLOOR_REQUEST ||
+         msg->primitive() == BFCP_FLOOR_RELEASE);
+  LOG_INFO << "Reply with FloorRequestStatus to " << msg->toString();
   sendReplyInLoop(
     boost::bind(&build_msg_FloorRequestStatus, _1, true, _2, _3, _4),
     msg,
     frqInfo);
 }
 
-void BfcpConnection::replyWithFloorStatusInLoop(const BfcpMsg &msg,
+void BfcpConnection::replyWithFloorStatusInLoop(const BfcpMsgPtr &msg,
                                                 const FloorStatusParam &floorStatus)
 {
-  assert(msg.primitive() == BFCP_FLOOR_QUERY);
-  LOG_INFO << "Reply with FloorStatus to " << msg.toString();
+  assert(msg->primitive() == BFCP_FLOOR_QUERY);
+  LOG_INFO << "Reply with FloorStatus to " << msg->toString();
   sendReplyInLoop(
     boost::bind(&build_msg_FloorStatus, _1, true, _2, _3, _4),
     msg, 
@@ -465,11 +465,11 @@ void BfcpConnection::replyWithFloorStatusInLoop(const BfcpMsg &msg,
 }
 
 template <typename BuildMsgFunc>
-void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg &msg)
+void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsgPtr &msg)
 {
   loop_->assertInLoopThread();
-  assert(msg.valid());
-  assert(!msg.isResponse());
+  assert(msg->valid());
+  assert(!msg->isResponse());
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -479,22 +479,22 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc, const BfcpMsg
     LOG_SYSFATAL << "No enough memory to build BFCP message";
   }
 
-  bfcp_entity entity =  msg.getEntity();
-  int err = buildFunc(msgBuf, msg.getVersion(), entity);
+  bfcp_entity entity =  msg->getEntity();
+  int err = buildFunc(msgBuf, msg->getVersion(), entity);
   // FIXME: check error
   (void)(err);
 
-  startNewServerTransaction(msg.getSrc(), entity, msg.primitive(), msgBuf);
+  startNewServerTransaction(msg->getSrc(), entity, msg->primitive(), msgBuf);
 }
 
 template <typename BuildMsgFunc, typename ExtParam>
 void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc,
-                                           const BfcpMsg &msg,
+                                           const BfcpMsgPtr &msg,
                                            const ExtParam &extParam)
 {
   loop_->assertInLoopThread();
-  assert(msg.valid());
-  assert(!msg.isResponse());
+  assert(msg->valid());
+  assert(!msg->isResponse());
 
   mbuf_t *msgBuf = mbuf_alloc(BFCP_MBUF_SIZE);
   detail::AutoDeref derefer(msgBuf);
@@ -504,12 +504,12 @@ void bfcp::BfcpConnection::sendReplyInLoop(BuildMsgFunc buildFunc,
     LOG_SYSFATAL << "No enough memory to build BFCP message";
   }
 
-  bfcp_entity entity =  msg.getEntity();
-  int err = buildFunc(msgBuf, msg.getVersion(), entity, extParam);
+  bfcp_entity entity =  msg->getEntity();
+  int err = buildFunc(msgBuf, msg->getVersion(), entity, extParam);
   // FIXME: check error
   (void)(err);
 
-  startNewServerTransaction(msg.getSrc(), entity, msg.primitive(), msgBuf);
+  startNewServerTransaction(msg->getSrc(), entity, msg->primitive(), msgBuf);
 }
 
 void BfcpConnection::startNewServerTransaction(const muduo::net::InetAddress &dst,

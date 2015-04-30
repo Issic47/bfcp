@@ -42,7 +42,7 @@ public:
   > FloorRequestExpiredCallback;
   
   typedef boost::function<
-    void (uint32_t, bfcp_prim, uint16_t, ResponseError, const BfcpMsg&)
+    void (uint32_t, bfcp_prim, uint16_t, ResponseError, const BfcpMsgPtr&)
   > ClientResponseCallback;
 
 public:
@@ -91,12 +91,12 @@ public:
   void setClientReponseCallback(ClientResponseCallback &&cb)
   { clientReponseCallback_ = std::move(cb); }
 
-  void onNewRequest(const BfcpMsg &msg);
+  void onNewRequest(const BfcpMsgPtr &msg);
   void onResponse(
     bfcp_prim expectedPrimitive,
     uint16_t userID,
     ResponseError err, 
-    const BfcpMsg &msg);
+    const BfcpMsgPtr &msg);
   void onTimeoutForChairAction(uint16_t floorRequestID);
   void onTimeoutForHoldingFloors(uint16_t floorRequestID);
 
@@ -104,47 +104,47 @@ private:
   typedef std::list<FloorRequestNodePtr> FloorRequestQueue;
 
   void initRequestHandlers();
-  void handleFloorRequest(const BfcpMsg &msg);
-  void handleFloorRelease(const BfcpMsg &msg);
-  void handleFloorRequestQuery(const BfcpMsg &msg);
-  void handleUserQuery(const BfcpMsg &msg);
-  void handleFloorQuery(const BfcpMsg &msg);
-  void handleChairAction(const BfcpMsg &msg);
-  void handleHello(const BfcpMsg &msg); 
-  void handleGoodbye(const BfcpMsg &msg);
+  void handleFloorRequest(const BfcpMsgPtr &msg);
+  void handleFloorRelease(const BfcpMsgPtr &msg);
+  void handleFloorRequestQuery(const BfcpMsgPtr &msg);
+  void handleUserQuery(const BfcpMsgPtr &msg);
+  void handleFloorQuery(const BfcpMsgPtr &msg);
+  void handleChairAction(const BfcpMsgPtr &msg);
+  void handleHello(const BfcpMsgPtr &msg); 
+  void handleGoodbye(const BfcpMsgPtr &msg);
 
   UserPtr findUser(uint16_t userID);
   FloorPtr findFloor(uint16_t floorID);
 
   bool isChair(uint16_t userID) const;
-  bool checkUserID(const BfcpMsg &msg, uint16_t userID);
-  bool checkFloorID(const BfcpMsg &msg, uint16_t floorID);
-  bool checkFloorIDs(const BfcpMsg &msg, const bfcp_floor_id_list &floorIDs);
-  bool checkFloorChair(const BfcpMsg &msg, uint16_t floorID, uint16_t userID);
-  bool checkUnknownAttrs(const BfcpMsg &msg);
+  bool checkUserID(const BfcpMsgPtr &msg, uint16_t userID);
+  bool checkFloorID(const BfcpMsgPtr &msg, uint16_t floorID);
+  bool checkFloorIDs(const BfcpMsgPtr &msg, const bfcp_floor_id_list &floorIDs);
+  bool checkFloorChair(const BfcpMsgPtr &msg, uint16_t floorID, uint16_t userID);
+  bool checkUnknownAttrs(const BfcpMsgPtr &msg);
 
   bool checkFloorRequestInfo(
-    const BfcpMsg &msg,
+    const BfcpMsgPtr &msg,
     const bfcp_floor_request_info &info);
   bool checkFloorsInFloorRequest(
-    const BfcpMsg &msg, 
+    const BfcpMsgPtr &msg, 
     FloorRequestNodePtr &floorRequest, 
     const bfcp_floor_request_status_list &fRS);
 
   FloorRequestNodePtr checkFloorRequestInPendingQueue(
-    const BfcpMsg &msg, uint16_t floorRequestID);
+    const BfcpMsgPtr &msg, uint16_t floorRequestID);
   FloorRequestNodePtr checkFloorRequestInGrantedQueue(
-    const BfcpMsg &msg, uint16_t floorRequestID);
+    const BfcpMsgPtr &msg, uint16_t floorRequestID);
 
   void notifyFloorAndRequestInfo(const FloorRequestNodePtr &floorRequest);
   void notifyWithFloorRequestStatus(const FloorRequestNodePtr &floorRequest);
   void notifyWithFloorStatus(uint16_t floorID);
   void notifyWithFloorStatus(uint16_t userID, uint16_t floorID);
 
-  void replyWithError(const BfcpMsg &msg, bfcp_err err, const char *errInfo);
-  void replyWithFloorStatus(const BfcpMsg &msg, const uint16_t *floorID);
+  void replyWithError(const BfcpMsgPtr &msg, bfcp_err err, const char *errInfo);
+  void replyWithFloorStatus(const BfcpMsgPtr &msg, const uint16_t *floorID);
   void replyWithFloorRequestStatus(
-    const BfcpMsg &msg, 
+    const BfcpMsgPtr &msg, 
     FloorRequestNodePtr &floorRequest);
 
   void insertFloorRequestToPendingQueue(FloorRequestNodePtr &floorRequest);
@@ -170,13 +170,13 @@ private:
   void releaseFloorRequestsFromGrantedByUserID(uint16_t userID);
 
   void acceptFloorRequest(
-    const BfcpMsg &msg,
+    const BfcpMsgPtr &msg,
     const bfcp_floor_request_info &info);
   void denyFloorRequest(
-    const BfcpMsg &msg,
+    const BfcpMsgPtr &msg,
     const bfcp_floor_request_info &info);
   void revokeFloorRequest(
-    const BfcpMsg &msg,
+    const BfcpMsgPtr &msg,
     const bfcp_floor_request_info &info);
 
   bool tryToAcceptFloorRequestsWithFloor(FloorPtr &floor);
@@ -185,7 +185,7 @@ private:
   bool tryToGrantFloor(FloorRequestNodePtr &floorRequest, FloorPtr &floor);
   bool tryToGrantFloorRequestWithAllFloors(FloorRequestNodePtr &floorRequest);
 
-  bool parseFloorRequestParam(FloorRequestParam &param, const BfcpMsg &msg);
+  bool parseFloorRequestParam(FloorRequestParam &param, const BfcpMsgPtr &msg);
 
   FloorStatusParam getFloorStatusParam(uint16_t floorID) const;
 
@@ -226,7 +226,7 @@ private:
     const FloorRequestExpiredCallback &cb);
 
 private:
-  typedef boost::function<void (const BfcpMsg&)> Handler;
+  typedef boost::function<void (const BfcpMsgPtr&)> Handler;
   typedef std::unordered_map<int, Handler> HandlerDict;
 
   muduo::net::EventLoop *loop_;

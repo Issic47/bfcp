@@ -198,7 +198,7 @@ bool BfcpConnection::tryHandleRequest(const BfcpMsg &msg)
   entry.prim = msg.primitive();
   entry.entity = msg.getEntity();
 
-  for (auto bucket : cachedReplys_)
+  for (auto &bucket : cachedReplys_)
   {
     auto it = bucket.find(entry);
     if (it != bucket.end())

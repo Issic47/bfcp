@@ -4,6 +4,7 @@
 #include <set>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <muduo/net/Buffer.h>
 #include <muduo/net/InetAddress.h>
@@ -61,7 +62,11 @@ private:
   mbuf_t *buf_;
 };
 
-class BfcpMsg : public muduo::copyable // FIXME: BfcpMsg should be noncopyable
+
+class BfcpMsg;
+typedef boost::shared_ptr<BfcpMsg> BfcpMsgPtr;
+
+class BfcpMsg : boost::noncopyable
 {
 public:
   BfcpMsg() 
@@ -73,16 +78,6 @@ public:
   BfcpMsg(muduo::net::Buffer *buf, 
           const muduo::net::InetAddress &src, 
           muduo::Timestamp receivedTime);
-  
-  BfcpMsg(const BfcpMsg &other) 
-   : msg_(other.msg_), 
-     err_(other.err_),
-     receivedTime_(other.receivedTime_),
-     fragments_(other.fragments_),
-     isComplete_(other.isComplete_)
-  {
-    mem_ref(other.msg_);
-  }
   
   ~BfcpMsg() { 
     mem_deref(msg_); 
@@ -129,27 +124,14 @@ public:
     return entity;
   }
 
-  BfcpMsg& operator=(const BfcpMsg &other)
-  {
-    mem_ref(other.msg_);
-    mem_deref(msg_);
-    msg_ = other.msg_;
-    err_ = other.err_;
-    receivedTime_ = other.receivedTime_;
-    fragments_ = other.fragments_;
-    isComplete_ = other.isComplete_;
-
-    return *this;
-  }
-
   string toString() const;
   string toStringInDetail() const;
 
-  void addFragment(const BfcpMsg &msg);
+  void addFragment(const BfcpMsgPtr &msg);
   bool isComplete() const { return isComplete_; }
 
 private:
-  bool canMergeWith(const BfcpMsg &msg) const;
+  bool canMergeWith(const BfcpMsgPtr &msg) const;
   bool checkComplete();
   void mergeFragments();
 
@@ -167,9 +149,11 @@ private:
   int err_;
   muduo::Timestamp receivedTime_;
  
-  boost::shared_ptr<FragmentSet> fragments_;
+  FragmentSet fragments_;
   bool isComplete_;
 };
+
+
 
 } // namespace bfcp
 

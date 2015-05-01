@@ -801,25 +801,25 @@ void Conference::notifyWithFloorRequestStatus(
   }
 }
 
-void Conference::onNewRequest( const BfcpMsg &msg )
+void Conference::onNewRequest( const BfcpMsgPtr &msg )
 {
-  LOG_TRACE << "Conference received new request " << msg.toString();
-  assert(msg.valid());
-  assert(!msg.isResponse());
-  assert(msg.getConferenceID() == conferenceID_);
+  LOG_TRACE << "Conference received new request " << msg->toString();
+  assert(msg->valid());
+  assert(!msg->isResponse());
+  assert(msg->getConferenceID() == conferenceID_);
 
-  if (checkUnknownAttrs(msg) && checkUserID(msg, msg.getUserID()))
+  if (checkUnknownAttrs(msg) && checkUserID(msg, msg->getUserID()))
   {
-    auto user = findUser(msg.getUserID());
+    auto user = findUser(msg->getUserID());
     assert(user);
     if (!isUserAvailable(user))
     {
       user->setAvailable(true);
-      user->setAddr(msg.getSrc());
+      user->setAddr(msg->getSrc());
     }
-    user->setActiveTime(msg.getReceivedTime());
+    user->setActiveTime(msg->getReceivedTime());
 
-    bfcp_prim prim = msg.primitive();
+    bfcp_prim prim = msg->primitive();
     auto it = requestHandler_.find(prim);
     if (it != requestHandler_.end())
     {
@@ -847,9 +847,9 @@ bool Conference::isUserAvailable( const UserPtr &user ) const
   return true;
 }
 
-bool Conference::checkUnknownAttrs( const BfcpMsg &msg )
+bool Conference::checkUnknownAttrs( const BfcpMsgPtr &msg )
 {
-  auto &unknownAttrs = msg.getUnknownAttrs();
+  auto &unknownAttrs = msg->getUnknownAttrs();
   if (unknownAttrs.typec > 0)
   {
     bfcp_errcode_t errcode;
@@ -865,21 +865,21 @@ bool Conference::checkUnknownAttrs( const BfcpMsg &msg )
   return true;
 }
 
-bool Conference::checkUserID( const BfcpMsg &msg, uint16_t userID )
+bool Conference::checkUserID( const BfcpMsgPtr &msg, uint16_t userID )
 {
   if (!findUser(userID))
   {
     char errorInfo[128];
     snprintf(errorInfo, sizeof errorInfo, 
       "User %hu does not exist in Conference %u",
-      userID, msg.getConferenceID());
+      userID, msg->getConferenceID());
     replyWithError(msg, BFCP_USER_NOT_EXIST, errorInfo);
     return false;
   }
   return true;
 }
 
-void Conference::replyWithError(const BfcpMsg &msg, 
+void Conference::replyWithError(const BfcpMsgPtr &msg, 
                                 bfcp_err err, 
                                 const char *errInfo)
 {
@@ -889,9 +889,9 @@ void Conference::replyWithError(const BfcpMsg &msg,
   connection_->replyWithError(msg, param);
 }
 
-void Conference::handleHello( const BfcpMsg &msg )
+void Conference::handleHello( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_HELLO);
+  assert(msg->primitive() == BFCP_HELLO);
 
   HelloAckParam param;
   // set supported primitives
@@ -910,26 +910,26 @@ void Conference::handleHello( const BfcpMsg &msg )
   connection_->replyWithHelloAck(msg, param);
 }
 
-void Conference::handleGoodbye( const BfcpMsg &msg )
+void Conference::handleGoodbye( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_GOODBYE);
+  assert(msg->primitive() == BFCP_GOODBYE);
   
   connection_->replyWithGoodbyeAck(msg);
 
-  auto user = findUser(msg.getUserID());
+  auto user = findUser(msg->getUserID());
   assert(user);
   user->setAvailable(false);
   user->clearAllSendMessageTasks();
 }
 
-void Conference::handleFloorRequest( const BfcpMsg &msg )
+void Conference::handleFloorRequest( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQUEST);
+  assert(msg->primitive() == BFCP_FLOOR_REQUEST);
 
   FloorRequestParam param;
   if (!parseFloorRequestParam(param, msg)) return;
 
-  auto user = findUser(msg.getUserID());
+  auto user = findUser(msg->getUserID());
   assert(user);
   auto beneficiaryUser = user;
   if (param.hasBeneficiaryID)
@@ -943,7 +943,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
 
   FloorRequestNodePtr newFloorRequest = 
     boost::make_shared<FloorRequestNode>(
-      nextFloorRequestID_++, msg.getUserID(), param);
+      nextFloorRequestID_++, msg->getUserID(), param);
 
   for (auto &floorNode : newFloorRequest->getFloorNodeList())
   {
@@ -984,7 +984,7 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
   // insert to the pending queue
   insertFloorRequestToPendingQueue(newFloorRequest);
   replyWithFloorRequestStatus(msg, newFloorRequest);
-  newFloorRequest->addQueryUser(msg.getUserID());
+  newFloorRequest->addQueryUser(msg->getUserID());
 
   // handle chair part
   bool needChairAction = false;
@@ -1026,9 +1026,9 @@ void Conference::handleFloorRequest( const BfcpMsg &msg )
   }
 }
 
-bool Conference::parseFloorRequestParam(FloorRequestParam &param, const BfcpMsg &msg)
+bool Conference::parseFloorRequestParam(FloorRequestParam &param, const BfcpMsgPtr &msg)
 {
-  param.floorIDs = msg.getFloorIDs();
+  param.floorIDs = msg->getFloorIDs();
   if (param.floorIDs.empty())
   {
     replyWithError(msg, BFCP_PARSE_ERROR, 
@@ -1036,7 +1036,7 @@ bool Conference::parseFloorRequestParam(FloorRequestParam &param, const BfcpMsg 
     return false;
   }
 
-  auto attr = msg.findAttribute(BFCP_BENEFICIARY_ID);
+  auto attr = msg->findAttribute(BFCP_BENEFICIARY_ID);
   if (attr)
   {
     BfcpAttr beneficiaryIDAttr(*attr);
@@ -1044,14 +1044,14 @@ bool Conference::parseFloorRequestParam(FloorRequestParam &param, const BfcpMsg 
     param.beneficiaryID = beneficiaryIDAttr.getBeneficiaryID();
   }
 
-  attr = msg.findAttribute(BFCP_PART_PROV_INFO);
+  attr = msg->findAttribute(BFCP_PART_PROV_INFO);
   if (attr)
   {
     BfcpAttr partProvInfo(*attr);
     detail::setString(param.pInfo, partProvInfo.getParticipantProvidedInfo());
   }
 
-  attr = msg.findAttribute(BFCP_PRIORITY);
+  attr = msg->findAttribute(BFCP_PRIORITY);
   if (attr)
   {
     BfcpAttr priorityAttr(*attr);
@@ -1074,7 +1074,7 @@ bool Conference::isChair( uint16_t userID ) const
   return false;
 }
 
-bool Conference::checkFloorIDs( const BfcpMsg &msg, const bfcp_floor_id_list &floorIDs )
+bool Conference::checkFloorIDs( const BfcpMsgPtr &msg, const bfcp_floor_id_list &floorIDs )
 {
   for (auto floorID : floorIDs)
   {
@@ -1086,7 +1086,7 @@ bool Conference::checkFloorIDs( const BfcpMsg &msg, const bfcp_floor_id_list &fl
   return true;
 }
 
-bool Conference::checkFloorID( const BfcpMsg &msg, uint16_t floorID )
+bool Conference::checkFloorID( const BfcpMsgPtr &msg, uint16_t floorID )
 {
   if (!findFloor(floorID))
   {
@@ -1101,7 +1101,7 @@ bool Conference::checkFloorID( const BfcpMsg &msg, uint16_t floorID )
 }
 
 void Conference::replyWithFloorRequestStatus(
-  const BfcpMsg &msg, FloorRequestNodePtr &floorRequest)
+  const BfcpMsgPtr &msg, FloorRequestNodePtr &floorRequest)
 {
   FloorRequestInfoParam param = 
     floorRequest->toFloorRequestInfoParam(users_);
@@ -1171,11 +1171,11 @@ void Conference::onTimeoutForChairAction( uint16_t floorRequestID )
   notifyFloorAndRequestInfo(floorRequest);
 }
 
-void Conference::handleFloorRelease( const BfcpMsg &msg )
+void Conference::handleFloorRelease( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_RELEASE);
+  assert(msg->primitive() == BFCP_FLOOR_RELEASE);
   
-  auto attr = msg.findAttribute(BFCP_FLOOR_REQUEST_ID);
+  auto attr = msg->findAttribute(BFCP_FLOOR_REQUEST_ID);
   if (!attr)
   {
     replyWithError(msg, BFCP_PARSE_ERROR, 
@@ -1191,7 +1191,7 @@ void Conference::handleFloorRelease( const BfcpMsg &msg )
 
   // FIXME: reply with error BFCP_UNAUTH_OPERATION if user ID not matched?
   FloorRequestNodePtr floorRequest = 
-    removeFloorRequest(floorRequestID, msg.getUserID());
+    removeFloorRequest(floorRequestID, msg->getUserID());
   if (!floorRequest)
   {
     char errorInfo[128];
@@ -1204,7 +1204,7 @@ void Conference::handleFloorRelease( const BfcpMsg &msg )
 
   // reply the releaser about the floor request status of the release request
   replyWithFloorRequestStatus(msg, floorRequest);
-  floorRequest->removeQueryUser(msg.getUserID());
+  floorRequest->removeQueryUser(msg->getUserID());
   // notify the interested users
   notifyWithFloorRequestStatus(floorRequest);
 
@@ -1295,11 +1295,11 @@ bool Conference::revokeFloorsFromFloorRequest(FloorRequestNodePtr &floorRequest)
   return hasRevokeFloor;
 }
 
-void Conference::handleChairAction( const BfcpMsg &msg )
+void Conference::handleChairAction( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_CHAIR_ACTION);
+  assert(msg->primitive() == BFCP_CHAIR_ACTION);
 
-  auto attr = msg.findAttribute(BFCP_FLOOR_REQ_INFO);
+  auto attr = msg->findAttribute(BFCP_FLOOR_REQ_INFO);
   if (!attr)
   {
     replyWithError(msg, BFCP_PARSE_ERROR, 
@@ -1329,7 +1329,7 @@ void Conference::handleChairAction( const BfcpMsg &msg )
 }
 
 bool Conference::checkFloorRequestInfo(
-  const BfcpMsg &msg, const bfcp_floor_request_info &info)
+  const BfcpMsgPtr &msg, const bfcp_floor_request_info &info)
 {
   if (info.fRS.empty())
   {
@@ -1367,7 +1367,7 @@ bool Conference::checkFloorRequestInfo(
   for (auto &floorReqStatus : info.fRS)
   {
     if (!(checkFloorID(msg, floorReqStatus.floorID) && 
-          checkFloorChair(msg, floorReqStatus.floorID, msg.getUserID())))
+          checkFloorChair(msg, floorReqStatus.floorID, msg->getUserID())))
     {
       return false;
     }
@@ -1376,7 +1376,7 @@ bool Conference::checkFloorRequestInfo(
 }
 
 bool Conference::checkFloorChair(
-  const BfcpMsg &msg, uint16_t floorID, uint16_t userID)
+  const BfcpMsgPtr &msg, uint16_t floorID, uint16_t userID)
 {
   auto floor = findFloor(floorID);
   assert(floor);
@@ -1393,7 +1393,7 @@ bool Conference::checkFloorChair(
 }
 
 void Conference::acceptFloorRequest(
-  const BfcpMsg &msg, const bfcp_floor_request_info &info)
+  const BfcpMsgPtr &msg, const bfcp_floor_request_info &info)
 {
   assert(info.oRS.requestStatus);
   assert(info.oRS.requestStatus->status == BFCP_ACCEPTED);
@@ -1429,7 +1429,7 @@ void Conference::acceptFloorRequest(
 }
 
 void Conference::denyFloorRequest(
-  const BfcpMsg &msg, const bfcp_floor_request_info &info)
+  const BfcpMsgPtr &msg, const bfcp_floor_request_info &info)
 {
   assert(info.oRS.requestStatus);
   assert(info.oRS.requestStatus->status == BFCP_DENIED);
@@ -1462,7 +1462,7 @@ void Conference::denyFloorRequest(
 }
 
 FloorRequestNodePtr Conference::checkFloorRequestInPendingQueue(
-  const BfcpMsg &msg, uint16_t floorRequestID)
+  const BfcpMsgPtr &msg, uint16_t floorRequestID)
 {
   auto floorRequest = findFloorRequest(pending_, floorRequestID);
   if (!floorRequest)
@@ -1486,7 +1486,7 @@ FloorRequestNodePtr Conference::findFloorRequest(
 }
 
 bool Conference::checkFloorsInFloorRequest(
-  const BfcpMsg &msg, 
+  const BfcpMsgPtr &msg, 
   FloorRequestNodePtr &floorRequest, 
   const bfcp_floor_request_status_list &fRS)
 {
@@ -1506,7 +1506,7 @@ bool Conference::checkFloorsInFloorRequest(
 }
 
 void Conference::revokeFloorRequest(
-  const BfcpMsg &msg, const bfcp_floor_request_info &info)
+  const BfcpMsgPtr &msg, const bfcp_floor_request_info &info)
 {
   assert(info.oRS.requestStatus);
   assert(info.oRS.requestStatus->status == BFCP_REVOKED);
@@ -1539,7 +1539,7 @@ void Conference::revokeFloorRequest(
 }
 
 FloorRequestNodePtr Conference::checkFloorRequestInGrantedQueue( 
-  const BfcpMsg &msg, uint16_t floorRequestID)
+  const BfcpMsgPtr &msg, uint16_t floorRequestID)
 {
   auto floorRequest = findFloorRequest(granted_, floorRequestID);
   if (!floorRequest)
@@ -1554,10 +1554,10 @@ FloorRequestNodePtr Conference::checkFloorRequestInGrantedQueue(
   return floorRequest;
 }
 
-void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
+void Conference::handleFloorRequestQuery( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_REQUEST_QUERY);
-  auto attr = msg.findAttribute(BFCP_FLOOR_REQUEST_ID);
+  assert(msg->primitive() == BFCP_FLOOR_REQUEST_QUERY);
+  auto attr = msg->findAttribute(BFCP_FLOOR_REQUEST_ID);
   if (!attr)
   {
     replyWithError(msg, BFCP_PARSE_ERROR,
@@ -1589,22 +1589,22 @@ void Conference::handleFloorRequestQuery( const BfcpMsg &msg )
   }
 
   replyWithFloorRequestStatus(msg, floorRequest);
-  LOG_INFO << "Add Query User " << msg.getUserID() 
+  LOG_INFO << "Add Query User " << msg->getUserID() 
            << " to FloorRequest " << floorRequestID
            << " in Conference " << conferenceID_;
-  floorRequest->addQueryUser(msg.getUserID()); 
+  floorRequest->addQueryUser(msg->getUserID()); 
 }
 
-void Conference::handleUserQuery( const BfcpMsg &msg )
+void Conference::handleUserQuery( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_USER_QUERY);
+  assert(msg->primitive() == BFCP_USER_QUERY);
   UserStatusParam param;
 
   UserPtr user;
-  auto attr = msg.findAttribute(BFCP_BENEFICIARY_ID);
+  auto attr = msg->findAttribute(BFCP_BENEFICIARY_ID);
   if (!attr)
   {
-    user = findUser(msg.getUserID());
+    user = findUser(msg->getUserID());
   }
   else
   {
@@ -1650,11 +1650,11 @@ void Conference::getFloorRequestInfoParamsByUserID(
   }
 }
 
-void Conference::handleFloorQuery( const BfcpMsg &msg )
+void Conference::handleFloorQuery( const BfcpMsgPtr &msg )
 {
-  assert(msg.primitive() == BFCP_FLOOR_QUERY);
-  uint16_t userID = msg.getUserID();
-  auto floorIDs = msg.getFloorIDs();
+  assert(msg->primitive() == BFCP_FLOOR_QUERY);
+  uint16_t userID = msg->getUserID();
+  auto floorIDs = msg->getFloorIDs();
   // first clear the floor query of the user
   for (auto floor : floors_)
   {
@@ -1668,7 +1668,7 @@ void Conference::handleFloorQuery( const BfcpMsg &msg )
     auto floor = findFloor(floorID);
     if (floor)
     {
-      LOG_INFO << "Add Query User " << msg.getUserID() 
+      LOG_INFO << "Add Query User " << msg->getUserID() 
                << " to Floor " << floorID
                << " in Conference " << conferenceID_;
       floor->addQueryUser(userID);
@@ -1706,7 +1706,7 @@ void Conference::handleFloorQuery( const BfcpMsg &msg )
   }
 }
 
-void Conference::replyWithFloorStatus(const BfcpMsg &msg, const uint16_t *floorID)
+void Conference::replyWithFloorStatus(const BfcpMsgPtr &msg, const uint16_t *floorID)
 {
   FloorStatusParam param;
   if (floorID)
@@ -1760,7 +1760,7 @@ void Conference::getFloorRequestInfoParamsByFloorID(
 void Conference::onResponse(bfcp_prim expectedPrimitive,
                             uint16_t userID,
                             ResponseError err, 
-                            const BfcpMsg &msg)
+                            const BfcpMsgPtr &msg)
 {
   auto user = findUser(userID);
   if (!user)
@@ -1781,15 +1781,15 @@ void Conference::onResponse(bfcp_prim expectedPrimitive,
   }
   else
   {
-    assert(msg.valid());
-    assert(msg.getUserID() == userID);
+    assert(msg->valid());
+    assert(msg->getUserID() == userID);
     // FIXME: currently treat unexpected primitive as ACK
-    if (msg.primitive() != expectedPrimitive)
+    if (msg->primitive() != expectedPrimitive)
     {
       LOG_ERROR << "Expected BFCP " << bfcp_prim_name(expectedPrimitive) 
-                << " but get " << bfcp_prim_name(msg.primitive());
+                << " but get " << bfcp_prim_name(msg->primitive());
     }
-    user->setActiveTime(msg.getReceivedTime());
+    user->setActiveTime(msg->getReceivedTime());
     if (isUserAvailable(user))
     {
       user->runNextSendMessageTask();

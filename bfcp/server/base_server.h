@@ -126,14 +126,14 @@ private:
                  muduo::Timestamp time);
   void onWriteComplete(const muduo::net::UdpSocketPtr& socket, int messageId);
 
-  void onNewRequest(const BfcpMsg &msg);
+  void onNewRequest(const BfcpMsgPtr &msg);
 
   void onResponse(
     uint32_t conferenceID, 
     bfcp_prim expectedPrimitive, 
     uint16_t userID,
     ResponseError err, 
-    const BfcpMsg &msg);
+    const BfcpMsgPtr &msg);
 
   void onChairActionTimeout(
     uint32_t conferenceID,

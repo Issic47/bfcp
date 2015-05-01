@@ -492,28 +492,28 @@ void BaseServer::runTask(Func func,
   }
 }
 
-void BaseServer::onNewRequest( const BfcpMsg &msg )
+void BaseServer::onNewRequest( const BfcpMsgPtr &msg )
 {
-  LOG_TRACE << "BfcpServer received new request " << msg.toString();
+  LOG_TRACE << "BfcpServer received new request " << msg->toString();
   connectionLoop_->assertInLoopThread();
-  auto it = conferenceMap_.find(msg.getConferenceID());
+  auto it = conferenceMap_.find(msg->getConferenceID());
   if (it == conferenceMap_.end()) // conference not found
   {
     LOG_WARN << "Received new request for not existed conference " 
-             << msg.getConferenceID();
+             << msg->getConferenceID();
 
     ErrorParam param;
     param.errorCode.code = BFCP_CONF_NOT_EXIST;
     char errorInfo[64];
     snprintf(errorInfo, sizeof errorInfo, 
-      "Conference %u does not exist", msg.getConferenceID());
+      "Conference %u does not exist", msg->getConferenceID());
     param.setErrorInfo(errorInfo);
     connection_->replyWithError(msg, param);
   }
   else // conference found
   {
     int res = threadPool_->run(
-      msg.getConferenceID(), 
+      msg->getConferenceID(), 
       boost::bind(&Conference::onNewRequest, (*it).second, msg),
       ThreadPool::kNormalPriority);
     (void)(res);
@@ -525,7 +525,7 @@ void BaseServer::onResponse(uint32_t conferenceID,
                             bfcp_prim expectedPrimitive, 
                             uint16_t userID,
                             ResponseError err, 
-                            const BfcpMsg &msg)
+                            const BfcpMsgPtr &msg)
 {
   LOG_TRACE << "BfcpServer received response";
   connectionLoop_->assertInLoopThread();

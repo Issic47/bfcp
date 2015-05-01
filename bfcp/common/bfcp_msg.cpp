@@ -41,8 +41,7 @@ BfcpMsg::BfcpMsg(muduo::net::Buffer *buf,
   isComplete_ = !valid() || !msg_->f;
   if (valid() && msg_->f)
   {
-    fragments_.reset(new FragmentSet());
-    fragments_->emplace(msg_->fragoffset, msg_->fraglen, msg_->fragdata);
+    fragments_.emplace(msg_->fragoffset, msg_->fraglen, msg_->fragdata);
   }
 }
 
@@ -113,18 +112,18 @@ string BfcpMsg::toStringInDetail() const
   return str;
 }
 
-void BfcpMsg::addFragment( const BfcpMsg &msg )
+void BfcpMsg::addFragment( const BfcpMsgPtr &msg )
 {
-  assert(this != &msg);
+  assert(this != &(*msg));
   if (!valid() || !canMergeWith(msg))
   {
-    LOG_WARN << "Cannot merge fragment: " << msg.toString();
+    LOG_WARN << "Cannot merge fragment: " << msg->toString();
     err_ = EBADMSG;
     return;
   }
   
-  fragments_->emplace(
-    msg.msg_->fragoffset, msg.msg_->fraglen, msg.msg_->fragdata);
+  fragments_.emplace(
+    msg->msg_->fragoffset, msg->msg_->fraglen, msg->msg_->fragdata);
 
   if (checkComplete())
   {
@@ -132,19 +131,19 @@ void BfcpMsg::addFragment( const BfcpMsg &msg )
   }
 }
 
-bool BfcpMsg::canMergeWith( const BfcpMsg &msg ) const
+bool BfcpMsg::canMergeWith( const BfcpMsgPtr &msg ) const
 {
-  return (isFragment() && msg.isFragment()) &&
-         getEntity() == msg.getEntity() &&
-         primitive() == msg.primitive() &&
-         msg_->len == msg.msg_->len &&
-         isResponse() == msg.isResponse();
+  return (isFragment() && msg->isFragment()) &&
+         getEntity() == msg->getEntity() &&
+         primitive() == msg->primitive() &&
+         msg_->len == msg->msg_->len &&
+         isResponse() == msg->isResponse();
 }
 
 bool BfcpMsg::checkComplete()
 {
   isComplete_ = false;
-  auto it = fragments_->begin();
+  auto it = fragments_.begin();
   if ((*it).getOffset() != 0)
   {
     return false;
@@ -153,7 +152,7 @@ bool BfcpMsg::checkComplete()
   auto nextIt = it;
   ++nextIt;
   size_t len = it->getLen();
-  for (; nextIt != fragments_->end(); ++it, ++nextIt)
+  for (; nextIt != fragments_.end(); ++it, ++nextIt)
   {
     size_t offsetEnd = (*it).getOffset() + (*it).getLen();
     if (offsetEnd < (*nextIt).getOffset())
@@ -194,7 +193,7 @@ void BfcpMsg::mergeFragments()
   mb.end = 0;
   mb.size = sizeof buf;
 
-  for (auto &fragment : *fragments_)
+  for (auto &fragment : fragments_)
   {
     mbuf_t *fragBuf = fragment.getBuf();
     err_ = mbuf_write_mem(&mb, fragBuf->buf, fragBuf->end);
@@ -202,7 +201,7 @@ void BfcpMsg::mergeFragments()
   }
   mb.pos = 0;
   err_ = bfcp_attrs_decode(&msg_->attrl, &mb, 4 * msg_->len, &msg_->uma);
-  fragments_->clear();
+  fragments_.clear();
 }
 
 } // namespace bfcp

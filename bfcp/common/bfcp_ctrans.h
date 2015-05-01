@@ -42,7 +42,7 @@ public:
   // no thread safe
   void start();
   // no thread safe
-  void onResponse(ResponseError err, const BfcpMsg &msg);
+  void onResponse(ResponseError err, const BfcpMsgPtr &msg);
 
   const bfcp_entity& getEntity() const { return entity_; }
 

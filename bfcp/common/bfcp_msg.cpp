@@ -122,11 +122,17 @@ void BfcpMsg::addFragment( const BfcpMsgPtr &msg )
     return;
   }
   
-  fragments_.emplace(
-    msg->msg_->fragoffset, msg->msg_->fraglen, msg->msg_->fragdata);
-
-  if (checkComplete())
+  if (!isComplete_ && holes_.empty()) 
   {
+    holes_.emplace_back(0, getLength() - 1);
+    doAddFragment(this);
+  }
+
+  doAddFragment(&(*msg));
+
+  if (holes_.empty()) 
+  {
+    isComplete_ = true;
     mergeFragments();
   }
 }
@@ -136,8 +142,42 @@ bool BfcpMsg::canMergeWith( const BfcpMsgPtr &msg ) const
   return (isFragment() && msg->isFragment()) &&
          getEntity() == msg->getEntity() &&
          primitive() == msg->primitive() &&
-         msg_->len == msg->msg_->len &&
+         getLength() == msg->getLength() &&
          isResponse() == msg->isResponse();
+}
+
+void BfcpMsg::doAddFragment(const BfcpMsg *msg)
+{
+  bool isInHole = false;
+  uint16_t fragOffset = msg->msg_->fragoffset;
+  uint16_t fragBack = fragOffset + msg->msg_->fraglen - 1;
+  for (auto it = holes_.begin(); it != holes_.end(); ++it)
+  {
+    if ((*it).front <= fragOffset && fragBack <= (*it).back) 
+    {
+      isInHole = true;
+      if ((*it).front < fragOffset) 
+      {
+        holes_.emplace_back((*it).front, fragOffset - 1);
+      }
+      if (fragBack < (*it).back)
+      {
+        holes_.emplace_back(fragBack + 1, (*it).back);
+      }
+      it = holes_.erase(it);
+      break;
+    }
+  }
+
+  if (!isInHole) 
+  {
+    LOG_WARN << "Ignore fragment not in the hole: " << msg->toString();
+  } 
+  else 
+  {
+    fragments_.emplace(
+      msg->msg_->fragoffset, msg->msg_->fraglen, msg->msg_->fragdata);
+  }
 }
 
 bool BfcpMsg::checkComplete()

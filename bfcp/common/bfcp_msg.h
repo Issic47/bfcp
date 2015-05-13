@@ -17,6 +17,15 @@
 namespace bfcp
 {
 
+struct Hole
+{
+  Hole(uint16_t f, uint16_t b) : front(f), back(b) {}
+
+  uint16_t front; // in 4-octet unit
+  uint16_t back; // in 4-octet unit
+};
+typedef std::list<Hole> HoleList;
+
 class Fragment : public muduo::copyable
 {
 public:
@@ -141,6 +150,7 @@ private:
     ::memcpy(&msg_->src.u.sa, &rawAddr.u.sa, rawAddr.len);
     msg_->src.len = rawAddr.len;
   }
+  void doAddFragment(const BfcpMsg *msg);
 
 private:
   typedef std::set<Fragment> FragmentSet;
@@ -150,6 +160,7 @@ private:
   muduo::Timestamp receivedTime_;
  
   FragmentSet fragments_;
+  HoleList holes_;
   bool isComplete_;
 };
 

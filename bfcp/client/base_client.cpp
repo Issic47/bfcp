@@ -22,7 +22,8 @@ BaseClient::BaseClient(muduo::net::EventLoop* loop,
       conferenceID_(conferenceID),
       userID_(userID),
       state_(kDisconnected),
-      heartBeatInterval_(heartBeatInterval)
+      heartBeatInterval_(heartBeatInterval),
+      msgSendCount_(0)
 {
   client_.setMessageCallback(
     boost::bind(&BaseClient::onMessage, this, _1, _2, _3, _4));
@@ -115,10 +116,15 @@ void BaseClient::changeState( State state )
     else if (state == kDisconnected)
     {
       loop_->cancel(heartBeatTimer_);
-      tasks_.clear();
     }
     if (stateChangedCallback_)
       stateChangedCallback_(state);
+  }
+
+  // clear task queue whatever
+  if (state == kDisconnected) 
+  {
+    tasks_.clear();
   }
 }
 
@@ -280,6 +286,7 @@ void BaseClient::onMessage(const UdpSocketPtr& socket,
 void BaseClient::onWriteComplete( const UdpSocketPtr& socket, int messageId )
 {
   LOG_TRACE << "message " << messageId << " write completed";
+  ++msgSendCount_;
 }
 
 void BaseClient::onNewRequest( const BfcpMsgPtr &msg )
@@ -308,8 +315,8 @@ void BaseClient::onResponse(bfcp_prim requestPrimitive,
 {
   if (err != ResponseError::kNoError)
   {
-    LOG_TRACE << "BfcpClient received response with error " 
-              << response_error_name(err);
+    LOG_WARN << "BfcpClient received response with error " 
+             << response_error_name(err);
     changeState(kDisconnected);
   }
   else

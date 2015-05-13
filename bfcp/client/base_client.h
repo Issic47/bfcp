@@ -80,6 +80,11 @@ public:
   void sendHello();
   void sendGoodbye();
 
+  uint32_t getConferenceID() const { return conferenceID_; }
+  uint16_t getUserID() const { return userID_; }
+
+  size_t getMsgSendCount() const { return msgSendCount_; }
+
 private:
   typedef boost::function<void (const BfcpMsgPtr&)> Handler;
   typedef std::unordered_map<int, Handler> HandlerDict;
@@ -162,6 +167,8 @@ private:
   double heartBeatInterval_;
   muduo::net::TimerId heartBeatTimer_;
   TaskList tasks_;
+
+  size_t msgSendCount_;
 };
 
 } // namespace bfcp

@@ -82,7 +82,6 @@ void ClientTransaction::onSendTimeout()
   double delay = (BFCP_T1 << txc_) / 1000.0;
   if (++txc_ > BFCP_TXC)
   {
-    loop_->cancel(timer1_);
     if (requestTimeoutCallback_)
     {
       loop_->queueInLoop(
